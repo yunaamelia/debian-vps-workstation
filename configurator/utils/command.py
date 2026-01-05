@@ -60,6 +60,7 @@ def run_command(
         ModuleExecutionError if check=True and command fails
     """
     # Convert string to list if not using shell
+    cmd_list: Union[List[str], str]
     if isinstance(command, str) and not shell:
         cmd_list = shlex.split(command)
     else:

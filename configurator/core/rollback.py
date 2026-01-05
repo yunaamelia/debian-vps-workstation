@@ -67,7 +67,7 @@ class RollbackManager:
         self.actions: List[RollbackAction] = []
         self.state_file = ROLLBACK_STATE_FILE
 
-    def add_command(self, rollback_command: str, description: str = ""):
+    def add_command(self, rollback_command: str, description: str = "") -> None:
         """
         Add a command to be executed during rollback.
 
@@ -83,7 +83,7 @@ class RollbackManager:
         self.actions.append(action)
         self._save_state()
 
-    def add_file_restore(self, backup_path: str, original_path: str, description: str = ""):
+    def add_file_restore(self, backup_path: str, original_path: str, description: str = "") -> None:
         """
         Add a file restoration to rollback.
 
@@ -103,7 +103,7 @@ class RollbackManager:
         self.actions.append(action)
         self._save_state()
 
-    def add_package_remove(self, packages: List[str], description: str = ""):
+    def add_package_remove(self, packages: List[str], description: str = "") -> None:
         """
         Add packages to be removed during rollback.
 
@@ -119,7 +119,7 @@ class RollbackManager:
         self.actions.append(action)
         self._save_state()
 
-    def add_service_stop(self, service: str, description: str = ""):
+    def add_service_stop(self, service: str, description: str = "") -> None:
         """
         Add a service to be stopped during rollback.
 
@@ -177,7 +177,7 @@ class RollbackManager:
         self.logger.info("Rollback completed successfully")
         return True
 
-    def _execute_action(self, action: RollbackAction):
+    def _execute_action(self, action: RollbackAction) -> None:
         """Execute a single rollback action."""
         if action.action_type == "command":
             run_command(action.data["command"], check=False)
@@ -196,7 +196,7 @@ class RollbackManager:
             run_command(f"systemctl stop {action.data['service']}", check=False)
             run_command(f"systemctl disable {action.data['service']}", check=False)
 
-    def _save_state(self):
+    def _save_state(self) -> None:
         """Save rollback state to file."""
         try:
             self.state_file.parent.mkdir(parents=True, exist_ok=True)
@@ -212,7 +212,7 @@ class RollbackManager:
         except Exception as e:
             self.logger.debug(f"Could not save rollback state: {e}")
 
-    def _clear_state(self):
+    def _clear_state(self) -> None:
         """Clear saved rollback state."""
         try:
             if self.state_file.exists():
@@ -248,7 +248,7 @@ class RollbackManager:
         if not self.actions:
             return "No rollback actions pending"
 
-        types = {}
+        types: Dict[str, int] = {}
         for action in self.actions:
             types[action.action_type] = types.get(action.action_type, 0) + 1
 

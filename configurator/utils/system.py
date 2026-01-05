@@ -281,7 +281,8 @@ def get_swap_info() -> Tuple[float, float]:
     """
     try:
         with open("/proc/meminfo", "r") as f:
-            total = used = 0
+            total: float = 0.0
+            used: float = 0.0
             for line in f:
                 if line.startswith("SwapTotal:"):
                     total = int(line.split()[1]) / 1024 / 1024

@@ -11,7 +11,7 @@ import logging
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 
 from rich.console import Console
 from rich.logging import RichHandler
@@ -140,7 +140,7 @@ class LogContext:
         self.logger.info(f"▶ {self.operation}...")
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> bool:
+    def __exit__(self, exc_type: object, exc_val: object, exc_tb: object) -> Literal[False]:
         if self.start_time and self.show_time:
             elapsed = datetime.now() - self.start_time
             elapsed_str = f" ({elapsed.total_seconds():.1f}s)"
