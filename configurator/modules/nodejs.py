@@ -113,9 +113,14 @@ class NodeJSModule(ConfigurationModule):
         # Download and run nvm install script
         nvm_url = f"https://raw.githubusercontent.com/nvm-sh/nvm/v{self.NVM_VERSION}/install.sh"
 
+        # Explicitly set NVM_DIR
+        env = os.environ.copy()
+        env["NVM_DIR"] = nvm_dir
+        
         result = self.run(
             f"curl -o- {nvm_url} | bash",
             check=False,
+            env=env,
         )
 
         if not result.success:
@@ -142,12 +147,15 @@ export NVM_DIR="$HOME/.nvm"
     def _install_nodejs(self):
         """Install Node.js using nvm."""
         node_version = self.get_config("version", "20")  # Default to LTS
+        nvm_dir = os.path.expanduser("~/.nvm")
 
         self.logger.info(f"Installing Node.js v{node_version} (LTS)...")
 
         # Install and use specified version
+        # NVM_DIR is explicitly set within the bash script for robustness
         nvm_commands = f"""
-source ~/.nvm/nvm.sh
+export NVM_DIR="{nvm_dir}"
+[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
 nvm install {node_version}
 nvm use {node_version}
 nvm alias default {node_version}

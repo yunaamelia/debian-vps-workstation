@@ -71,7 +71,11 @@ class CursorModule(ConfigurationModule):
         cursor_path = cursor_dir / "cursor.AppImage"
 
         # Download
-        self.run(f"curl -fsSL '{self.CURSOR_URL}' -o {cursor_path}", check=True)
+        # Download with retry
+        self.run(
+            f"curl -fsSL --retry 3 --retry-delay 5 '{self.CURSOR_URL}' -o {cursor_path}",
+            check=True,
+        )
 
         # Make executable
         self.run(f"chmod +x {cursor_path}", check=True)

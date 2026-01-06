@@ -68,15 +68,21 @@ class JavaModule(ConfigurationModule):
 
     def _install_jdk(self):
         """Install OpenJDK."""
-        jdk_version = self.get_config("version", "17")
-        jdk_package = f"openjdk-{jdk_version}-jdk"
+        jdk_version = self.get_config("version", "default")
 
-        self.logger.info(f"Installing {jdk_package}...")
+        if jdk_version == "default":
+            jdk_package = "default-jdk"
+            headless_package = "default-jdk-headless"
+            self.logger.info("Installing default JDK...")
+        else:
+            jdk_package = f"openjdk-{jdk_version}-jdk"
+            headless_package = f"openjdk-{jdk_version}-jdk-headless"
+            self.logger.info(f"Installing OpenJDK {jdk_version}...")
 
         self.install_packages(
             [
                 jdk_package,
-                f"openjdk-{jdk_version}-jdk-headless",
+                headless_package,
             ]
         )
 
