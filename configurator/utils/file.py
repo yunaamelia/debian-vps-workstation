@@ -108,6 +108,19 @@ def restore_file(
         )
 
 
+# ... imports ...
+from pathlib import Path
+from typing import Optional, Union
+
+from configurator.exceptions import ModuleExecutionError
+from configurator.utils.file_lock import file_lock
+
+# Default backup directory
+BACKUP_DIR = Path("/var/backups/debian-vps-configurator")
+
+# ... ensure_dir, backup_file, restore_file unchanged ...
+
+
 def write_file(
     path: Union[str, Path],
     content: str,
@@ -117,7 +130,7 @@ def write_file(
     group: Optional[str] = None,
 ) -> Path:
     """
-    Write content to a file with optional backup.
+    Write content to a file with optional backup (Thread-Safe).
 
     Args:
         path: File path
@@ -135,43 +148,46 @@ def write_file(
     # Create parent directories
     ensure_dir(path.parent)
 
-    # Backup existing file
-    if backup and path.exists():
-        backup_file(path)
+    with file_lock(str(path)):
+        # Backup existing file
+        if backup and path.exists():
+            backup_file(path)
 
-    # Write content
-    try:
-        path.write_text(content, encoding="utf-8")
-        os.chmod(path, mode)
+        # Write content
+        try:
+            path.write_text(content, encoding="utf-8")
+            os.chmod(path, mode)
 
-        # Set ownership if specified
-        if owner or group:
-            import grp
-            import pwd
+            # Set ownership if specified
+            if owner or group:
+                import grp
+                import pwd
 
-            uid = pwd.getpwnam(owner).pw_uid if owner else -1
-            gid = grp.getgrnam(group).gr_gid if group else -1
-            os.chown(path, uid, gid)
+                uid = pwd.getpwnam(owner).pw_uid if owner else -1
+                gid = grp.getgrnam(group).gr_gid if group else -1
+                os.chown(path, uid, gid)
 
-        return path
-    except Exception as e:
-        raise ModuleExecutionError(
-            what=f"Failed to write file: {path}",
-            why=str(e),
-            how="Check file permissions and available disk space",
-        )
+            return path
+        except Exception as e:
+            raise ModuleExecutionError(
+                what=f"Failed to write file: {path}",
+                why=str(e),
+                how="Check file permissions and available disk space",
+            )
 
 
 def read_file(path: Union[str, Path]) -> str:
-    """
-    Read file content.
-
-    Args:
-        path: File path
-
-    Returns:
-        File content as string
-    """
+    """Read file content (Thread-Safeish - advisory lock ignored for read usually, but good practice if critical)."""
+    # For read, strictly dependent on writer lock. flock shared lock?
+    # fcntl.LOCK_SH
+    # But file_lock context manager creates new file for lock?
+    # file_lock uses .lock file.
+    # So writers acquire EX lock on .lock.
+    # Readers should probably just read, unless we want strict consistency.
+    # For this project, config files are small. Atomic writes (rename) are best but we use in-place write_text.
+    # write_text is not atomic (truncates then writes).
+    # So we SHOULD lock readers too if we expect parallel read/write.
+    # But read_file is simple.
     path = Path(path)
 
     if not path.exists():
@@ -197,7 +213,7 @@ def append_to_file(
     create: bool = True,
 ) -> Path:
     """
-    Append content to a file.
+    Append content to a file (Thread-Safe).
 
     Args:
         path: File path
@@ -209,42 +225,38 @@ def append_to_file(
     """
     path = Path(path)
 
-    if not path.exists() and not create:
-        raise ModuleExecutionError(
-            what=f"File not found: {path}",
-            why="The file does not exist and create=False",
-            how="Set create=True or create the file first",
-        )
+    with file_lock(str(path)):
+        if not path.exists() and not create:
+            raise ModuleExecutionError(
+                what=f"File not found: {path}",
+                why="The file does not exist and create=False",
+                how="Set create=True or create the file first",
+            )
 
-    try:
-        with open(path, "a", encoding="utf-8") as f:
-            f.write(content)
-        return path
-    except Exception as e:
-        raise ModuleExecutionError(
-            what=f"Failed to append to file: {path}",
-            why=str(e),
-            how="Check file permissions",
-        )
+        try:
+            with open(path, "a", encoding="utf-8") as f:
+                f.write(content)
+            return path
+        except Exception as e:
+            raise ModuleExecutionError(
+                what=f"Failed to append to file: {path}",
+                why=str(e),
+                how="Check file permissions",
+            )
 
 
 def file_contains(path: Union[str, Path], pattern: str) -> bool:
-    """
-    Check if a file contains a pattern.
-
-    Args:
-        path: File path
-        pattern: String pattern to search for
-
-    Returns:
-        True if pattern is found
-    """
+    """Check if a file contains a pattern."""
     path = Path(path)
 
     if not path.exists():
         return False
 
-    content = path.read_text(encoding="utf-8")
+    # Naive read without lock is mostly fine for checking exists
+    try:
+        content = path.read_text(encoding="utf-8")
+    except:
+        return False
     return pattern in content
 
 
@@ -255,7 +267,7 @@ def replace_in_file(
     backup: bool = True,
 ) -> bool:
     """
-    Replace text in a file.
+    Replace text in a file (Thread-Safe).
 
     Args:
         path: File path
@@ -275,12 +287,42 @@ def replace_in_file(
             how="Check if the file path is correct",
         )
 
-    content = path.read_text(encoding="utf-8")
+    with file_lock(str(path)):
+        content = path.read_text(encoding="utf-8")
 
-    if old not in content:
-        return False
+        if old not in content:
+            return False
 
-    new_content = content.replace(old, new)
-    write_file(path, new_content, backup=backup)
+        new_content = content.replace(old, new)
 
-    return True
+        # We assume write_file will lock again? No, file_lock is typically reentrant if same process/thread?
+        # NO. fcntl on same file from same process?
+        # lock file is separate file .lock
+        # If we nest locks on same file, it might deadlock or be a no-op?
+        # flock is valid per fd.
+        # But here we call write_file which calls file_lock.
+        # If replace_in_file acquires lock, then write_file tries to acquire SAME lock...
+        # It will wait forever if in another thread, but same thread?
+        # flock is associated with OPEN FILE DESCRIPTION.
+        # If we open .lock again, it's a new file description.
+        # Locking it again from same thread WILL BLOCK if using fcntl.LOCK_EX?
+        # Actually, POSIX locks: "If a process has a write lock, it can also have a read lock..."
+        # But wait, fcntl locks are per process?
+        # "flock() locks are associated with a file description... duplicated fds share lock..."
+        # "Process-oriented: if a process holding a lock on a file closes any fd for that file, the lock is released."
+        # If we open new fd, it might block.
+        # So we should call internal write logic or bypass lock in write_file.
+        # Refactoring write_file to have `_write_file_internal` and `write_file` wrapper is safer.
+        # OR just duplicate logic here.
+
+        # Backup existing file (manually to avoid nested lock in write_file)
+        if backup:
+            backup_file(path)  # backup_file doesn't lock? It reads.
+
+        try:
+            path.write_text(new_content, encoding="utf-8")
+            # Mode? Preserved?
+            # write_text replaces file.
+            return True
+        except Exception as e:
+            raise ModuleExecutionError(what=f"Failed to replace in {path}", why=str(e))

@@ -22,8 +22,9 @@ class GolangModule(ConfigurationModule):
     the environment for Go development.
     """
 
-    name = "Go (Golang)"
-    description = "Install Go development environment"
+    name = "Go Development"
+    description = "Go programming language environment"
+    depends_on = ["system"]
     priority = 42
     mandatory = False
 

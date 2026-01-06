@@ -15,8 +15,9 @@ class PHPModule(ConfigurationModule):
     PHP development environment module.
     """
 
-    name = "PHP"
-    description = "Install PHP development environment"
+    name = "PHP Development"
+    description = "PHP environment with Composer"
+    depends_on = ["system"]
     priority = 45
     mandatory = False
 

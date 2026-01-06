@@ -19,7 +19,8 @@ class PythonModule(ConfigurationModule):
     """
 
     name = "Python Development"
-    description = "Setup Python development environment"
+    description = "Python 3.11+, Pip, Poetry, Pyenv"
+    depends_on = ["system"]
     priority = 40
     mandatory = False
 

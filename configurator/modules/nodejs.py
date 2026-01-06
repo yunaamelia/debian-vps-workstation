@@ -22,7 +22,8 @@ class NodeJSModule(ConfigurationModule):
     """
 
     name = "Node.js Development"
-    description = "Setup Node.js with nvm"
+    description = "Node.js (via NVM), NPM, Yarn"
+    depends_on = ["system"]
     priority = 41
     mandatory = False
 

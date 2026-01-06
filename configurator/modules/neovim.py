@@ -21,7 +21,8 @@ class NeovimModule(ConfigurationModule):
     """
 
     name = "Neovim"
-    description = "Install Neovim with modern configuration"
+    description = "Neovim editor with configuration"
+    depends_on = ["system"]
     priority = 62
     mandatory = False
 

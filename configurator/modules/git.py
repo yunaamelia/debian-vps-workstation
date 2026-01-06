@@ -16,7 +16,8 @@ class GitModule(ConfigurationModule):
     """
 
     name = "Git"
-    description = "Install Git and GitHub CLI"
+    description = "Git configuration and GPG signing"
+    depends_on = ["system"]
     priority = 51
     mandatory = False
 

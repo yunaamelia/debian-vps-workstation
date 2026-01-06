@@ -23,7 +23,8 @@ class DevOpsModule(ConfigurationModule):
     """
 
     name = "DevOps Tools"
-    description = "Install DevOps and cloud tools"
+    description = "Kubectl, Helm, Terraform, Ansible"
+    depends_on = ["system", "docker"]
     priority = 53
     mandatory = False
 

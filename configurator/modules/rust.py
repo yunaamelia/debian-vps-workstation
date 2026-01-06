@@ -19,8 +19,9 @@ class RustModule(ConfigurationModule):
     Uses rustup for Rust toolchain management.
     """
 
-    name = "Rust"
-    description = "Install Rust development environment"
+    name = "Rust Development"
+    description = "Rust programming language (via rustup)"
+    depends_on = ["system"]
     priority = 43
     mandatory = False
 

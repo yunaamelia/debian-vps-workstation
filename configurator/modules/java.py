@@ -17,8 +17,9 @@ class JavaModule(ConfigurationModule):
     Installs OpenJDK and optionally Maven/Gradle.
     """
 
-    name = "Java"
-    description = "Install Java development environment"
+    name = "Java Development"
+    description = "OpenJDK environment"
+    depends_on = ["system"]
     priority = 44
     mandatory = False
 

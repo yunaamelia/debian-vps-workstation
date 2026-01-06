@@ -17,8 +17,9 @@ class UtilitiesModule(ConfigurationModule):
     Installs commonly used command-line tools.
     """
 
-    name = "CLI Utilities"
-    description = "Install common CLI utilities"
+    name = "System Utilities"
+    description = "htop, ripgrep, fzf, zsh, etc."
+    depends_on = ["system"]
     priority = 54
     mandatory = False
 

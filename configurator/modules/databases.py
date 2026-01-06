@@ -19,8 +19,9 @@ class DatabasesModule(ConfigurationModule):
     Does NOT install database servers (use Docker for that).
     """
 
-    name = "Database Clients"
-    description = "Install database CLI clients"
+    name = "Databases"
+    description = "Database clients (PostgreSQL, MySQL/MariaDB, SQLite, Redis)"
+    depends_on = ["system"]
     priority = 52
     mandatory = False
 

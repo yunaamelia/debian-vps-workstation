@@ -19,7 +19,8 @@ class VSCodeModule(ConfigurationModule):
     """
 
     name = "VS Code"
-    description = "Install Visual Studio Code"
+    description = "Visual Studio Code editor"
+    depends_on = ["system"]
     priority = 60
     mandatory = False
 

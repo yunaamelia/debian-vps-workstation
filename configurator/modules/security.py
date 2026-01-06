@@ -25,8 +25,9 @@ class SecurityModule(ConfigurationModule):
     It sets up essential security measures.
     """
 
-    name = "Security Hardening"
-    description = "Setup firewall, fail2ban, and SSH hardening"
+    name = "Security"
+    description = "Security hardening (UFW, Fail2Ban, SSH)"
+    depends_on = ["system"]
     priority = 20
     mandatory = True
 

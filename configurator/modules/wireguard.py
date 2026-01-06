@@ -22,8 +22,9 @@ class WireGuardModule(ConfigurationModule):
     Sets up a WireGuard VPN server for secure remote access.
     """
 
-    name = "WireGuard VPN"
-    description = "Install WireGuard VPN server"
+    name = "WireGuard"
+    description = "WireGuard VPN server"
+    depends_on = ["system", "security"]
     priority = 70
     mandatory = False
 

@@ -22,8 +22,9 @@ class CursorModule(ConfigurationModule):
     Cursor is an AI-powered code editor based on VS Code.
     """
 
-    name = "Cursor IDE"
-    description = "Install Cursor AI-powered code editor"
+    name = "Cursor"
+    description = "Cursor AI editor"
+    depends_on = ["system"]
     priority = 61
     mandatory = False
 

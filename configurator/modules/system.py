@@ -33,8 +33,9 @@ class SystemModule(ConfigurationModule):
     This is the first module to run and sets up the base system.
     """
 
-    name = "System Configuration"
-    description = "Configure hostname, timezone, locale, and kernel parameters"
+    name = "System Base"
+    description = "Base system configuration (curl, wget, build-essential)"
+    depends_on = []
     priority = 10
     mandatory = True
 

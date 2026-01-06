@@ -25,7 +25,8 @@ class DockerModule(ConfigurationModule):
     """
 
     name = "Docker"
-    description = "Install Docker Engine and Docker Compose"
+    description = "Docker Engine and Docker Compose"
+    depends_on = ["system", "security"]
     priority = 50
     mandatory = False
 

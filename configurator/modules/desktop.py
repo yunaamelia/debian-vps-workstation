@@ -22,9 +22,11 @@ class DesktopModule(ConfigurationModule):
     environment accessible via standard RDP clients.
     """
 
-    name = "Remote Desktop"
-    description = "Install xrdp + XFCE4 remote desktop"
+    name = "Desktop Environment"
+    description = "XFCE4 Desktop and XRDP"
     priority = 30
+    depends_on = ["system", "security"]
+    force_sequential = True
     mandatory = False
 
     # Packages for XFCE4 desktop

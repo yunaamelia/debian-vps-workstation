@@ -19,7 +19,8 @@ class NetdataModule(ConfigurationModule):
     """
 
     name = "Netdata"
-    description = "Install Netdata real-time monitoring"
+    description = "Real-time performance monitoring"
+    depends_on = ["system"]
     priority = 80
     mandatory = False
 

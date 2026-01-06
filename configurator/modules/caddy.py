@@ -20,8 +20,9 @@ class CaddyModule(ConfigurationModule):
     than Nginx for most use cases.
     """
 
-    name = "Caddy"
-    description = "Install Caddy reverse proxy"
+    name = "Caddy Web Server"
+    description = "Caddy web server with automatic HTTPS"
+    depends_on = ["system", "security"]
     priority = 71
     mandatory = False
 

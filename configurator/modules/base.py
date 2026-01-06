@@ -6,11 +6,13 @@ Provides the interface that all modules must implement.
 
 import logging
 import os
+import threading
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
 from configurator.core.rollback import RollbackManager
 from configurator.exceptions import ModuleExecutionError
+from configurator.utils.circuit_breaker import CircuitBreakerError, CircuitBreakerManager
 from configurator.utils.command import CommandResult, run_command
 from configurator.utils.retry import retry
 
@@ -18,21 +20,19 @@ from configurator.utils.retry import retry
 class ConfigurationModule(ABC):
     """
     Abstract base class for all configuration modules.
-
-    Each module must implement:
-    - validate(): Check prerequisites before installation
-    - configure(): Execute the installation/configuration
-    - verify(): Verify the installation was successful
-
-    The rollback() method is provided with a default implementation
-    that executes commands registered during configure().
     """
+
+    # Global lock for APT operations to prevent parallel execution failures
+    _APT_LOCK = threading.Lock()
 
     # Module metadata - override in subclasses
     name: str = "Base Module"
     description: str = "Base configuration module"
-    priority: int = 100  # Lower = higher priority
+    priority: int = 100
+    depends_on: List[str] = []
+    force_sequential: bool = False  # If True, runs alone in a batch
     mandatory: bool = False  # If True, installation stops on failure
+    depends_on: List[str] = []
 
     def __init__(
         self,
@@ -40,6 +40,7 @@ class ConfigurationModule(ABC):
         logger: Optional[logging.Logger] = None,
         rollback_manager: Optional[RollbackManager] = None,
         dry_run_manager: Optional["DryRunManager"] = None,
+        circuit_breaker_manager: Optional[CircuitBreakerManager] = None,
     ):
         """
         Initialize the module.
@@ -49,11 +50,13 @@ class ConfigurationModule(ABC):
             logger: Logger instance
             rollback_manager: Rollback manager for tracking changes
             dry_run_manager: Manager for dry-run recording
+            circuit_breaker_manager: Manager for circuit breakers
         """
         self.config = config
         self.logger = logger or logging.getLogger(self.__class__.__name__)
         self.rollback_manager = rollback_manager or RollbackManager()
         self.dry_run_manager = dry_run_manager
+        self.circuit_breaker_manager = circuit_breaker_manager or CircuitBreakerManager()
 
         # Dry run state
         self.dry_run = dry_run_manager.is_enabled if dry_run_manager else False
@@ -194,29 +197,78 @@ class ConfigurationModule(ABC):
                 self.dry_run_manager.record_package_install(packages)
             return True
 
-        if update_cache:
-            self.run("apt-get update", check=False)
+        # Acquire lock to prevent parallel APT operations
+        with self._APT_LOCK:
+            if update_cache:
+                self.run("apt-get update", check=False)
 
-        # Install packages
-        packages_str = " ".join(packages)
+            # Install packages
+            packages_str = " ".join(packages)
 
-        env = os.environ.copy()
-        env["DEBIAN_FRONTEND"] = "noninteractive"
+            env = os.environ.copy()
+            env["DEBIAN_FRONTEND"] = "noninteractive"
 
-        result = self.run(
-            f"apt-get install -y {packages_str}",
-            check=True,
-            env=env,
-        )
+            def _install():
+                return self.run(
+                    f"apt-get install -y {packages_str}",
+                    check=True,
+                    env=env,
+                )
 
-        if result.success:
-            self.installed_packages.extend(packages)
-            self.rollback_manager.add_package_remove(
-                packages,
-                description=f"Remove packages: {', '.join(packages)}",
+            # Get apt circuit breaker
+            breaker = self.circuit_breaker_manager.get_breaker(
+                "apt-repository",
+                failure_threshold=3,
+                timeout=60.0,
             )
 
-        return result.success
+            try:
+                # Execute through circuit breaker
+                result = breaker.call(_install)
+            except CircuitBreakerError as e:
+                self.logger.error(f"Circuit breaker open for apt: {e}")
+
+                # Ask user if they want to wait or skip
+                if self.config.get("interactive"):
+                    import time
+
+                    print(f"\n[!] Circuit breaker is OPEN. Retry in {e.retry_after:.0f}s.")
+                    choice = input(f"Wait {e.retry_after:.0f}s and retry? (y/n): ")
+                    if choice.lower() == "y":
+                        self.logger.info("User requested wait and retry.")
+                        time.sleep(e.retry_after)
+                        breaker.reset()  # Manual reset
+                        # Recursive retry could be dangerous, but for this specific "single package" loop it's okay
+                        # IF we assume it returns controlling to the loop.
+                        # Actually, we are inside the loop for packages.
+                        # We should `continue` the loop if we want to retry THIS package.
+                        # But `_install` executes the batch.
+                        # Wait, `install_packages` executes `_install` which does `apt-get install` for ALL `packages` at once or one by one?
+                        # The code says `packages_str = " ".join(packages)`, so it's a batch.
+                        # So simply retrying the same call is what we want.
+                        return self.install_packages(packages, update_cache=False)
+
+                raise ModuleExecutionError(
+                    what=f"Cannot install packages: {', '.join(packages)}",
+                    why="APT repository appears to be down or unreachable",
+                    how="""
+Try these steps:
+1. Check internet connectivity:  ping -c 3 deb.debian.org
+2. Check APT sources: cat /etc/apt/sources.list
+3. Update package lists: sudo apt-get update
+4. Wait and try again (repository might be temporarily down)
+5. Manual reset: vps-configurator reset circuit-breaker apt-repository
+""",
+                )
+
+            if result.success:
+                self.installed_packages.extend(packages)
+                self.rollback_manager.add_package_remove(
+                    packages,
+                    description=f"Remove packages: {', '.join(packages)}",
+                )
+
+            return result.success
 
     def enable_service(self, service: str, start: bool = True) -> bool:
         """

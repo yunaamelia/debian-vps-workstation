@@ -76,8 +76,9 @@ class RBACModule(ConfigurationModule):
     Creates and manages users with predefined roles.
     """
 
-    name = "RBAC"
-    description = "User management with role-based access control"
+    name = "User Management"
+    description = "RBAC and user configuration"
+    depends_on = ["system", "security"]
     priority = 25  # After security, before desktop
     mandatory = False
 

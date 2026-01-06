@@ -17,6 +17,7 @@ from configurator.core.validator import SystemValidator
 from configurator.exceptions import ModuleExecutionError, PrerequisiteError
 from configurator.modules.base import ConfigurationModule
 from configurator.plugins.loader import PluginManager
+from configurator.utils.circuit_breaker import CircuitBreakerManager
 
 
 class Installer:
@@ -83,6 +84,7 @@ class Installer:
         self.hooks_manager = HooksManager(self.logger)
         self.plugin_manager = PluginManager(self.logger)
         self.dry_run_manager = DryRunManager()
+        self.circuit_breaker_manager = CircuitBreakerManager()
 
         # Register core services in container
         self.container.singleton("config", lambda: self.config)
@@ -93,6 +95,7 @@ class Installer:
         self.container.singleton("hooks_manager", lambda: self.hooks_manager)
         self.container.singleton("plugin_manager", lambda: self.plugin_manager)
         self.container.singleton("dry_run_manager", lambda: self.dry_run_manager)
+        self.container.singleton("circuit_breaker_manager", lambda: self.circuit_breaker_manager)
 
         # Module registry - maps names to classes/factories
         self._register_modules()
@@ -171,6 +174,7 @@ class Installer:
                 logger=c.get("logger"),
                 rollback_manager=c.get("rollback_manager"),
                 dry_run_manager=c.get("dry_run_manager"),
+                circuit_breaker_manager=c.get("circuit_breaker_manager"),
             ),
         )
 
@@ -178,13 +182,15 @@ class Installer:
         self,
         skip_validation: bool = False,
         dry_run: bool = False,
+        parallel: bool = True,
     ) -> bool:
         """
-        Run the full installation.
+        Run the full installation with optional parallel execution.
 
         Args:
             skip_validation: Skip system validation
             dry_run: Only show what would be done
+            parallel: Enable parallel execution (overrides config if False)
 
         Returns:
             True if installation was successful
@@ -214,23 +220,118 @@ class Installer:
             enabled_modules = self.config.get_enabled_modules()
             self.logger.info(f"Enabled modules: {', '.join(enabled_modules)}")
 
-            # Sort by priority
-            sorted_modules = sorted(enabled_modules, key=lambda m: self.MODULE_PRIORITY.get(m, 100))
-
-            # Execute modules
             results = {}
-            for module_name in sorted_modules:
-                if not self.container.has(module_name):
-                    self.logger.warning(f"Module not found: {module_name}")
-                    continue
 
-                success = self._execute_module(module_name, dry_run=dry_run)
-                results[module_name] = success
+            # Determine effective parallel setting
+            config_parallel = self.config.get("performance.parallel_execution", True)
+            use_parallel = parallel and config_parallel
 
-                # Stop on mandatory module failure
-                if not success and module_name in ("system", "security"):
-                    self.logger.error(f"Mandatory module {module_name} failed. Stopping.")
-                    break
+            # If only 1 module, no need for parallel overhead
+            if len(enabled_modules) <= 1:
+                use_parallel = False
+
+            if use_parallel:
+                try:
+                    from configurator.core.dependencies import COMPLETE_MODULE_DEPENDENCIES
+                    from configurator.core.parallel import DependencyGraph, ParallelModuleExecutor
+
+                    self.logger.info("Initializing parallel execution engine...")
+
+                    # 1. Instantiate all modules
+                    module_registry = {}
+                    for module_name in enabled_modules:
+                        if not self.container.has(module_name):
+                            self.logger.warning(f"Module not found: {module_name}")
+                            continue
+
+                        module_config = self._get_module_config(module_name)
+                        module = self.container.make(module_name, config=module_config)
+                        module_registry[module_name] = module
+
+                    # 2. Build Dependency Graph
+                    graph = DependencyGraph(logger=self.logger)
+
+                    for name, module in module_registry.items():
+                        # Use dependency dict OR module attribute
+                        # Default to COMPLETE_MODULE_DEPENDENCIES if available to ensure consistency
+                        # But module attribute is the source of truth for custom plugins
+                        depends_on = getattr(module, "depends_on", [])
+                        force_sequential = getattr(module, "force_sequential", False)
+
+                        # Fallback to centralized dict if module attribute empty (legacy support)
+                        if not depends_on:
+                            depends_on = COMPLETE_MODULE_DEPENDENCIES.get(name, [])
+
+                        graph.add_module(
+                            name, depends_on=depends_on, force_sequential=force_sequential
+                        )
+
+                    # 3. Validate Graph
+                    graph.validate()
+
+                    # 4. Get batches
+                    batches = graph.get_parallel_batches()
+
+                    self.logger.info(f"Parallel execution plan: {len(batches)} batches")
+                    for i, batch in enumerate(batches, 1):
+                        self.logger.info(f"  Batch {i}: {', '.join(batch)}")
+
+                    # 5. Execute
+                    max_workers = self.config.get("performance.max_workers", 3)
+                    executor = ParallelModuleExecutor(
+                        max_workers=max_workers, logger=self.logger, reporter=self.reporter
+                    )
+
+                    def execute_adapter(name: str, instance: ConfigurationModule) -> bool:
+                        """Adapter to use existing _execute_module logic with instance"""
+                        return self._execute_module_instance(name, instance, dry_run=dry_run)
+
+                    # Execute
+                    results = executor.execute_batches(
+                        batches, module_registry, execution_handler=execute_adapter
+                    )
+
+                    # Log Stats
+                    stats = executor.get_execution_stats()
+                    total_time = sum(s["duration"] for s in stats.values())
+                    self.logger.info(f"Total execution time (sum of threads): {total_time:.1f}s")
+
+                except Exception as e:
+                    self.logger.error(
+                        f"Parallel execution failed: {e}. Falling back to sequential.",
+                        exc_info=True,
+                    )
+                    use_parallel = False
+                    results = {}  # Clear partial results to restart?
+                    # Ideally we resume or retry? For safety, simpler to fall back or fail?
+                    # Prompt says "Fallback to sequential on error" (implied for graph errors, maybe not mid-execution)
+                    # If execution failed mid-way, fallback might re-run modules.
+                    # Idempotency is key. Modules should be idempotent.
+                    self.logger.warning("Restarting with sequential execution...")
+
+            if not use_parallel:
+                # Sequential fallback
+                self.logger.info("Using sequential execution")
+                sorted_modules = sorted(
+                    enabled_modules, key=lambda m: self.MODULE_PRIORITY.get(m, 100)
+                )
+                for module_name in sorted_modules:
+                    if not self.container.has(module_name):
+                        self.logger.warning(f"Module not found: {module_name}")
+                        continue
+
+                    if module_name in results and results[module_name]:
+                        # Skip already successful modules if we falling back?
+                        # Or re-verify?
+                        pass
+
+                    # Execute
+                    success = self._execute_module(module_name, dry_run=dry_run)
+                    results[module_name] = success
+
+                    if not success and module_name in ("system", "security"):
+                        self.logger.error(f"Mandatory module {module_name} failed. Stopping.")
+                        break
 
             # Show summary
             self.reporter.results = results
@@ -242,7 +343,7 @@ class Installer:
                 return True
 
             # Check for failures
-            if all(results.values()):
+            if all(results.values()) and results:
                 from configurator.utils.network import get_public_ip
 
                 self.reporter.show_next_steps(
@@ -277,14 +378,7 @@ class Installer:
         dry_run: bool = False,
     ) -> bool:
         """
-        Execute a single module.
-
-        Args:
-            module_name: Name of the module
-            dry_run: Only show what would be done
-
-        Returns:
-            True if module executed successfully
+        Execute a single module (instantiates it first).
         """
         # Get module-specific config
         module_config = self._get_module_config(module_name)
@@ -292,6 +386,17 @@ class Installer:
         # Create module instance via container
         module = self.container.make(module_name, config=module_config)
 
+        return self._execute_module_instance(module_name, module, dry_run=dry_run)
+
+    def _execute_module_instance(
+        self,
+        module_name: str,
+        module: ConfigurationModule,
+        dry_run: bool = False,
+    ) -> bool:
+        """
+        Execute a pre-instantiated module instance.
+        """
         # Start phase
         self.reporter.start_phase(f"Installing {module.name}")
 

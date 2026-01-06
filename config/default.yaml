@@ -89,6 +89,11 @@ monitoring:
   netdata:
     enabled: false
 
+# Performance Tuning
+performance:
+  parallel_execution: true
+  max_workers: 3
+
 # Installation Options
 interactive: true
 verbose: false
