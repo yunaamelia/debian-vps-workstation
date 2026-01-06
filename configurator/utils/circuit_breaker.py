@@ -111,7 +111,12 @@ class CircuitBreaker:
         self.total_failures = 0
         self.total_successes = 0
 
-    def call(self, func: Callable, *args, **kwargs):
+        # Thread safety
+        import threading
+
+        self._state_lock = threading.RLock()
+
+    def call(self, func: Callable, *args, **kwargs) -> any:
         """
         Execute function through circuit breaker.
 

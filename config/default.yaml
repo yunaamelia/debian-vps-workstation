@@ -93,6 +93,9 @@ monitoring:
 performance:
   parallel_execution: true
   max_workers: 3
+  package_cache:
+    enabled: true
+    max_size_gb: 10.0
 
 # Installation Options
 interactive: true

@@ -16,10 +16,20 @@ import click
 from rich.console import Console
 
 from configurator import __version__
-from configurator.config import ConfigManager
-from configurator.core.installer import Installer
-from configurator.core.reporter import ProgressReporter
+from configurator.core.lazy_loader import LazyLoader
 from configurator.logger import setup_logger
+
+# Lazy load heavy components
+ConfigManager = LazyLoader("configurator.config", "ConfigManager")
+Installer = LazyLoader("configurator.core.installer", "Installer")
+ProgressReporter = LazyLoader("configurator.core.reporter", "ProgressReporter")
+InteractiveWizard = LazyLoader("configurator.wizard", "InteractiveWizard")
+PluginManager = LazyLoader("configurator.plugins.loader", "PluginManager")
+PackageCacheManager = LazyLoader("configurator.core.package_cache", "PackageCacheManager")
+SecretsManager = LazyLoader("configurator.core.secrets", "SecretsManager")
+AuditEventType = LazyLoader("configurator.core.audit", "AuditEventType")
+AuditLogger = LazyLoader("configurator.core.audit", "AuditLogger")
+FileIntegrityMonitor = LazyLoader("configurator.core.file_integrity", "FileIntegrityMonitor")
 
 console = Console()
 
@@ -194,7 +204,8 @@ def wizard(ctx: click.Context):
     Guides you through the configuration process
     with beginner-friendly prompts.
     """
-    from configurator.wizard import InteractiveWizard
+    # InteractiveWizard already lazy imported
+    # from configurator.wizard import InteractiveWizard
 
     logger = ctx.obj["logger"]
 
@@ -366,7 +377,7 @@ def secrets():
 @click.password_option()
 def secret_set(key: str, password: str):
     """Store a secure secret."""
-    from configurator.core.secrets import SecretsManager
+    # SecretsManager already lazy imported
 
     try:
         manager = SecretsManager()
@@ -381,7 +392,7 @@ def secret_set(key: str, password: str):
 @click.argument("key")
 def secret_get(key: str):
     """Retrieve a secure secret."""
-    from configurator.core.secrets import SecretsManager
+    # SecretsManager already lazy imported
 
     try:
         manager = SecretsManager()
@@ -399,7 +410,7 @@ def secret_get(key: str):
 @secrets.command("list")
 def secret_list():
     """List all stored secret keys."""
-    from configurator.core.secrets import SecretsManager
+    # SecretsManager already lazy imported
 
     try:
         manager = SecretsManager()
@@ -421,7 +432,7 @@ def secret_list():
 @click.confirmation_option(prompt="Are you sure you want to delete this secret?")
 def secret_delete(key: str):
     """Delete a stored secret."""
-    from configurator.core.secrets import SecretsManager
+    # SecretsManager already lazy imported
 
     try:
         manager = SecretsManager()
@@ -446,7 +457,7 @@ def audit():
 @click.option("--limit", "-n", default=20, help="Number of events to show")
 def audit_query(type: Optional[str], limit: int):
     """View recent audit events."""
-    from configurator.core.audit import AuditEventType, AuditLogger
+    # AuditEventType, AuditLogger already lazy imported
 
     try:
         if type:
@@ -497,7 +508,7 @@ def fim():
 @click.confirmation_option(prompt="This will reset the baseline. Continue?")
 def fim_init():
     """Initialize FIM baseline."""
-    from configurator.core.file_integrity import FileIntegrityMonitor
+    # FileIntegrityMonitor already lazy imported
 
     try:
         fim = FileIntegrityMonitor()
@@ -511,7 +522,7 @@ def fim_init():
 @fim.command("check")
 def fim_check():
     """Check for file integrity violations."""
-    from configurator.core.file_integrity import FileIntegrityMonitor
+    # FileIntegrityMonitor already lazy imported
 
     try:
         fim = FileIntegrityMonitor()
@@ -539,7 +550,7 @@ def fim_check():
 @click.argument("file_path")
 def fim_update(file_path: str):
     """Update baseline for a specific file."""
-    from configurator.core.file_integrity import FileIntegrityMonitor
+    # FileIntegrityMonitor already lazy imported
 
     try:
         fim = FileIntegrityMonitor()
@@ -567,7 +578,7 @@ def plugin_install(source: str):
 
     SOURCE can be a Git URL, HTTP URL (zip/tar.gz), or local path.
     """
-    from configurator.plugins.loader import PluginManager
+    # PluginManager already lazy imported
 
     try:
         manager = PluginManager()
@@ -584,7 +595,7 @@ def plugin_install(source: str):
 @plugin.command("list")
 def plugin_list():
     """List installed plugins."""
-    from configurator.plugins.loader import PluginManager
+    # PluginManager already lazy imported
 
     try:
         manager = PluginManager()
@@ -612,7 +623,7 @@ def plugin_list():
 @click.argument("name")
 def plugin_enable(name: str):
     """Enable a plugin."""
-    from configurator.plugins.loader import PluginManager
+    # PluginManager already lazy imported
 
     try:
         manager = PluginManager()
@@ -632,7 +643,7 @@ def plugin_enable(name: str):
 @click.argument("name")
 def plugin_disable(name: str):
     """Disable a plugin."""
-    from configurator.plugins.loader import PluginManager
+    # PluginManager already lazy imported
 
     try:
         manager = PluginManager()
@@ -642,6 +653,118 @@ def plugin_disable(name: str):
             console.print(f"[red]Plugin '{name}' not found[/red]")
     except Exception as e:
         console.print(f"[red]Error disabling plugin: {e}[/red]")
+        sys.exit(1)
+
+
+@main.group()
+def cache():
+    """Manage package cache."""
+    pass
+
+
+@cache.command("stats")
+def cache_stats():
+    """Show cache statistics."""
+    # PackageCacheManager already lazy imported
+    from rich.table import Table
+
+    try:
+        manager = PackageCacheManager()
+        stats = manager.get_stats()
+
+        console.print("\n[bold]Package Cache Statistics[/bold]\n")
+
+        # General Info
+        console.print(f"Cache Directory: [cyan]{stats['cache_dir']}[/cyan]")
+        console.print(f"Total Packages: [green]{stats['total_packages']}[/green]")
+        console.print(
+            f"Size: [yellow]{stats['total_size_mb']:.2f} MB[/yellow] / {stats['max_size_mb']:.0f} MB"
+        )
+        console.print(f"Usage: {stats['usage_percent']:.1f}%")
+
+        # Performance
+        console.print("\n[bold]Performance[/bold]")
+        console.print(f"Total Downloads: {stats['total_downloads']}")
+        console.print(f"Cache Hits: {stats['total_cache_hits']}")
+        console.print(f"Hit Rate: [green]{stats['cache_hit_rate']*100:.1f}%[/green]")
+        console.print(f"Bandwidth Saved: [green]{stats['total_mb_saved']:.2f} MB[/green]")
+        console.print()
+
+    except Exception as e:
+        console.print(f"[red]Error getting cache stats: {e}[/red]")
+        sys.exit(1)
+
+
+@cache.command("list")
+@click.option("--limit", "-n", default=20, help="Number of packages to show")
+@click.option("--sort", type=click.Choice(["name", "size", "date"]), default="date", help="Sort by")
+def cache_list(limit: int, sort: str):
+    """List cached packages."""
+    # PackageCacheManager already lazy imported
+    from rich.table import Table
+
+    try:
+        manager = PackageCacheManager()
+        packages = manager.list_packages()
+
+        if not packages:
+            console.print("[yellow]Cache is empty.[/yellow]")
+            return
+
+        # Sort
+        if sort == "size":
+            packages.sort(key=lambda p: p.size_bytes, reverse=True)
+        elif sort == "name":
+            packages.sort(key=lambda p: p.name)
+        else:  # date
+            packages.sort(key=lambda p: p.cached_at, reverse=True)
+
+        packages = packages[:limit]
+
+        console.print(f"\n[bold]Cached Packages (Top {len(packages)})[/bold]\n")
+
+        table = Table(show_header=True, header_style="bold magenta")
+        table.add_column("Package")
+        table.add_column("Version")
+        table.add_column("Size")
+        table.add_column("Cached At")
+        table.add_column("Hits")
+
+        for p in packages:
+            size_str = f"{p.size_bytes / 1024 / 1024:.1f} MB"
+            date_str = p.cached_at.strftime("%Y-%m-%d %H:%M")
+
+            table.add_row(p.name, p.version, size_str, date_str, str(p.access_count))
+
+        console.print(table)
+        console.print()
+
+    except Exception as e:
+        console.print(f"[red]Error listing cache: {e}[/red]")
+        sys.exit(1)
+
+
+@cache.command("clear")
+@click.option("--days", type=int, help="Clear packages older than N days")
+@click.confirmation_option(prompt="Are you sure you want to clear the cache?")
+def cache_clear(days: Optional[int]):
+    """Clear package cache."""
+    # PackageCacheManager already lazy imported
+
+    try:
+        manager = PackageCacheManager()
+
+        if days is not None:
+            removed = manager.clear_cache(older_than_days=days)
+            console.print(f"[green]✓ Removed {removed} packages older than {days} days.[/green]")
+        else:
+            removed = manager.clear_cache()
+            console.print(
+                f"[green]✓ Cache cleared completely ({removed} packages removed).[/green]"
+            )
+
+    except Exception as e:
+        console.print(f"[red]Error clearing cache: {e}[/red]")
         sys.exit(1)
 
 
@@ -718,6 +841,80 @@ def reset_resource(target, name):
         console.print(f"[green]Successfully reset circuit breaker: {name}[/green]")
 
     console.print()
+
+
+@main.group()
+def cis():
+    """Security compliance and hardening based on CIS Benchmarks."""
+    pass
+
+
+@cis.command(name="scan")
+@click.option(
+    "--level",
+    type=click.Choice(["1", "2"]),
+    default="1",
+    help="CIS Benchmark Level (1=Basic, 2=Defense-in-Depth)",
+)
+@click.option(
+    "--format",
+    multiple=True,
+    type=click.Choice(["html", "json"]),
+    default=["html"],
+    help="Report format",
+)
+@click.option(
+    "--auto-remediate", is_flag=True, help="Automatically fix failed checks (Use with caution)"
+)
+def cis_scan(level, format, auto_remediate):
+    """Run CIS Benchmark compliance scan."""
+    from configurator.security.cis_report import CISReportGenerator
+    from configurator.security.cis_scanner import CISBenchmarkScanner
+
+    console.print(f"[bold blue]Starting CIS Benchmark Scan (Level {level})...[/bold blue]")
+
+    scanner = CISBenchmarkScanner()
+    report = scanner.scan(level=int(level))
+
+    # Display Summary to Console
+    console.print("\n[bold]Scan Complete![/bold]")
+    summary = report.get_summary()
+
+    score_color = "green" if report.score >= 80 else "yellow" if report.score >= 60 else "red"
+    console.print(f"Compliance Score: [bold {score_color}]{report.score}%[/bold {score_color}]")
+    console.print(f"Passed: [green]{summary['passed']}[/green] / {summary['total_checks']}")
+    console.print(f"Failed: [red]{summary['failed']}[/red]")
+
+    # Generate Reports
+    reporter = CISReportGenerator()
+    generated_files = []
+
+    if "json" in format:
+        path = reporter.generate_json(report)
+        generated_files.append(path)
+
+    if "html" in format:
+        path = reporter.generate_html(report)
+        generated_files.append(path)
+
+    for path in generated_files:
+        console.print(f"Report generated: [underline]{path}[/underline]")
+
+    # Auto-Remediation
+    if auto_remediate and summary["failed"] > 0:
+        if click.confirm(
+            f"\nFound {summary['failed']} failed checks. Attempt auto-remediation?", default=False
+        ):
+            console.print("[yellow]Starting auto-remediation...[/yellow]")
+            stats = scanner.remediate(report)
+            console.print(
+                f"Remediation complete. Fixed: [green]{stats['remediated']}[/green], Failed: [red]{stats['failed']}[/red]"
+            )
+
+            # Re-scan to show improvement
+            console.print("\n[blue]Re-scanning to verify fixes...[/blue]")
+            new_report = scanner.scan(level=int(level))
+            console.print(f"New Compliance Score: [bold]{new_report.score}%[/bold]")
 
 
 if __name__ == "__main__":

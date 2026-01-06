@@ -198,7 +198,7 @@ class DependencyGraph:
             module_info = self.module_info.get(node)
             if module_info:
                 for dep in module_info.depends_on:
-                    if dep not in self.graph:
+                    if dep not in self.module_info:
                         raise ValueError(f"Module '{node}' depends on '{dep}' which doesn't exist")
 
         # Check for disconnected components (warning only)

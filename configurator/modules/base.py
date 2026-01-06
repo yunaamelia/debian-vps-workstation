@@ -10,8 +10,10 @@ import threading
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
+from configurator.core.package_cache import PackageCacheManager
 from configurator.core.rollback import RollbackManager
 from configurator.exceptions import ModuleExecutionError
+from configurator.utils.apt_cache import AptCacheIntegration
 from configurator.utils.circuit_breaker import CircuitBreakerError, CircuitBreakerManager
 from configurator.utils.command import CommandResult, run_command
 from configurator.utils.retry import retry
@@ -32,7 +34,6 @@ class ConfigurationModule(ABC):
     depends_on: List[str] = []
     force_sequential: bool = False  # If True, runs alone in a batch
     mandatory: bool = False  # If True, installation stops on failure
-    depends_on: List[str] = []
 
     def __init__(
         self,
@@ -41,6 +42,7 @@ class ConfigurationModule(ABC):
         rollback_manager: Optional[RollbackManager] = None,
         dry_run_manager: Optional["DryRunManager"] = None,
         circuit_breaker_manager: Optional[CircuitBreakerManager] = None,
+        package_cache_manager: Optional[PackageCacheManager] = None,
     ):
         """
         Initialize the module.
@@ -51,12 +53,21 @@ class ConfigurationModule(ABC):
             rollback_manager: Rollback manager for tracking changes
             dry_run_manager: Manager for dry-run recording
             circuit_breaker_manager: Manager for circuit breakers
+            package_cache_manager: Manager for package caching
         """
         self.config = config
         self.logger = logger or logging.getLogger(self.__class__.__name__)
         self.rollback_manager = rollback_manager or RollbackManager()
         self.dry_run_manager = dry_run_manager
         self.circuit_breaker_manager = circuit_breaker_manager or CircuitBreakerManager()
+        self.package_cache_manager = package_cache_manager
+
+        # Initialize APT Cache Integration if manager is available
+        self.apt_cache_integration = None
+        if self.package_cache_manager:
+            self.apt_cache_integration = AptCacheIntegration(
+                self.package_cache_manager, self.logger
+            )
 
         # Dry run state
         self.dry_run = dry_run_manager.is_enabled if dry_run_manager else False
@@ -202,6 +213,13 @@ class ConfigurationModule(ABC):
             if update_cache:
                 self.run("apt-get update", check=False)
 
+            # Pre-populate APT cache from our local cache
+            if self.apt_cache_integration and not self.dry_run:
+                try:
+                    self.apt_cache_integration.prepare_apt_cache(packages)
+                except Exception as e:
+                    self.logger.warning(f"Failed to prepare package cache: {e}")
+
             # Install packages
             packages_str = " ".join(packages)
 
@@ -267,6 +285,13 @@ Try these steps:
                     packages,
                     description=f"Remove packages: {', '.join(packages)}",
                 )
+
+                # Capture downloaded packages to our local cache
+                if self.apt_cache_integration and not self.dry_run:
+                    try:
+                        self.apt_cache_integration.capture_new_packages()
+                    except Exception as e:
+                        self.logger.warning(f"Failed to update package cache: {e}")
 
             return result.success
 

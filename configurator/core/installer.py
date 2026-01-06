@@ -86,6 +86,20 @@ class Installer:
         self.dry_run_manager = DryRunManager()
         self.circuit_breaker_manager = CircuitBreakerManager()
 
+        # Initialize Package Cache (Phase 3)
+        self.package_cache_manager = None
+        if self.config.get("performance.package_cache.enabled", True):
+            from configurator.core.package_cache import PackageCacheManager
+
+            max_size_gb = self.config.get("performance.package_cache.max_size_gb", 10.0)
+            try:
+                self.package_cache_manager = PackageCacheManager(
+                    max_size_gb=max_size_gb, logger=self.logger
+                )
+                self.logger.info(f"Package cache enabled (Max size: {max_size_gb}GB)")
+            except Exception as e:
+                self.logger.warning(f"Failed to initialize package cache: {e}")
+
         # Register core services in container
         self.container.singleton("config", lambda: self.config)
         self.container.singleton("logger", lambda: self.logger)
@@ -96,6 +110,7 @@ class Installer:
         self.container.singleton("plugin_manager", lambda: self.plugin_manager)
         self.container.singleton("dry_run_manager", lambda: self.dry_run_manager)
         self.container.singleton("circuit_breaker_manager", lambda: self.circuit_breaker_manager)
+        self.container.singleton("package_cache_manager", lambda: self.package_cache_manager)
 
         # Module registry - maps names to classes/factories
         self._register_modules()
@@ -158,7 +173,6 @@ class Installer:
             "caddy": CaddyModule,
             # Monitoring
             "netdata": NetdataModule,
-            "netdata": NetdataModule,
         }
 
         # Register modules in container
@@ -175,6 +189,7 @@ class Installer:
                 rollback_manager=c.get("rollback_manager"),
                 dry_run_manager=c.get("dry_run_manager"),
                 circuit_breaker_manager=c.get("circuit_breaker_manager"),
+                package_cache_manager=c.get("package_cache_manager"),
             ),
         )
 

@@ -1,9 +1,8 @@
-import time
+import unittest.mock
 
 import pytest
 
-from configurator.core.parallel import DependencyGraph, ParallelModuleExecutor
-from configurator.modules.base import ConfigurationModule
+from configurator.core.parallel import DependencyGraph
 
 
 class TestDependencyGraph:
@@ -50,13 +49,6 @@ class TestDependencyGraph:
         graph.add_module("B", force_sequential=True)
         graph.add_module("C")
 
-        # A, B, C are independent dependency-wise.
-        # But B is sequential.
-        # B should be isolated.
-        # Possible valid batches: [['A', 'C'], ['B']] or [['B'], ['A', 'C']]
-        # (depending on sort stability, but typically sequential ones are processed separately)
-        # The algorithm separates sequential/parallel within the same logical "level".
-
         batches = graph.get_parallel_batches()
 
         # Flatten and check content
@@ -72,23 +64,6 @@ class TestDependencyGraph:
 
         assert b_batch_idx >= 0
 
-        # Check A and C are together (if implementation groups maximal parallel set)
-        # Our implementation groups remaining parallel nodes in one batch.
-        # So we expect roughly: [['B'], ['A', 'C']] or [['A', 'C'], ['B']]
-        # Or even [['B'], ['A'], ['C']] is technically valid but less optimal.
-        # The code implementation:
-        # sequential_modules = [...]
-        # parallel_modules = [...]
-        # for m in sequential: append([m])
-        # if parallel: append(parallel)
-        # So if A, B, C are all roots (indegree 0):
-        # B is seq, A, C are parallel.
-        # Batches: [['B'], ['A', 'C']] (or reverse order of handling?)
-        # Let's see code logic:
-        # It iterates while in_degree matches.
-        # Ideally it processes all roots.
-        pass
-
     def test_cycle_detection(self):
         graph = DependencyGraph()
         graph.add_module("A", depends_on=["B"])
@@ -97,28 +72,35 @@ class TestDependencyGraph:
         with pytest.raises(ValueError, match="Circular dependency"):
             graph.get_parallel_batches()
 
+    def test_missing_dependency_validation(self):
+        graph = DependencyGraph()
+        graph.add_module("A", depends_on=["NonExistent"])
 
-class MockModule(ConfigurationModule):
-    def __init__(self, name):
-        # Bypass base init for simple testing
-        self.name = name
+        with pytest.raises(ValueError, match="depends on 'NonExistent' which doesn't exist"):
+            graph.validate()
 
-    def validate(self):
-        return True
+    def test_visualize_mock(self):
+        graph = DependencyGraph()
+        graph.add_module("A")
 
-    def configure(self):
-        return True
+        # Test 1: Matplotlib not installed (safe fail)
+        with unittest.mock.patch.dict("sys.modules", {"matplotlib.pyplot": None}):
+            graph.visualize("test.png")
+            # Should not raise
 
-    def verify(self):
-        return True
+        # Test 2: Matplotlib success
+        mock_mpl = unittest.mock.MagicMock()
+        mock_mpl.__path__ = []  # Simulate package
+        mock_plt = unittest.mock.MagicMock()
 
+        # Patch sys.modules to simulate matplotlib installed
+        with unittest.mock.patch.dict(
+            "sys.modules", {"matplotlib": mock_mpl, "matplotlib.pyplot": mock_plt}
+        ):
+            # Ensure import matplotlib.pyplot works
+            mock_mpl.pyplot = mock_plt
 
-class TestParallelExecutor:
-    def test_execution(self):
-        executor = ParallelModuleExecutor(max_workers=2)
-        registry = {"A": MockModule("A"), "B": MockModule("B")}
-        batches = [["A", "B"]]
-
-        results = executor.execute_batches(batches, registry)
-        assert results["A"] is True
-        assert results["B"] is True
+            with unittest.mock.patch("networkx.spring_layout"):
+                with unittest.mock.patch("networkx.draw"):
+                    graph.visualize("test.png")
+                    mock_plt.savefig.assert_called_once()

@@ -40,6 +40,12 @@ class TestCircuitBreakerAptIntegration:
             "apt-repository", failure_threshold=2, timeout=10
         )
 
+        # Bypass retry decorator for precise control over calls
+        if hasattr(mock_module.install_packages, "__wrapped__"):
+            original_func = mock_module.install_packages.__wrapped__
+            # Bind to instance
+            mock_module.install_packages = original_func.__get__(mock_module, MockModule)
+
         # Mock run command to simulate failure
         with patch.object(mock_module, "run") as mock_run:
             mock_run.return_value.success = False
@@ -71,9 +77,9 @@ class TestCircuitBreakerAptIntegration:
 
             # Attempt 3 should fail FAST with ModuleExecutionError (wrapping CircuitBreakerError)
             with pytest.raises(ModuleExecutionError) as excinfo:
-                mock_module.install_packages(["package1"])
+                mock_module.install_packages(["package1"], update_cache=False)
 
-            assert "Repository appears down" in str(excinfo.value)
+            assert "APT repository appears to be down" in str(excinfo.value)
 
             # Verify we didn't call run the 3rd time
             assert mock_run.call_count == 2
