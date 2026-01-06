@@ -86,7 +86,7 @@ class CaddyModule(ConfigurationModule):
         # Add GPG key
         self.run(
             "curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/gpg.key' | "
-            "gpg --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg",
+            "gpg --dearmor --yes -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg",
             check=True,
         )
 

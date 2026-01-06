@@ -81,7 +81,7 @@ class VSCodeModule(ConfigurationModule):
         # Download and install GPG key
         self.run(
             "wget -qO- https://packages.microsoft.com/keys/microsoft.asc | "
-            "gpg --dearmor -o /usr/share/keyrings/packages.microsoft.gpg",
+            "gpg --dearmor --yes -o /usr/share/keyrings/packages.microsoft.gpg",
             check=True,
         )
 
