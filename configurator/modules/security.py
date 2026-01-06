@@ -10,6 +10,7 @@ Handles:
 - Automatic security updates
 """
 
+import os
 from configurator.exceptions import ModuleExecutionError
 from configurator.modules.base import ConfigurationModule
 from configurator.utils.file import backup_file, file_contains, write_file
