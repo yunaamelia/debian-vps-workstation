@@ -2,15 +2,17 @@
 Cursor IDE module for AI-powered code editor.
 
 Handles:
-- Cursor AppImage download
-- Desktop integration
+- Cursor .deb package download (v2.3+)
+- Installation via apt-get
+- Configuration and Verification
 """
 
 import os
 from pathlib import Path
 
 from configurator.modules.base import ConfigurationModule
-from configurator.utils.network import get_latest_github_release
+from configurator.exceptions import ModuleExecutionError
+from configurator.utils.command import command_exists
 
 
 class CursorModule(ConfigurationModule):
@@ -25,93 +27,93 @@ class CursorModule(ConfigurationModule):
     priority = 61
     mandatory = False
 
-    # Cursor download URL (AppImage)
-    CURSOR_URL = "https://downloader.cursor.sh/linux/appImage/x64"
-
     def validate(self) -> bool:
         """Validate Cursor prerequisites."""
         # Check if Cursor is already installed
-        if self.command_exists("cursor"):
+        if command_exists("cursor"):
             self.logger.info("  Cursor is already installed")
 
         return True
 
     def configure(self) -> bool:
-        """Install Cursor IDE."""
-        self.logger.info("Installing Cursor IDE...")
-
-        # 1. Download Cursor AppImage
-        self._download_cursor()
-
-        # 2. Create desktop entry
-        self._create_desktop_entry()
-
-        self.logger.info("✓ Cursor IDE installed")
+        """Install and Configure Cursor IDE."""
+        self._install_cursor()
+        self._configure()
+        self._verify_installation()
         return True
 
     def verify(self) -> bool:
         """Verify Cursor installation."""
-        cursor_path = Path("/opt/cursor/cursor.AppImage")
-
-        if cursor_path.exists():
-            self.logger.info("✓ Cursor is installed")
+        try:
+            self._verify_installation()
             return True
-        else:
-            self.logger.error("Cursor not found!")
+        except ModuleExecutionError:
             return False
 
-    def _download_cursor(self):
-        """Download Cursor AppImage."""
-        self.logger.info("Downloading Cursor...")
+    def _verify_installation(self) -> None:
+        """Verify Cursor installation."""
+        if not command_exists("cursor"):
+            raise ModuleExecutionError(
+                what="Cursor verification failed",
+                why="cursor command not found",
+                how="Check installation logs",
+            )
+        
+        # Check if it was installed via package manager
+        result = self.run("dpkg -s cursor", check=False)
+        if not result.success:
+             self.logger.warning("Cursor installed but not found in dpkg (manual install?)")
 
-        # Create installation directory
-        cursor_dir = Path("/opt/cursor")
-        cursor_dir.mkdir(parents=True, exist_ok=True)
+        self.logger.info("✓ Cursor IDE installed")
 
-        cursor_path = cursor_dir / "cursor.AppImage"
+    def _configure(self) -> None:
+        """Configure Cursor settings directory."""
+        # Create config directory
+        config_dir = Path.home() / ".config" / "Cursor"
+        config_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Set permissions if running as sudo
+        sudo_user = os.environ.get('SUDO_USER')
+        if sudo_user:
+            self.run(f"chown -R {sudo_user}:{sudo_user} {config_dir}", check=False)
 
-        # Download
-        # Download with retry
-        self.run(
-            f"curl -fsSL --retry 3 --retry-delay 5 '{self.CURSOR_URL}' -o {cursor_path}",
-            check=True,
-        )
+    def _install_cursor(self) -> None:
+        """Install Cursor IDE via .deb package."""
+        self.logger.info("Installing Cursor IDE...")
 
-        # Make executable
-        self.run(f"chmod +x {cursor_path}", check=True)
+        # New URL for .deb package (v2.3)
+        # Using the specific version endpoint as requested by user
+        cursor_url = "https://api2.cursor.sh/updates/download/golden/linux-x64-deb/cursor/2.3"
+        temp_deb = "/tmp/cursor.deb"
 
-        # Create symlink
-        self.run(f"ln -sf {cursor_path} /usr/local/bin/cursor", check=True)
+        self.logger.info("Downloading Cursor .deb package...")
+        try:
+            # Download with retry logic
+            self.run(
+                f"curl -L --retry 3 --retry-delay 5 -o {temp_deb} '{cursor_url}'", 
+                check=True,
+                description="Download Cursor .deb"
+            )
 
-        self.logger.info("✓ Cursor downloaded")
+            self.logger.info("Installing Cursor package...")
+            # Use apt-get install to handle dependencies automatically
+            env = os.environ.copy()
+            env["DEBIAN_FRONTEND"] = "noninteractive"
+            
+            self.run(
+                f"apt-get install -y {temp_deb}",
+                check=True,
+                env=env,
+                description="Install Cursor .deb"
+            )
 
-    def _create_desktop_entry(self):
-        """Create desktop entry for Cursor."""
-        desktop_entry = """[Desktop Entry]
-Name=Cursor
-Comment=AI-powered Code Editor
-Exec=/opt/cursor/cursor.AppImage --no-sandbox %F
-Icon=cursor
-Terminal=false
-Type=Application
-Categories=Development;IDE;TextEditor;
-MimeType=text/plain;inode/directory;
-StartupWMClass=Cursor
-"""
-
-        # Create desktop entry
-        desktop_file = Path("/usr/share/applications/cursor.desktop")
-        desktop_file.write_text(desktop_entry)
-
-        # Download icon (using VS Code icon as fallback)
-        icon_dir = Path("/usr/share/icons/hicolor/256x256/apps")
-        icon_dir.mkdir(parents=True, exist_ok=True)
-
-        # Use a simple placeholder or VS Code icon
-        self.run(
-            "curl -fsSL 'https://raw.githubusercontent.com/getcursor/cursor/main/resources/icon.png' "
-            f"-o {icon_dir}/cursor.png 2>/dev/null || true",
-            check=False,
-        )
-
-        self.logger.info("✓ Desktop entry created")
+        except Exception as e:
+            raise ModuleExecutionError(
+                what="Failed to install Cursor",
+                why=str(e),
+                how="Check network connection and URL",
+            )
+        finally:
+            # Cleanup
+            if os.path.exists(temp_deb):
+                os.remove(temp_deb)
