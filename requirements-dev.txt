@@ -19,3 +19,5 @@ types-paramiko>=3.3.0
 
 # Workflow
 pre-commit>=3.3.0
+pyotp>=2.6.0
+qrcode>=7.0

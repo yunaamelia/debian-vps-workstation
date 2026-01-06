@@ -17,7 +17,7 @@ from configurator.core.package_cache import PackageCacheManager
 from configurator.modules.base import ConfigurationModule
 
 
-class TestModule(ConfigurationModule):
+class MockModule(ConfigurationModule):
     name = "test-module"
 
     def validate(self):
@@ -89,7 +89,7 @@ class TestPackageCacheIntegration(unittest.TestCase):
 
         # 2. Instantiate a module
         # We use strict factory registration logic or just manual instantiation
-        module = TestModule(
+        module = MockModule(
             config={},
             logger=self.logger,
             package_cache_manager=manager,
