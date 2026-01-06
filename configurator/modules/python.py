@@ -33,6 +33,7 @@ class PythonModule(ConfigurationModule):
         "python3-wheel",
         "libssl-dev",
         "libffi-dev",
+        "pipx",  # Install pipx via apt
     ]
 
     # Python dev tools to install
@@ -42,10 +43,22 @@ class PythonModule(ConfigurationModule):
         "mypy",
         "pytest",
         "ipython",
-        "virtualenv",
-        "wheel",
-        "pipx",
+        "httpie",
+        "poetry",
     ]
+
+    # Map tools to Debian packages
+    TOOL_PACKAGE_MAP = {
+        "black": "python3-black",
+        "pylint": "python3-pylint",
+        "mypy": "python3-mypy",
+        "pytest": "python3-pytest",
+        "ipython": "python3-ipython",
+        "virtualenv": "python3-virtualenv",
+        "wheel": "python3-wheel",
+        "poetry": "python3-poetry",
+        "httpie": "httpie",
+    }
 
     def validate(self) -> bool:
         """Validate Python prerequisites."""
@@ -63,7 +76,7 @@ class PythonModule(ConfigurationModule):
         # 1. Install system packages
         self._install_system_packages()
 
-        # 2. Upgrade pip
+        # 2. Upgrade pip (only if not restricted by PEP 668)
         self._upgrade_pip()
 
         # 3. Install dev tools
@@ -95,6 +108,13 @@ class PythonModule(ConfigurationModule):
             result = self.run("pip3 --version", check=False)
             self.logger.info(f"✓ pip installed")
 
+        # Check pipx
+        if not self.command_exists("pipx"):
+            self.logger.warning("pipx not found!")
+        else:
+            result = self.run("pipx --version", check=False)
+            self.logger.info(f"✓ pipx {result.stdout.strip()}")
+
         # Check venv
         result = self.run("python3 -c 'import venv'", check=False)
         if not result.success:
@@ -111,8 +131,9 @@ class PythonModule(ConfigurationModule):
 
     def _upgrade_pip(self):
         """Upgrade pip to latest version."""
-        self.logger.info("Upgrading pip...")
-        self.run("python3 -m pip install --upgrade pip", check=False)
+        # On Debian 12+, we need --break-system-packages or just skip it
+        # Since we use system packages, we probably shouldn't mess with system pip
+        self.logger.info("Skipping global pip upgrade (managed by apt)")
 
     def _install_dev_tools(self):
         """Install Python development tools."""
@@ -125,21 +146,39 @@ class PythonModule(ConfigurationModule):
 
         self.logger.info(f"Installing dev tools: {', '.join(dev_tools)}")
 
-        # Install using pipx for isolation (if available) or pip
+        packages_to_install = []
+        pipx_tools = []
+
         for tool in dev_tools:
-            # Try pipx first for CLI tools
-            if tool in ["black", "pylint", "mypy", "ipython"]:
-                result = self.run(f"pipx install {tool}", check=False)
+            if tool in self.TOOL_PACKAGE_MAP:
+                packages_to_install.append(self.TOOL_PACKAGE_MAP[tool])
+            else:
+                pipx_tools.append(tool)
+
+        # Install APT packages
+        if packages_to_install:
+            self.logger.info(f"Installing system packages: {', '.join(packages_to_install)}")
+            self.install_packages(packages_to_install)
+
+        # Install pipx tools
+        if pipx_tools:
+            # Ensure pipx path is set up for root if we are running as root
+            # But usually we want these for the user.
+            # If running as root, 'pipx install' goes to /root/.local/bin
+            # We explicitly allow this for now, or just warn.
+            
+            for tool in pipx_tools:
+                self.logger.info(f"Installing {tool} via pipx...")
+                result = self.run(f"pipx install {tool} --global", check=False)
+                
+                if not result.success:
+                     # Try without --global
+                     result = self.run(f"pipx install {tool}", check=False)
+
                 if result.success:
                     self.logger.info(f"  ✓ Installed {tool} (pipx)")
-                    continue
-
-            # Fall back to pip
-            result = self.run(f"pip3 install --user {tool}", check=False)
-            if result.success:
-                self.logger.info(f"  ✓ Installed {tool}")
-            else:
-                self.logger.warning(f"  ⚠ Failed to install {tool}")
+                else:
+                    self.logger.warning(f"  ⚠ Failed to install {tool} via pipx")
 
     def _create_example_venv(self):
         """Create an example virtual environment."""
