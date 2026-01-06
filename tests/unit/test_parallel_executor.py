@@ -1,7 +1,4 @@
 import time
-import unittest.mock
-
-import pytest
 
 from configurator.core.parallel import ParallelModuleExecutor
 from configurator.modules.base import ConfigurationModule

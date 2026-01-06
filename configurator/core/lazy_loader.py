@@ -1,12 +1,12 @@
 """
 Lazy loading utility for optimizing CLI startup time.
 """
+
 import importlib
-import sys
 import threading
 import time
 import types
-from typing import Any, Optional, Type
+from typing import Any, Optional
 
 
 class LazyLoader:

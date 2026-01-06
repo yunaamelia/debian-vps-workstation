@@ -39,7 +39,7 @@ def test_command_testing():
 
     result = sudo_mgr.test_command(test_user, "systemctl restart myapp")
 
-    print(f"  Command: systemctl restart myapp")
+    print("  Command: systemctl restart myapp")
     print(f"  Allowed: {result['allowed']}")
     print(f"  Password required: {result['password_required']}")
     print(f"  Rule matched: {result.get('rule', 'None')}")
@@ -55,7 +55,7 @@ def test_command_testing():
 
     result = sudo_mgr.test_command(test_user, "iptables -A INPUT -j DROP")
 
-    print(f"  Command: iptables -A INPUT -j DROP")
+    print("  Command: iptables -A INPUT -j DROP")
     print(f"  Allowed: {result['allowed']}")
     print(f"  Reason: {result['reason']}")
 
@@ -70,7 +70,7 @@ def test_command_testing():
 
     result = sudo_mgr.test_command(test_user, "docker logs container123")
 
-    print(f"  Command: docker logs container123")
+    print("  Command: docker logs container123")
     print(f"  Allowed: {result['allowed']}")
     print(f"  Rule matched: {result.get('rule', 'None')}")
 
@@ -109,7 +109,7 @@ def test_command_testing():
 
     result = sudo_mgr.test_command(test_user, "apt-get update")
 
-    print(f"  Command: apt-get update (devops role)")
+    print("  Command: apt-get update (devops role)")
     print(f"  Allowed: {result['allowed']}")
     print(f"  Password required: {result['password_required']}")
 

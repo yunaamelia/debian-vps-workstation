@@ -12,7 +12,6 @@ Handles:
 
 import os
 import re
-from typing import Any, Dict
 
 from configurator.exceptions import ModuleExecutionError, PrerequisiteError
 from configurator.modules.base import ConfigurationModule
@@ -74,8 +73,8 @@ class SystemModule(ConfigurationModule):
                 what=f"Unsupported Debian version: {os_info.version_id}",
                 why="This tool requires Debian 13 (Trixie)",
                 how=f"Your system: Debian {os_info.version_id}\n"
-                f"Required: Debian 13 (Trixie)\n"
-                f"Please use a fresh Debian 13 VPS.",
+                "Required: Debian 13 (Trixie)\n"
+                "Please use a fresh Debian 13 VPS.",
             )
 
         self.logger.info(f"✓ Detected: {os_info.pretty_name}")
@@ -210,7 +209,7 @@ class SystemModule(ConfigurationModule):
         # Update /etc/hosts
         backup_file("/etc/hosts")
 
-        hosts_content = f"""127.0.0.1   localhost
+        hosts_content = """127.0.0.1   localhost
 127.0.1.1   {hostname}
 
 # IPv6

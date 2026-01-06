@@ -122,9 +122,9 @@ class JavaModule(ConfigurationModule):
 
     def _configure_environment(self):
         """Configure JAVA_HOME."""
-        jdk_version = self.get_config("version", "17")
+        self.get_config("version", "17")
 
-        java_env = f"""
+        java_env = """
 # Java environment
 export JAVA_HOME=/usr/lib/jvm/java-{jdk_version}-openjdk-amd64
 export PATH=$PATH:$JAVA_HOME/bin

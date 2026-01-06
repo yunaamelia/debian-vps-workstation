@@ -148,13 +148,13 @@ export NVM_DIR="$HOME/.nvm"
     def _install_nodejs(self):
         """Install Node.js using nvm."""
         node_version = self.get_config("version", "20")  # Default to LTS
-        nvm_dir = os.path.expanduser("~/.nvm")
+        os.path.expanduser("~/.nvm")
 
         self.logger.info(f"Installing Node.js v{node_version} (LTS)...")
 
         # Install and use specified version
         # NVM_DIR is explicitly set within the bash script for robustness
-        nvm_commands = f"""
+        nvm_commands = """
 export NVM_DIR="{nvm_dir}"
 [ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
 nvm install {node_version}

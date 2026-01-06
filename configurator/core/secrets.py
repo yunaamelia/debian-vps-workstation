@@ -1,5 +1,4 @@
 import base64
-import getpass
 import json
 import logging
 import os
@@ -17,8 +16,6 @@ logger = logging.getLogger(__name__)
 
 class SecretsError(ConfiguratorError):
     """Exception raised for secrets management errors."""
-
-    pass
 
 
 class SecretsManager:

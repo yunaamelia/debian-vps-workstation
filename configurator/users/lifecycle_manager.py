@@ -8,7 +8,7 @@ import pwd
 import secrets
 import string
 import subprocess
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -211,27 +211,27 @@ class UserLifecycleManager:
             department=data.get("department"),
             manager=data.get("manager"),
             employee_id=data.get("employee_id"),
-            created_at=datetime.fromisoformat(data["created_at"])
-            if data.get("created_at")
-            else None,
+            created_at=(
+                datetime.fromisoformat(data["created_at"]) if data.get("created_at") else None
+            ),
             created_by=data.get("created_by"),
-            activated_at=datetime.fromisoformat(data["activated_at"])
-            if data.get("activated_at")
-            else None,
-            last_modified=datetime.fromisoformat(data["last_modified"])
-            if data.get("last_modified")
-            else None,
-            offboarded_at=datetime.fromisoformat(data["offboarded_at"])
-            if data.get("offboarded_at")
-            else None,
+            activated_at=(
+                datetime.fromisoformat(data["activated_at"]) if data.get("activated_at") else None
+            ),
+            last_modified=(
+                datetime.fromisoformat(data["last_modified"]) if data.get("last_modified") else None
+            ),
+            offboarded_at=(
+                datetime.fromisoformat(data["offboarded_at"]) if data.get("offboarded_at") else None
+            ),
             offboarded_by=data.get("offboarded_by"),
             offboarding_reason=data.get("offboarding_reason"),
             ssh_keys_enabled=data.get("ssh_keys_enabled", False),
             mfa_enabled=data.get("mfa_enabled", False),
             certificates_issued=data.get("certificates_issued", False),
-            last_login=datetime.fromisoformat(data["last_login"])
-            if data.get("last_login")
-            else None,
+            last_login=(
+                datetime.fromisoformat(data["last_login"]) if data.get("last_login") else None
+            ),
             login_count=data.get("login_count", 0),
         )
 
@@ -303,7 +303,7 @@ class UserLifecycleManager:
                     user=username,
                     role_name=role,
                     assigned_by=created_by,
-                    reason=f"User provisioning",
+                    reason="User provisioning",
                 )
             except Exception as e:
                 self.logger.error(f"Failed to assign RBAC role: {e}")
@@ -613,7 +613,7 @@ class UserLifecycleManager:
         """Remove user from all supplementary groups."""
         try:
             # Get current groups
-            user_info = pwd.getpwnam(username)
+            pwd.getpwnam(username)
             groups = [g.gr_name for g in grp.getgrall() if username in g.gr_mem]
 
             # Remove from each group
@@ -636,7 +636,7 @@ class UserLifecycleManager:
 
         try:
             subprocess.run(
-                ["tar", "-czf", str(archive_path), "-C", str(home_dir.parent), home_dir.name],
+                ["tar", "-cz", str(archive_path), "-C", str(home_dir.parent), home_dir.name],
                 check=True,
                 capture_output=True,
             )

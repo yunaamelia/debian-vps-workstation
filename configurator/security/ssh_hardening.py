@@ -354,7 +354,7 @@ class SSHDConfigManager:
 
         if backup_path.exists():
             shutil.copy2(backup_path, self.config_path)
-            self.logger.info(f"Restored sshd_config from backup")
+            self.logger.info("Restored sshd_config from backup")
             return True
 
         self.logger.warning("No backup found to restore")

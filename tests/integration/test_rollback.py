@@ -4,10 +4,6 @@ Integration tests for rollback functionality.
 Tests the ability to undo installation changes.
 """
 
-import json
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
 import pytest
 
 from configurator.core.rollback import RollbackAction, RollbackManager

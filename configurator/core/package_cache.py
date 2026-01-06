@@ -7,13 +7,12 @@ Handles storage, indexing, retrieval, and eviction of cached packages.
 import hashlib
 import json
 import logging
-import os
 import shutil
 import threading
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 
 @dataclass
@@ -493,9 +492,9 @@ class PackageCacheManager:
                 "total_size_bytes": current_size,
                 "total_size_mb": current_size / 1024 / 1024,
                 "max_size_mb": self.max_size_bytes / 1024 / 1024,
-                "usage_percent": (current_size / self.max_size_bytes) * 100
-                if self.max_size_bytes > 0
-                else 0,
+                "usage_percent": (
+                    (current_size / self.max_size_bytes) * 100 if self.max_size_bytes > 0 else 0
+                ),
                 "total_downloads": self._stats.get("total_downloads", 0),
                 "total_cache_hits": self._stats.get("total_cache_hits", 0),
                 "total_bytes_saved": self._stats.get("total_bytes_saved", 0),

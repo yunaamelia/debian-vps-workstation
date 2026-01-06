@@ -4,20 +4,17 @@ Verifies interaction between Module, Installer, AptCacheIntegration and PackageC
 """
 
 import logging
-import os
 import shutil
 import tempfile
 import unittest
 import unittest.mock
 from pathlib import Path
-from typing import Any, Dict
 
 from configurator.config import ConfigManager
 from configurator.core.container import Container
 from configurator.core.installer import Installer
 from configurator.core.package_cache import PackageCacheManager
 from configurator.modules.base import ConfigurationModule
-from configurator.utils.apt_cache import AptCacheIntegration
 
 
 class TestModule(ConfigurationModule):

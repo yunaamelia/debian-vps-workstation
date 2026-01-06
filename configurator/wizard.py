@@ -2,15 +2,13 @@
 Interactive setup wizard using Textual TUI.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from textual import on
 from textual.app import App, ComposeResult
 from textual.containers import Container, Grid, Horizontal, Vertical
 from textual.screen import Screen
-from textual.widgets import Button, Checkbox, Footer, Header, Input, Label, Markdown, Select, Static
-
-from configurator.config import ConfigManager
+from textual.widgets import Button, Checkbox, Footer, Header, Input, Label, Markdown, Select
 
 
 class WizardScreen(Screen):
@@ -180,7 +178,7 @@ class ReviewScreen(WizardScreen):
 
         # Build summary
         cfg = self.app.config_data
-        summary = f"""
+        summary = """
 ## Configuration Summary
 
 **Profile**: {cfg.get('profile', 'Unknown').title()}

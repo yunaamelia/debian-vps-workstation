@@ -382,7 +382,6 @@ def profiles():
 @main.group()
 def secrets():
     """Manage encrypted secrets."""
-    pass
 
 
 @secrets.command("set")
@@ -462,7 +461,6 @@ def secret_delete(key: str):
 @main.group()
 def audit():
     """Query security audit logs."""
-    pass
 
 
 @audit.command("query")
@@ -514,7 +512,6 @@ def audit_query(type: Optional[str], limit: int):
 @main.group()
 def fim():
     """File Integrity Monitoring."""
-    pass
 
 
 @fim.command("init")
@@ -570,7 +567,7 @@ def fim_update(file_path: str):
         if fim.update_baseline(file_path):
             console.print(f"[green]✓ Baseline updated for {file_path}[/green]")
         else:
-            console.print(f"[red]Failed to update baseline (file exists?)[/red]")
+            console.print("[red]Failed to update baseline (file exists?)[/red]")
             sys.exit(1)
     except Exception as e:
         console.print(f"[red]Error updating baseline: {e}[/red]")
@@ -580,7 +577,6 @@ def fim_update(file_path: str):
 @main.group()
 def plugin():
     """Manage external plugins."""
-    pass
 
 
 @plugin.command("install")
@@ -672,14 +668,12 @@ def plugin_disable(name: str):
 @main.group()
 def cache():
     """Manage package cache."""
-    pass
 
 
 @cache.command("stats")
 def cache_stats():
     """Show cache statistics."""
     # PackageCacheManager already lazy imported
-    from rich.table import Table
 
     try:
         manager = PackageCacheManager()
@@ -784,7 +778,6 @@ def cache_clear(days: Optional[int]):
 @main.group()
 def status():
     """Check system status."""
-    pass
 
 
 @status.command("circuit-breakers")
@@ -840,7 +833,7 @@ def status_circuit_breakers():
 def reset_resource(target, name):
     """Reset a resource (e.g., circuit breaker)."""
     if target == "circuit-breaker":
-        from configurator.utils.circuit_breaker import CircuitBreakerManager
+        pass
 
         # NOTE: In a real daemon/service, this would interact with the running process via IPC/Socket.
         # Since this CLI seems to run standalone instances for installers, this command might only be useful
@@ -859,7 +852,6 @@ def reset_resource(target, name):
 @main.group()
 def cis():
     """Security compliance and hardening based on CIS Benchmarks."""
-    pass
 
 
 @cis.command(name="scan")
@@ -933,7 +925,6 @@ def cis_scan(level, format, auto_remediate):
 @main.group()
 def vuln():
     """Vulnerability scanning and management."""
-    pass
 
 
 @vuln.command(name="scan")
@@ -1038,7 +1029,6 @@ def vuln_monitor(interval, auto_remediate):
 @main.group()
 def cert():
     """SSL/TLS certificate management with Let's Encrypt."""
-    pass
 
 
 @cert.command(name="install")
@@ -1064,7 +1054,7 @@ def cert_install(domain, email, webserver, additional, wildcard, staging, force)
 
     manager = CertificateManager()
 
-    console.print(f"\n[bold blue]SSL/TLS Certificate Installation[/bold blue]")
+    console.print("\n[bold blue]SSL/TLS Certificate Installation[/bold blue]")
     console.print("=" * 50)
     console.print(f"Domain: [cyan]{domain}[/cyan]")
     console.print(f"Web Server: {webserver}")
@@ -1117,7 +1107,7 @@ def cert_install(domain, email, webserver, additional, wildcard, staging, force)
             force=force,
         )
 
-        console.print(f"   [green]✅ Certificate issued successfully![/green]")
+        console.print("   [green]✅ Certificate issued successfully![/green]")
         console.print()
         console.print("[bold]Certificate Details:[/bold]")
         console.print(f"  Subject: CN={cert.domain}")
@@ -1163,7 +1153,7 @@ def cert_renew(domain, force):
             if manager.renew_certificate(domain, force=force):
                 console.print(f"[green]✅ Certificate renewed for {domain}[/green]")
             else:
-                console.print(f"[yellow]Certificate not due for renewal yet[/yellow]")
+                console.print("[yellow]Certificate not due for renewal yet[/yellow]")
         except Exception as e:
             console.print(f"[red]Renewal failed: {e}[/red]")
     else:
@@ -1293,7 +1283,7 @@ def cert_delete(domain, confirm):
         if manager.delete_certificate(domain):
             console.print(f"[green]✅ Certificate for {domain} deleted[/green]")
         else:
-            console.print(f"[red]Failed to delete certificate[/red]")
+            console.print("[red]Failed to delete certificate[/red]")
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
 
@@ -1341,7 +1331,6 @@ def cert_monitor_cmd(interval, warning_days, critical_days):
 @main.group()
 def ssh():
     """SSH key management and security hardening."""
-    pass
 
 
 @ssh.command(name="setup")
@@ -1402,7 +1391,7 @@ def ssh_setup(
                 )
                 manager.deploy_key(key)
 
-                console.print(f"  [green]✅ Generated key pair[/green]")
+                console.print("  [green]✅ Generated key pair[/green]")
                 console.print(f"     Key ID: [cyan]{key.key_id}[/cyan]")
                 console.print(f"     Fingerprint: [dim]{key.fingerprint}[/dim]")
                 console.print(f"     Private key: [dim]{private_path}[/dim]")
@@ -1480,7 +1469,7 @@ def ssh_generate_key(user, key_id, key_type, rotation_days, deploy):
 
     kt = KeyType.ED25519 if key_type == "ed25519" else KeyType.RSA
 
-    console.print(f"\n[bold blue]Generating SSH Key Pair[/bold blue]")
+    console.print("\n[bold blue]Generating SSH Key Pair[/bold blue]")
     console.print(f"User: [cyan]{user}[/cyan]")
     console.print(f"Type: {key_type.upper()}")
 
@@ -1492,7 +1481,7 @@ def ssh_generate_key(user, key_id, key_type, rotation_days, deploy):
             rotation_days=rotation_days,
         )
 
-        console.print(f"\n[green]✅ Key pair generated successfully![/green]")
+        console.print("\n[green]✅ Key pair generated successfully![/green]")
         console.print(f"  Key ID: [cyan]{key.key_id}[/cyan]")
         console.print(f"  Fingerprint: [dim]{key.fingerprint}[/dim]")
         console.print(f"  Private key: [dim]{private_path}[/dim]")
@@ -1510,7 +1499,7 @@ def ssh_generate_key(user, key_id, key_type, rotation_days, deploy):
 
         if deploy:
             manager.deploy_key(key)
-            console.print(f"  [green]✅ Deployed to authorized_keys[/green]")
+            console.print("  [green]✅ Deployed to authorized_keys[/green]")
             audit_logger.log_key_deployed(user=user, key_id=key.key_id)
 
     except ValueError as e:
@@ -1563,14 +1552,14 @@ def ssh_rotate(user, key_id, grace_days):
         console.print(f"[red]Key not found: {key_id}[/red]")
         sys.exit(1)
 
-    console.print(f"\n[bold blue]SSH Key Rotation[/bold blue]")
+    console.print("\n[bold blue]SSH Key Rotation[/bold blue]")
     console.print(f"Rotating: [cyan]{key_id}[/cyan]")
     console.print(f"Grace period: {grace_days} days")
 
     result = manager.rotate_key(user, key_id, grace_period_days=grace_days)
 
     if result.success:
-        console.print(f"\n[green]✅ Key rotation successful![/green]")
+        console.print("\n[green]✅ Key rotation successful![/green]")
         console.print(f"  New Key ID: [cyan]{result.new_key.key_id}[/cyan]")
         console.print(f"  New Private Key: [dim]{result.new_private_key_path}[/dim]")
         console.print(f"  Grace Period Until: {result.grace_period_until.strftime('%Y-%m-%d')}")
@@ -1637,7 +1626,7 @@ def ssh_list_keys(user, as_json):
             if key.last_used:
                 console.print(f"     Last used: {key.last_used.strftime('%Y-%m-%d')}")
             else:
-                console.print(f"     Last used: [dim]Never[/dim]")
+                console.print("     Last used: [dim]Never[/dim]")
 
             if key.expires_at:
                 days = key.days_until_expiry()
@@ -1652,7 +1641,7 @@ def ssh_list_keys(user, as_json):
                         f"     Expires: {key.expires_at.strftime('%Y-%m-%d')} ({days} days)"
                     )
             else:
-                console.print(f"     Expires: [dim]Never[/dim]")
+                console.print("     Expires: [dim]Never[/dim]")
 
             console.print(f"     Status: {key.status.value.upper()}")
 
@@ -1682,7 +1671,7 @@ def ssh_revoke_key(user, key_id, skip_confirm):
         console.print(f"[red]Key not found: {key_id}[/red]")
         sys.exit(1)
 
-    console.print(f"\n[bold red]SSH Key Revocation[/bold red]")
+    console.print("\n[bold red]SSH Key Revocation[/bold red]")
     console.print(f"Key ID: [cyan]{key_id}[/cyan]")
     console.print(f"User: {user}")
     console.print(f"Fingerprint: [dim]{key.fingerprint}[/dim]")
@@ -1838,7 +1827,6 @@ def ssh_harden(disable_password, disable_root, skip_reload):
 @main.group()
 def mfa():
     """Two-factor authentication (2FA/MFA) management."""
-    pass
 
 
 @mfa.command("setup")
@@ -1877,12 +1865,12 @@ def mfa_setup(user: str, issuer: str):
         console.print(f"\n[red]❌ Enrollment failed: {e}[/red]")
         sys.exit(1)
 
-    console.print(f"\n[bold]Step 2: Scan QR Code[/bold]")
+    console.print("\n[bold]Step 2: Scan QR Code[/bold]")
     console.print("─" * 45)
     console.print("Open your authenticator app and scan this QR code:\n")
     console.print(qr_code)
 
-    console.print(f"Or enter this secret key manually:")
+    console.print("Or enter this secret key manually:")
     console.print(f"  [bold cyan]{config.secret}[/bold cyan]\n")
 
     console.print("[bold]Step 3: Verify Setup[/bold]")
@@ -1893,22 +1881,20 @@ def mfa_setup(user: str, issuer: str):
     if manager.verify_code(user, code):
         console.print("\n[green]✅ Verification successful![/green]")
 
-        console.print(f"\n[bold]Step 4: Backup Codes[/bold]")
+        console.print("\n[bold]Step 4: Backup Codes[/bold]")
         console.print("─" * 45)
-        console.print(
-            "\n[yellow]⚠️  IMPORTANT: Save these backup codes in a secure place![/yellow]"
-        )
+        console.print("\n[yellow]⚠️  IMPORTANT: Save these backup codes in a secure place![/yellow]")
         console.print("\nIf you lose access to your authenticator app, use these one-time codes:\n")
 
         for i, code in enumerate(config.backup_codes, 1):
             console.print(f"  {i:2d}. [bold]{code}[/bold]")
 
-        console.print(f"\n[dim]Backup codes also saved to: ~/.mfa-backup-codes.txt[/dim]")
+        console.print("\n[dim]Backup codes also saved to: ~/.mfa-backup-codes.txt[/dim]")
 
         # Generate google_authenticator file for PAM
         manager.generate_google_authenticator_file(user)
 
-        console.print(f"\n[bold]Step 5: Configuration Complete[/bold]")
+        console.print("\n[bold]Step 5: Configuration Complete[/bold]")
         console.print("─" * 45)
         console.print(f"\n[green]✅ Two-factor authentication enabled for {user}[/green]")
         console.print(
@@ -1984,17 +1970,17 @@ def mfa_status(user: Optional[str], output_json: bool):
             console.print(f"  Disabled: {summary['disabled']}")
 
             if users:
-                console.print(f"\n[bold]Enrolled Users:[/bold]")
+                console.print("\n[bold]Enrolled Users:[/bold]")
                 for u in users:
                     cfg = manager.get_user_config(u)
                     status_icon = (
                         "✅"
                         if cfg and cfg.enabled
-                        else "⏳"
-                        if cfg and cfg.status.value == "pending"
-                        else "🔒"
-                        if cfg and cfg.is_locked()
-                        else "❌"
+                        else (
+                            "⏳"
+                            if cfg and cfg.status.value == "pending"
+                            else "🔒" if cfg and cfg.is_locked() else "❌"
+                        )
                     )
                     console.print(f"  {status_icon} {u}")
 
@@ -2029,7 +2015,7 @@ def mfa_disable(user: str, backup_code: Optional[str], force: bool):
     elif manager.disable_mfa(user, backup_code):
         console.print(f"[green]✅ MFA disabled for {user}[/green]")
     else:
-        console.print(f"[red]❌ Failed to disable MFA[/red]")
+        console.print("[red]❌ Failed to disable MFA[/red]")
         sys.exit(1)
 
 
@@ -2051,8 +2037,8 @@ def mfa_regenerate_codes(user: str):
         for i, code in enumerate(new_codes, 1):
             console.print(f"  {i:2d}. [bold]{code}[/bold]")
 
-        console.print(f"\n[dim]Also saved to: ~/.mfa-backup-codes.txt[/dim]")
-        console.print(f"\n[green]✅ Backup codes regenerated[/green]")
+        console.print("\n[dim]Also saved to: ~/.mfa-backup-codes.txt[/dim]")
+        console.print("\n[green]✅ Backup codes regenerated[/green]")
     except ValueError as e:
         console.print(f"[red]❌ {e}[/red]")
         sys.exit(1)
@@ -2218,6 +2204,7 @@ def rbac_check_permission(
     manager = _build_rbac_manager(roles_file, assignments_file, True, ctx.obj.get("logger"))
     has_access = manager.check_permission(user, permission_string)
     if has_access:
+
         console.print(f"[green]✅ Permission granted for {user}[/green]")
     else:
         console.print(f"[red]❌ Permission denied for {user}[/red]")
@@ -2294,7 +2281,6 @@ def rbac_create_role(
 @click.pass_context
 def user(ctx: click.Context):
     """Manage user lifecycle (create, offboard, suspend)."""
-    pass
 
 
 @user.command("create")
@@ -2363,7 +2349,7 @@ def user_create(
         if manager:
             console.print(f"  Manager: {manager}")
 
-        console.print(f"\n[bold]Security Features:[/bold]")
+        console.print("\n[bold]Security Features:[/bold]")
         console.print(f"  SSH keys: {'✅ Enabled' if enable_ssh_key else '❌ Disabled'}")
         console.print(f"  2FA: {'✅ Enabled' if enable_2fa else '❌ Disabled'}")
 
@@ -2399,7 +2385,7 @@ def user_info(ctx: click.Context, username: str, json_output: bool):
 
         console.print(f"\n[bold]User Profile: {username}[/bold]")
         console.print("=" * 60)
-        console.print(f"\n[bold]Basic Information:[/bold]")
+        console.print("\n[bold]Basic Information:[/bold]")
         console.print(f"  Username: {profile.username}")
         console.print(f"  UID: {profile.uid}")
         console.print(f"  GID: {profile.gid}")
@@ -2407,24 +2393,24 @@ def user_info(ctx: click.Context, username: str, json_output: bool):
         console.print(f"  Email: {profile.email}")
         console.print(f"  Status: {profile.status.value}")
 
-        console.print(f"\n[bold]System:[/bold]")
+        console.print("\n[bold]System:[/bold]")
         console.print(f"  Home: {profile.home_dir}")
         console.print(f"  Shell: {profile.shell}")
         console.print(f"  Role: {profile.role}")
 
         if profile.department or profile.manager:
-            console.print(f"\n[bold]Organization:[/bold]")
+            console.print("\n[bold]Organization:[/bold]")
             if profile.department:
                 console.print(f"  Department: {profile.department}")
             if profile.manager:
                 console.print(f"  Manager: {profile.manager}")
 
-        console.print(f"\n[bold]Security:[/bold]")
+        console.print("\n[bold]Security:[/bold]")
         console.print(f"  SSH keys: {'✅' if profile.ssh_keys_enabled else '❌'}")
         console.print(f"  2FA: {'✅' if profile.mfa_enabled else '❌'}")
         console.print(f"  Certificates: {'✅' if profile.certificates_issued else '❌'}")
 
-        console.print(f"\n[bold]Lifecycle:[/bold]")
+        console.print("\n[bold]Lifecycle:[/bold]")
         console.print(f"  Created: {profile.created_at}")
         console.print(f"  Created by: {profile.created_by}")
         if profile.activated_at:
@@ -2434,7 +2420,7 @@ def user_info(ctx: click.Context, username: str, json_output: bool):
             console.print(f"  Login count: {profile.login_count}")
 
         if profile.status == UserStatus.OFFBOARDED:
-            console.print(f"\n[bold red]Offboarded:[/bold red]")
+            console.print("\n[bold red]Offboarded:[/bold red]")
             console.print(f"  Date: {profile.offboarded_at}")
             console.print(f"  By: {profile.offboarded_by}")
             console.print(f"  Reason: {profile.offboarding_reason}")
@@ -2469,7 +2455,7 @@ def user_list(ctx: click.Context, status: Optional[str], json_output: bool):
             print(json.dumps(data, indent=2))
             return
 
-        console.print(f"\n[bold]Users[/bold]")
+        console.print("\n[bold]Users[/bold]")
         if status:
             console.print(f"Status: {status}")
         console.print("=" * 80)
@@ -2529,14 +2515,14 @@ def user_offboard(
             console.print(f"[red]User not found: {username}[/red]")
             sys.exit(1)
 
-        console.print(f"\n[bold]User Information:[/bold]")
+        console.print("\n[bold]User Information:[/bold]")
         console.print(f"  Username: {profile.username}")
         console.print(f"  Full name: {profile.full_name}")
         console.print(f"  Email: {profile.email}")
         console.print(f"  Role: {profile.role}")
         console.print(f"  Created: {profile.created_at}")
 
-        console.print(f"\n[bold]This will:[/bold]")
+        console.print("\n[bold]This will:[/bold]")
         console.print("  ☑ Disable user account")
         console.print("  ☑ Revoke all access (SSH, 2FA, certificates, RBAC)")
         console.print("  ☑ Remove from all groups")
@@ -2648,7 +2634,6 @@ def user_reactivate(
 @click.pass_context
 def sudo(ctx: click.Context):
     """Manage sudo policies (fine-grained access control)."""
-    pass
 
 
 @sudo.command("show-policy")
@@ -2709,7 +2694,7 @@ def sudo_show_policy(ctx: click.Context, user: str, json_output: bool):
         password_req = [r for r in policy.rules if r.password_required.value == "required"]
 
         if passwordless:
-            console.print(f"\n[bold green]Allowed Commands (Passwordless):[/bold green]")
+            console.print("\n[bold green]Allowed Commands (Passwordless):[/bold green]")
             console.print("─" * 60)
             for rule in passwordless:
                 console.print(f"  ✅ {rule.command_pattern}")
@@ -2717,7 +2702,7 @@ def sudo_show_policy(ctx: click.Context, user: str, json_output: bool):
                     console.print(f"     {rule.description}")
 
         if password_req:
-            console.print(f"\n[bold yellow]Allowed Commands (Password Required):[/bold yellow]")
+            console.print("\n[bold yellow]Allowed Commands (Password Required):[/bold yellow]")
             console.print("─" * 60)
             for rule in password_req:
                 console.print(f"  🔒 {rule.command_pattern}")
@@ -2725,7 +2710,7 @@ def sudo_show_policy(ctx: click.Context, user: str, json_output: bool):
                     console.print(f"     {rule.description}")
 
         if not policy.rules:
-            console.print(f"\n[red]No sudo commands allowed[/red]")
+            console.print("\n[red]No sudo commands allowed[/red]")
 
         # Show sudoers file location
         sudoers_file = sudo_mgr.SUDOERS_DIR / f"rbac-{user}"
@@ -2747,7 +2732,7 @@ def sudo_test(ctx: click.Context, user: str, command: str):
     """Test if a command is allowed for a user."""
     logger = ctx.obj.get("logger")
 
-    console.print(f"\n[bold]Sudo Policy Test[/bold]")
+    console.print("\n[bold]Sudo Policy Test[/bold]")
     console.print("=" * 60)
     console.print(f"\n[bold]User:[/bold] {user}")
     console.print(f"[bold]Command:[/bold] {command}")
@@ -2757,25 +2742,25 @@ def sudo_test(ctx: click.Context, user: str, command: str):
 
         result = sudo_mgr.test_command(user, command)
 
-        console.print(f"\n[bold]Policy Evaluation:[/bold]")
+        console.print("\n[bold]Policy Evaluation:[/bold]")
         console.print("─" * 60)
 
         if result["allowed"]:
-            console.print(f"[green]✅ Result: ALLOWED[/green]")
-            console.print(f"\n[bold]Details:[/bold]")
+            console.print("[green]✅ Result: ALLOWED[/green]")
+            console.print("\n[bold]Details:[/bold]")
             console.print(f"  Matching rule: {result['rule']}")
             console.print(f"  Password required: {'Yes' if result['password_required'] else 'No'}")
             console.print(f"  2FA required: {'Yes' if result['mfa_required'] else 'No'}")
             if result["reason"]:
                 console.print(f"  Reason: {result['reason']}")
 
-            console.print(f"\n[bold]To execute:[/bold]")
+            console.print("\n[bold]To execute:[/bold]")
             console.print(f"  $ sudo {command}")
         else:
-            console.print(f"[red]❌ Result: DENIED[/red]")
+            console.print("[red]❌ Result: DENIED[/red]")
             console.print(f"\n[bold]Reason:[/bold] {result['reason']}")
 
-            console.print(f"\n[bold]Suggestions:[/bold]")
+            console.print("\n[bold]Suggestions:[/bold]")
             console.print("  • Contact your administrator for access")
             console.print("  • Check if you have the correct role assigned")
             console.print("  • Review the sudo policy with: vps-configurator sudo show-policy")
@@ -2796,7 +2781,7 @@ def sudo_apply(ctx: click.Context, user: str, role: str, dry_run: bool):
     """Apply sudo policy for a user based on role."""
     logger = ctx.obj.get("logger")
 
-    console.print(f"\n[bold]Applying Sudo Policy[/bold]")
+    console.print("\n[bold]Applying Sudo Policy[/bold]")
     console.print("=" * 60)
     console.print(f"\nUser: {user}")
     console.print(f"Role: {role}")
@@ -2807,7 +2792,7 @@ def sudo_apply(ctx: click.Context, user: str, role: str, dry_run: bool):
         success = sudo_mgr.apply_policy_for_user(user, role)
 
         if success:
-            console.print(f"\n[green]✅ Sudo policy applied successfully![/green]")
+            console.print("\n[green]✅ Sudo policy applied successfully![/green]")
 
             if dry_run:
                 console.print("[yellow]⚠️  Dry run - no changes made[/yellow]")
@@ -2820,7 +2805,7 @@ def sudo_apply(ctx: click.Context, user: str, role: str, dry_run: bool):
                 if policy:
                     console.print(f"Rules applied: {len(policy.rules)}")
         else:
-            console.print(f"[red]❌ Failed to apply sudo policy[/red]")
+            console.print("[red]❌ Failed to apply sudo policy[/red]")
             sys.exit(1)
 
     except Exception as e:
@@ -2838,7 +2823,7 @@ def sudo_revoke(ctx: click.Context, user: str, dry_run: bool):
     """Revoke all sudo access for a user."""
     logger = ctx.obj.get("logger")
 
-    console.print(f"\n[bold red]⚠️  Revoking Sudo Access[/bold red]")
+    console.print("\n[bold red]⚠️  Revoking Sudo Access[/bold red]")
     console.print("=" * 60)
     console.print(f"\nUser: {user}")
 
@@ -2853,12 +2838,12 @@ def sudo_revoke(ctx: click.Context, user: str, dry_run: bool):
         success = sudo_mgr.revoke_sudo_access(user)
 
         if success:
-            console.print(f"\n[green]✅ Sudo access revoked[/green]")
+            console.print("\n[green]✅ Sudo access revoked[/green]")
 
             if dry_run:
                 console.print("[yellow]⚠️  Dry run - no changes made[/yellow]")
         else:
-            console.print(f"[yellow]No sudo policy found for user[/yellow]")
+            console.print("[yellow]No sudo policy found for user[/yellow]")
 
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
@@ -2876,7 +2861,6 @@ def sudo_revoke(ctx: click.Context, user: str, dry_run: bool):
 @click.pass_context
 def activity(ctx: click.Context):
     """User activity monitoring and auditing."""
-    pass
 
 
 @activity.command("report")
@@ -2907,7 +2891,7 @@ def activity_report(ctx: click.Context, user: str, days: int, json_output: bool)
         )
         console.print("=" * 60)
 
-        console.print(f"\n[bold]SUMMARY[/bold]")
+        console.print("\n[bold]SUMMARY[/bold]")
         console.print("─" * 60)
         summary = report["summary"]
         console.print(f"Total Activities:     {summary['total_activities']}")
@@ -2919,7 +2903,7 @@ def activity_report(ctx: click.Context, user: str, days: int, json_output: bool)
         console.print(f"Unique IPs:           {summary['unique_ips']}")
 
         if report["recent_activities"]:
-            console.print(f"\n[bold]RECENT ACTIVITIES (Last 10)[/bold]")
+            console.print("\n[bold]RECENT ACTIVITIES (Last 10)[/bold]")
             console.print("─" * 60)
 
             for activity in report["recent_activities"][:10]:
@@ -2927,7 +2911,9 @@ def activity_report(ctx: click.Context, user: str, days: int, json_output: bool)
                 activity_type = activity["activity_type"]
                 risk = activity["risk_level"]
 
-                risk_icon = {"low": "🟢", "medium": "🟡", "high": "🟠", "critical": "🔴"}.get(risk, "⚪")
+                risk_icon = {"low": "🟢", "medium": "🟡", "high": "🟠", "critical": "🔴"}.get(
+                    risk, "⚪"
+                )
 
                 console.print(
                     f"\n{risk_icon} {timestamp.strftime('%Y-%m-%d %H:%M:%S')} - {activity_type}"
@@ -2975,7 +2961,7 @@ def activity_anomalies(ctx: click.Context, user: str, days: int, resolved: bool,
             console.print("[green]✅ No anomalies detected[/green]")
             return
 
-        console.print(f"\n[bold]Detected Anomalies[/bold]")
+        console.print("\n[bold]Detected Anomalies[/bold]")
         console.print(f"Period: Last {days} days")
         if user:
             console.print(f"User: {user}")
@@ -3035,7 +3021,7 @@ def activity_log(ctx: click.Context, user: str, activity_type: str, command: str
             command=command,
         )
 
-        console.print(f"[green]✅ Activity logged[/green]")
+        console.print("[green]✅ Activity logged[/green]")
         console.print(f"\nUser: {event.user}")
         console.print(f"Type: {event.activity_type.value}")
         console.print(f"Time: {event.timestamp.strftime('%Y-%m-%d %H:%M:%S')}")
@@ -3062,7 +3048,6 @@ def activity_log(ctx: click.Context, user: str, activity_type: str, command: str
 @click.pass_context
 def team(ctx: click.Context):
     """Team and group management."""
-    pass
 
 
 @team.command("create")
@@ -3092,7 +3077,7 @@ def team_create(
             docker_containers=containers,
         )
 
-        console.print(f"\n[green]✅ Team created successfully![/green]")
+        console.print("\n[green]✅ Team created successfully![/green]")
         console.print(f"\nTeam: {team.name}")
         console.print(f"Lead: {lead}")
         console.print(f"Members: {len(team.members)}")
@@ -3189,7 +3174,7 @@ def team_info(ctx: click.Context, team_name: str):
         console.print(f"\n[bold]Team Information: {team.name}[/bold]")
         console.print("=" * 60)
 
-        console.print(f"\n[bold]TEAM DETAILS[/bold]")
+        console.print("\n[bold]TEAM DETAILS[/bold]")
         console.print("─" * 60)
         console.print(f"Team ID: {team.team_id}")
         console.print(f"Name: {team.name}")
@@ -3210,7 +3195,7 @@ def team_info(ctx: click.Context, team_name: str):
             if member.role == MemberRole.MEMBER:
                 console.print(f"👤 {member.username} (Member)")
 
-        console.print(f"\n[bold]SHARED RESOURCES[/bold]")
+        console.print("\n[bold]SHARED RESOURCES[/bold]")
         console.print("─" * 60)
         console.print(f"Shared Directory: {team.shared_directory}")
 
@@ -3221,7 +3206,7 @@ def team_info(ctx: click.Context, team_name: str):
                 console.print(f"Container Limit: {team.quotas.docker_containers}")
 
         if team.permissions:
-            console.print(f"\n[bold]PERMISSIONS[/bold]")
+            console.print("\n[bold]PERMISSIONS[/bold]")
             console.print("─" * 60)
             for perm in team.permissions:
                 console.print(f"  ✅ {perm}")
@@ -3276,7 +3261,6 @@ def team_list(ctx: click.Context):
 @click.pass_context
 def temp_access(ctx: click.Context):
     """Temporary access and time-based permissions."""
-    pass
 
 
 @temp_access.command("grant")
@@ -3304,7 +3288,7 @@ def temp_access_grant(
     try:
         temp_mgr = TempAccessManager(logger=logger)
 
-        console.print(f"\n[bold]Granting Temporary Access[/bold]")
+        console.print("\n[bold]Granting Temporary Access[/bold]")
         console.print("=" * 60)
         console.print(f"\nUser: {username}")
         console.print(f"Role: {role}")
@@ -3320,7 +3304,7 @@ def temp_access_grant(
             notify_before_days=notify_before,
         )
 
-        console.print(f"\n[green]✅ Temporary access granted successfully![/green]")
+        console.print("\n[green]✅ Temporary access granted successfully![/green]")
         console.print(f"\nAccess ID: {access.access_id}")
         console.print(f"Expires: {access.expires_at.strftime('%Y-%m-%d %H:%M:%S')}")
         console.print(f"Days remaining: {access.days_remaining()}")
@@ -3379,14 +3363,14 @@ def temp_access_extend(
             requested_by=requested_by,
         )
 
-        console.print(f"\n[bold]Extension Request Created[/bold]")
+        console.print("\n[bold]Extension Request Created[/bold]")
         console.print("=" * 60)
         console.print(f"\nRequest ID: {extension.request_id}")
         console.print(f"User: {username}")
         console.print(f"Additional days: {days}")
         console.print(f"Status: {extension.status.value}")
 
-        console.print(f"\n[yellow]⏳ Extension pending approval[/yellow]")
+        console.print("\n[yellow]⏳ Extension pending approval[/yellow]")
 
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")
@@ -3409,9 +3393,9 @@ def temp_access_approve(ctx: click.Context, request_id: str, approved_by: str):
         success = temp_mgr.approve_extension(request_id, approved_by)
 
         if success:
-            console.print(f"[green]✅ Extension approved[/green]")
+            console.print("[green]✅ Extension approved[/green]")
         else:
-            console.print(f"[yellow]Extension approval failed[/yellow]")
+            console.print("[yellow]Extension approval failed[/yellow]")
 
     except Exception as e:
         console.print(f"[red]Error: {e}[/red]")

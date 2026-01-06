@@ -8,7 +8,7 @@ import time
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
 
-from configurator.security.cis_scanner import CISBenchmarkScanner, Status
+from configurator.security.cis_scanner import CISBenchmarkScanner
 
 
 def test_full_scan():
@@ -34,7 +34,7 @@ def test_full_scan():
         print(f"✅ Scan time acceptable: {duration:.2f}s <= 300s")
 
     # Validate results
-    print(f"\nScan Results:")
+    print("\nScan Results:")
     print(f"  Total checks: {len(report.results)}")
     print(f"  Compliance score: {report.score}/100")
 
@@ -44,7 +44,7 @@ def test_full_scan():
         status = result.status.value
         by_status[status] = by_status.get(status, 0) + 1
 
-    print(f"\nResults by status:")
+    print("\nResults by status:")
     for status in ["pass", "fail", "manual", "error", "na"]:
         count = by_status.get(status, 0)
         print(f"  {status.upper():10s}: {count:3d}")
@@ -59,7 +59,7 @@ def test_full_scan():
     # Validate summary
     summary = report.get_summary()
 
-    print(f"\nSummary statistics:")
+    print("\nSummary statistics:")
     print(f"  Total checks: {summary['total_checks']}")
     print(f"  Passed: {summary['passed']}")
     print(f"  Failed: {summary['failed']}")

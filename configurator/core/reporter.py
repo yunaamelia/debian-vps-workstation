@@ -2,21 +2,11 @@
 Progress reporting with Rich library.
 """
 
-import logging
 from datetime import datetime
 from typing import Dict, List, Optional
 
 from rich.console import Console
-from rich.live import Live
 from rich.panel import Panel
-from rich.progress import (
-    BarColumn,
-    Progress,
-    SpinnerColumn,
-    TaskProgressColumn,
-    TextColumn,
-    TimeElapsedColumn,
-)
 from rich.table import Table
 
 
@@ -207,9 +197,9 @@ class ProgressReporter:
             rdp_port: RDP port number
             public_ip: Server's public IP
         """
-        ip_display = public_ip or "YOUR_SERVER_IP"
+        public_ip or "YOUR_SERVER_IP"
 
-        next_steps = f"""
+        next_steps = """
 [bold cyan]🎉 Installation Complete! Here's what to do next:[/bold cyan]
 
 [bold]1. Connect via Remote Desktop:[/bold]

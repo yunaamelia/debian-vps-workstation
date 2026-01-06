@@ -105,7 +105,7 @@ class PythonModule(ConfigurationModule):
             checks_passed = False
         else:
             result = self.run("pip3 --version", check=False)
-            self.logger.info(f"✓ pip installed")
+            self.logger.info("✓ pip installed")
 
         # Check pipx
         if not self.command_exists("pipx"):

@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 
 class ActivityType(Enum):
@@ -680,7 +680,7 @@ class ActivityMonitor:
         auth_failures = [a for a in activities if a.activity_type == ActivityType.AUTH_FAILURE]
 
         # Calculate session statistics
-        total_session_time = timedelta()
+        timedelta()
         source_ips = set()
 
         for activity in ssh_logins:

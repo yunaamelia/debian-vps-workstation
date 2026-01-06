@@ -7,6 +7,7 @@ system-level integrations (sudo, groups).
 The implementation is safe to use in non-root environments; system mutations are
 skipped when `dry_run=True` or when the current user lacks privileges.
 """
+
 from __future__ import annotations
 
 import json

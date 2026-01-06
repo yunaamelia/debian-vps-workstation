@@ -6,7 +6,6 @@ This script demonstrates the speed improvement of the Package Cache
 by simulating package "installation" (copying) with and without cache.
 """
 
-import hashlib
 import os
 import shutil
 import tempfile

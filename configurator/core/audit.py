@@ -14,8 +14,6 @@ logger = logging.getLogger(__name__)
 class AuditError(ConfiguratorError):
     """Exception raised for audit logging errors."""
 
-    pass
-
 
 class AuditEventType(str, Enum):
     INSTALL_START = "install_start"

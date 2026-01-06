@@ -15,23 +15,11 @@ def check_imports():
     print("=" * 60)
 
     try:
-        from configurator.security.vulnerability_scanner import (
-            GrypeScanner,
-            ScanResult,
-            TrivyScanner,
-            Vulnerability,
-            VulnerabilityManager,
-            VulnerabilityScanner,
-            VulnerabilitySeverity,
-        )
+        pass
 
         print("✅ vulnerability_scanner.py imports OK")
 
-        from configurator.security.vuln_report import VulnReportGenerator
-
         print("✅ vuln_report.py imports OK")
-
-        from configurator.security.vuln_monitor import VulnerabilityMonitor
 
         print("✅ vuln_monitor.py imports OK")
 

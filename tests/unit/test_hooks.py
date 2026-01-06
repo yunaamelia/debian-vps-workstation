@@ -1,9 +1,7 @@
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
-from configurator.core.hooks import HookContext, HooksManager, HookType
+from configurator.core.hooks import HooksManager, HookType
 
 
 def test_manager_init():

@@ -18,7 +18,6 @@ import logging
 import os
 import pwd
 import re
-import shutil
 import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -153,9 +152,9 @@ class SSHKey:
             key_type=KeyType(data["key_type"]),
             fingerprint=data["fingerprint"],
             created_at=datetime.fromisoformat(data["created_at"]),
-            expires_at=datetime.fromisoformat(data["expires_at"])
-            if data.get("expires_at")
-            else None,
+            expires_at=(
+                datetime.fromisoformat(data["expires_at"]) if data.get("expires_at") else None
+            ),
             last_used=datetime.fromisoformat(data["last_used"]) if data.get("last_used") else None,
             status=KeyStatus(data["status"]),
             comment=data.get("comment", ""),
@@ -442,9 +441,9 @@ class SSHKeyManager:
             key_type=key_type,
             fingerprint=fingerprint,
             created_at=datetime.now(),
-            expires_at=datetime.now() + timedelta(days=rotation_days)
-            if rotation_days > 0
-            else None,
+            expires_at=(
+                datetime.now() + timedelta(days=rotation_days) if rotation_days > 0 else None
+            ),
             comment=comment,
             metadata={
                 "private_key_path": str(private_key_path),
@@ -471,7 +470,7 @@ class SSHKeyManager:
         """
         try:
             result = subprocess.run(
-                ["ssh-keygen", "-lf", str(public_key_path), "-E", "sha256"],
+                ["ssh-keygen", "-l", str(public_key_path), "-E", "sha256"],
                 capture_output=True,
                 text=True,
                 check=True,
@@ -500,7 +499,7 @@ class SSHKeyManager:
         """
         try:
             result = subprocess.run(
-                ["ssh-keygen", "-lf", "-", "-E", "sha256"],
+                ["ssh-keygen", "-l", "-", "-E", "sha256"],
                 input=public_key,
                 capture_output=True,
                 text=True,
@@ -703,7 +702,7 @@ class SSHKeyManager:
         key.metadata["revoked_at"] = datetime.now().isoformat()
         self._register_key(key)
 
-        self.logger.info(f"✅ Key revoked and removed from authorized_keys")
+        self.logger.info("✅ Key revoked and removed from authorized_keys")
         return True
 
     def get_key(self, user: str, key_id: str) -> Optional[SSHKey]:
@@ -855,7 +854,7 @@ class SSHKeyManager:
                     continue
 
                 key_type_str = parts[0]
-                key_data = parts[1]
+                parts[1]
                 comment = parts[2] if len(parts) > 2 else f"unmanaged-{i}"
 
                 # Determine key type
@@ -930,9 +929,9 @@ class SSHKeyManager:
             key_type=key_type,
             fingerprint=fingerprint,
             created_at=datetime.now(),
-            expires_at=datetime.now() + timedelta(days=rotation_days)
-            if rotation_days > 0
-            else None,
+            expires_at=(
+                datetime.now() + timedelta(days=rotation_days) if rotation_days > 0 else None
+            ),
             comment=parts[2] if len(parts) > 2 else "",
             metadata={"imported": True},
         )

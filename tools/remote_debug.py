@@ -1,6 +1,3 @@
-import argparse
-import sys
-
 import paramiko
 
 

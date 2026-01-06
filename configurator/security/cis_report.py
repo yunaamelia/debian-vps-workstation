@@ -1,10 +1,8 @@
 import json
-import os
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Optional
 
-from configurator.security.cis_scanner import ScanReport, Severity, Status
+from configurator.security.cis_scanner import ScanReport, Status
 
 
 class CISReportGenerator:
@@ -45,7 +43,7 @@ class CISReportGenerator:
         filename = f"cis-scan-{datetime.now().strftime('%Y-%m-%d')}.html"
         filepath = self.output_dir / filename
 
-        summary = report.get_summary()
+        report.get_summary()
 
         # Simple CSS
         css = """
@@ -73,13 +71,12 @@ class CISReportGenerator:
         """
 
         # determine score color
-        score_class = "score-bad"
         if report.score >= 80:
-            score_class = "score-good"
+            pass
         elif report.score >= 60:
-            score_class = "score-warn"
+            pass
 
-        html = f"""
+        html = """
         <!DOCTYPE html>
         <html>
         <head>
@@ -135,12 +132,12 @@ class CISReportGenerator:
         )
 
         for res in sorted_results:
-            sev_class = f"bg-{res.check.severity.value}"
-            status_class = f"bg-{res.status.value.lower()}"
+            f"bg-{res.check.severity.value}"
+            f"bg-{res.status.value.lower()}"
             if res.status == Status.MANUAL:
-                status_class = "bg-manual"
+                pass
 
-            html += f"""
+            html += """
                 <tr>
                     <td>{res.check.id}</td>
                     <td><span class="severity-badge {sev_class}">{res.check.severity.value.upper()}</span></td>

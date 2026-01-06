@@ -103,8 +103,6 @@ class PrerequisiteError(ConfiguratorError):
     - No internet connectivity
     """
 
-    pass
-
 
 class ConfigurationError(ConfiguratorError):
     """
@@ -115,8 +113,6 @@ class ConfigurationError(ConfiguratorError):
     - Missing required configuration values
     - Invalid configuration values
     """
-
-    pass
 
 
 class ModuleExecutionError(ConfiguratorError):
@@ -129,8 +125,6 @@ class ModuleExecutionError(ConfiguratorError):
     - File creation failed
     """
 
-    pass
-
 
 class ValidationError(ConfiguratorError):
     """
@@ -141,8 +135,6 @@ class ValidationError(ConfiguratorError):
     - Command not found after installation
     - Expected file not created
     """
-
-    pass
 
 
 class RollbackError(ConfiguratorError):
@@ -155,8 +147,6 @@ class RollbackError(ConfiguratorError):
     - Restore operation failed
     """
 
-    pass
-
 
 class NetworkError(ConfiguratorError):
     """
@@ -167,8 +157,6 @@ class NetworkError(ConfiguratorError):
     - Download failed
     - Connection timeout
     """
-
-    pass
 
 
 class UserCancelledError(ConfiguratorError):

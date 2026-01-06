@@ -71,16 +71,16 @@ def test_team_creation():
         # Check README
         readme = team.shared_directory / "README.md"
         if readme.exists():
-            print(f"  ✅ README.md created")
+            print("  ✅ README.md created")
 
             # Check content
             content = readme.read_text()
             if test_team_name in content:
-                print(f"  ✅ README contains team name")
+                print("  ✅ README contains team name")
         else:
-            print(f"  ⚠️  README.md not found")
+            print("  ⚠️  README.md not found")
     else:
-        print(f"  ❌ Shared directory not created")
+        print("  ❌ Shared directory not created")
         return False
 
     # Test 3: Verify team lead
@@ -92,15 +92,15 @@ def test_team_creation():
         print(f"  ✅ Team lead assigned: {lead.username}")
 
         if lead.username == test_user:
-            print(f"  ✅ Correct lead")
+            print("  ✅ Correct lead")
         else:
             print(f"  ❌ Wrong lead (expected {test_user}, got {lead.username})")
             return False
 
         if lead.role == MemberRole.LEAD:
-            print(f"  ✅ Lead role correct")
+            print("  ✅ Lead role correct")
     else:
-        print(f"  ❌ No team lead found")
+        print("  ❌ No team lead found")
         return False
 
     # Test 4: Verify team in registry
@@ -109,27 +109,27 @@ def test_team_creation():
     retrieved_team = team_mgr.get_team(test_team_name)
 
     if retrieved_team:
-        print(f"  ✅ Team found in registry")
+        print("  ✅ Team found in registry")
         print(f"     Members: {len(retrieved_team.members)}")
     else:
-        print(f"  ❌ Team not in registry")
+        print("  ❌ Team not in registry")
         return False
 
     # Test 5: Verify resource quotas
     print("\n5. Verifying resource quotas...")
 
     if team.quotas:
-        print(f"  ✅ Quotas configured")
+        print("  ✅ Quotas configured")
         print(f"     Disk quota: {team.quotas.disk_quota_gb} GB")
         print(f"     Container limit: {team.quotas.docker_containers}")
 
         if team.quotas.disk_quota_gb == 10:
-            print(f"  ✅ Disk quota correct")
+            print("  ✅ Disk quota correct")
 
         if team.quotas.docker_containers == 5:
-            print(f"  ✅ Container limit correct")
+            print("  ✅ Container limit correct")
     else:
-        print(f"  ⚠️  No quotas configured")
+        print("  ⚠️  No quotas configured")
 
     # Test 6: Verify audit log
     print("\n6. Verifying audit log...")
@@ -141,9 +141,9 @@ def test_team_creation():
             content = f.read()
 
         if "create_team" in content and test_team_name in content:
-            print(f"  ✅ Team creation logged")
+            print("  ✅ Team creation logged")
     else:
-        print(f"  ⚠️  Audit log not found")
+        print("  ⚠️  Audit log not found")
 
     # Cleanup
     print("\n7. Cleaning up...")

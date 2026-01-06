@@ -2,11 +2,9 @@
 Unit tests for utility functions.
 """
 
-from unittest.mock import mock_open, patch
+from unittest.mock import patch
 
-import pytest
-
-from configurator.utils.system import OSInfo, get_architecture, get_os_info, get_ram_gb, is_root
+from configurator.utils.system import OSInfo, get_architecture, is_root
 
 
 class TestOSInfo:

@@ -2,15 +2,12 @@
 """Test remediation safety (DRY RUN ONLY for validation)"""
 
 import os
-import shutil
 import sys
 import tempfile
 from pathlib import Path
 
 # Add project root to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../../..")))
-
-from configurator.security.cis_scanner import CISBenchmarkScanner
 
 
 def test_remediation_safety():

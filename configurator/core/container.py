@@ -1,5 +1,5 @@
 import inspect
-from typing import Any, Callable, Dict, Optional, Type, TypeVar
+from typing import Any, Callable, Dict, TypeVar
 
 T = TypeVar("T")
 
@@ -7,19 +7,13 @@ T = TypeVar("T")
 class ContainerError(Exception):
     """Base exception for container errors"""
 
-    pass
-
 
 class ServiceNotFoundError(ContainerError):
     """Raised when a service is not found"""
 
-    pass
-
 
 class CircularDependencyError(ContainerError):
     """Raised when a circular dependency is detected"""
-
-    pass
 
 
 class Container:

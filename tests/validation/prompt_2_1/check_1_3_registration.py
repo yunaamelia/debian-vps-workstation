@@ -44,7 +44,7 @@ def validate_check_registration():
     for check in checks:
         by_category[check.category] += 1
 
-    print(f"\nChecks by category:")
+    print("\nChecks by category:")
     for category, count in sorted(by_category.items()):
         print(f"  {category:25s}:  {count:3d} checks")
 
@@ -68,7 +68,7 @@ def validate_check_registration():
     for check in checks:
         by_severity[check.severity.value] += 1
 
-    print(f"\nChecks by severity:")
+    print("\nChecks by severity:")
     for severity in ["critical", "high", "medium", "low"]:
         count = by_severity.get(severity, 0)
         print(f"  {severity.capitalize():10s}: {count:3d} checks")
@@ -83,7 +83,7 @@ def validate_check_registration():
     checks_with_function = len([c for c in checks if c.check_function is not None])
     manual_checks = len([c for c in checks if c.manual])
 
-    print(f"\nCheck functions:")
+    print("\nCheck functions:")
     print(f"  Automated checks: {checks_with_function}")
     print(f"  Manual checks: {manual_checks}")
     print(f"  Total: {checks_with_function + manual_checks}")
@@ -96,12 +96,12 @@ def validate_check_registration():
 
     # Validate remediation functions
     remediable = len([c for c in checks if c.remediation_function is not None])
-    print(f"\nRemediation:")
+    print("\nRemediation:")
     print(f"  Auto-remediable checks: {remediable}")
     print(f"  Remediation coverage: {remediable/len(checks)*100:.1f}%")
 
     if remediable < 50:
-        print(f"⚠️  Few remediation functions (expected >= 50)")
+        print("⚠️  Few remediation functions (expected >= 50)")
     else:
         print(f"✅ Sufficient remediation functions ({remediable})")
 

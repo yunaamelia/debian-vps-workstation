@@ -1,5 +1,4 @@
-import json
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
 from rich.console import Console
@@ -149,7 +148,7 @@ class DryRunManager:
                 console.print(f"  [yellow]✎ {c.target}[/yellow]")
                 if c.details and c.details.get("diff"):
                     masked_diff = self._mask_sensitive_data(c.details["diff"])
-                    console.print(Panel(masked_diff, title="Diff", border_style="dim"))
+                    console.print(Panel(masked_diff, title="Dif", border_style="dim"))
             console.print()
 
         # Services

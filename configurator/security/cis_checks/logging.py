@@ -1,4 +1,3 @@
-import os
 import shutil
 import subprocess
 from typing import List
@@ -76,7 +75,7 @@ def _check_audit_config(param: str) -> CheckResult:
         return CheckResult(
             check=None, status=Status.FAIL, message=f"{param} missing in auditd.conf"
         )
-    except:
+    except Exception:
         return CheckResult(check=None, status=Status.ERROR, message="Error checking auditd.conf")
 
 

@@ -43,13 +43,13 @@ def test_manager_initialization():
     if registry_file.parent.exists():
         print(f"  ✅ Registry directory exists: {registry_file.parent}")
     else:
-        print(f"  ❌ Registry directory not found")
+        print("  ❌ Registry directory not found")
         return False
 
     if shared_dirs.exists():
         print(f"  ✅ Shared dirs base exists: {shared_dirs}")
     else:
-        print(f"  ❌ Shared dirs base not found")
+        print("  ❌ Shared dirs base not found")
         return False
 
     # Test 3: Check team registry
@@ -59,7 +59,7 @@ def test_manager_initialization():
         print(f"  ✅ Registry file exists: {registry_file}")
         print(f"     Registered teams: {len(team_mgr.teams)}")
     else:
-        print(f"  ℹ️  Registry file will be created on first team")
+        print("  ℹ️  Registry file will be created on first team")
 
     # Test 4: Check empty state
     print("\n4. Checking initial state...")

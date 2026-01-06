@@ -44,7 +44,7 @@ def safe_create_file(file_path: str, content: str):
 
         # Atomic rename
         os.rename(temp_path, file_path)
-    except:
+    except Exception:
         os.close(fd)
         os.unlink(temp_path)
         raise

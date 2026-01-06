@@ -3,7 +3,7 @@ import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional
 
 import networkx as nx
 
@@ -91,7 +91,7 @@ class DependencyGraph:
                 remaining_nodes = list(in_degree.keys())
                 raise ValueError(
                     f"Circular dependency detected among: {remaining_nodes}\n"
-                    f"Please check module dependencies for cycles."
+                    "Please check module dependencies for cycles."
                 )
 
             # Separate force_sequential modules
@@ -147,7 +147,6 @@ class DependencyGraph:
 
             # Color nodes by batch
             batches = self.get_parallel_batches()
-            colors = []
             color_map = {}
             for i, batch in enumerate(batches):
                 for node in batch:
@@ -417,7 +416,9 @@ class ParallelModuleExecutor:
             with self.results_lock:
                 self.end_times[module_name] = end_time
 
-            self.logger.info(f"[{thread_name}] ✅ {module_name} complete " f"(took {duration:.1f}s)")
+            self.logger.info(
+                f"[{thread_name}] ✅ {module_name} complete " f"(took {duration:.1f}s)"
+            )
             return True
 
         except Exception as e:

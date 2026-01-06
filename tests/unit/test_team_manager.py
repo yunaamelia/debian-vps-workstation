@@ -12,7 +12,6 @@ from configurator.users.team_manager import (
     Team,
     TeamManager,
     TeamMember,
-    TeamStatus,
 )
 
 

@@ -3,10 +3,8 @@ Network utilities for connectivity checks and downloads.
 """
 
 import socket
-import urllib.request
 from pathlib import Path
 from typing import Optional, Tuple
-from urllib.error import HTTPError, URLError
 
 import requests
 

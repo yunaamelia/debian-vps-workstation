@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Validate RBAC data models"""
 
-import inspect
 import sys
 from pathlib import Path
 

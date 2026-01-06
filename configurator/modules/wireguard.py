@@ -8,7 +8,6 @@ Handles:
 - Client configuration generation
 """
 
-import os
 from pathlib import Path
 
 from configurator.modules.base import ConfigurationModule
@@ -120,8 +119,8 @@ class WireGuardModule(ConfigurationModule):
         self.logger.info("Configuring server...")
 
         port = self.get_config("port", 51820)
-        subnet = self.get_config("subnet", "10.0.0.0/24")
-        server_ip = self.get_config("server_ip", "10.0.0.1")
+        self.get_config("subnet", "10.0.0.0/24")
+        self.get_config("server_ip", "10.0.0.1")
 
         # Get network interface
         result = self.run(
@@ -135,7 +134,7 @@ class WireGuardModule(ConfigurationModule):
             or Path("/etc/wireguard/server_private.key").read_text().strip()
         )
 
-        config = f"""[Interface]
+        config = """[Interface]
 PrivateKey = {server_private}
 Address = {server_ip}/24
 ListenPort = {port}
@@ -204,12 +203,12 @@ PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING 
             self.state.get("server_public")
             or Path("/etc/wireguard/server_public.key").read_text().strip()
         )
-        port = self.state.get("port", 51820)
+        self.state.get("port", 51820)
 
         # Get public IP
-        public_ip = get_public_ip() or "YOUR_SERVER_IP"
+        get_public_ip() or "YOUR_SERVER_IP"
 
-        client_config = f"""[Interface]
+        client_config = """[Interface]
 PrivateKey = {client_private}
 Address = 10.0.0.2/24
 DNS = 1.1.1.1

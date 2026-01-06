@@ -6,7 +6,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-import inspect
 
 from configurator.users.activity_monitor import (
     ActivityEvent,

@@ -8,10 +8,8 @@ Handles:
 """
 
 import os
-from pathlib import Path
 
 from configurator.modules.base import ConfigurationModule
-from configurator.utils.network import download_file, get_latest_github_release
 
 
 class GolangModule(ConfigurationModule):

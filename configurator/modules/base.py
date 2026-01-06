@@ -10,6 +10,7 @@ import threading
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
+from configurator.core.dryrun import DryRunManager
 from configurator.core.package_cache import PackageCacheManager
 from configurator.core.rollback import RollbackManager
 from configurator.exceptions import ModuleExecutionError
@@ -92,7 +93,6 @@ class ConfigurationModule(ABC):
         Raises:
             PrerequisiteError with helpful message if validation fails
         """
-        pass
 
     @abstractmethod
     def configure(self) -> bool:
@@ -108,7 +108,6 @@ class ConfigurationModule(ABC):
         Raises:
             ModuleExecutionError with helpful message on failure
         """
-        pass
 
     @abstractmethod
     def verify(self) -> bool:
@@ -122,7 +121,6 @@ class ConfigurationModule(ABC):
         Returns:
             True if verified successfully
         """
-        pass
 
     def rollback(self) -> bool:
         """

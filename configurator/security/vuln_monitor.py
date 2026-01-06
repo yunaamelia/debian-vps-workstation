@@ -1,8 +1,7 @@
 import logging
 import threading
 import time
-from datetime import datetime
-from typing import Callable, Optional
+from typing import Optional
 
 try:
     import schedule
@@ -93,7 +92,7 @@ class VulnerabilityMonitor:
         if results:
             try:
                 # Generate JSON & HTML
-                json_path = self.reporter.generate_json(results)
+                self.reporter.generate_json(results)
                 html_path = self.reporter.generate_html(results)
                 self.logger.info(f"Scheduled scan reports: {html_path}")
             except Exception as e:

@@ -1,5 +1,3 @@
-import os
-import shutil
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -105,7 +103,6 @@ class TestPluginManager:
 
             # This is hard to test purely with mocks due to dynamic imports
             # Ideally we'd create a real temporary file, but for now we skip complex loading logic
-            pass
 
     def test_instantiate_plugin(self, plugin_manager):
         # Manually register a plugin

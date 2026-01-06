@@ -2,8 +2,6 @@
 Unit tests for the ConfigManager class.
 """
 
-from pathlib import Path
-
 import pytest
 
 from configurator.config import ConfigManager

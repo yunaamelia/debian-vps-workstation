@@ -125,7 +125,7 @@ class PHPModule(ConfigurationModule):
                 packages.append(f"php-{ext}")
             self.install_packages(packages)
 
-        self.logger.info(f"✓ PHP installed")
+        self.logger.info("✓ PHP installed")
 
     def _install_composer(self):
         """Install Composer package manager."""

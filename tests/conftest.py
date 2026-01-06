@@ -2,7 +2,6 @@
 Pytest configuration and fixtures for the test suite.
 """
 
-import os
 import sys
 from pathlib import Path
 from typing import Any, Dict

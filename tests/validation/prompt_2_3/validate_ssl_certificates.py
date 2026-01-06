@@ -4,7 +4,6 @@ Comprehensive Validation for Prompt 2.3: SSL/TLS Certificate Management
 Runs all validation checks as specified in the validation prompt.
 """
 
-import inspect
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -194,7 +193,7 @@ def check_1_3_certbot_integration():
     try:
         from configurator.security.certificate_manager import CertificateManager
 
-        manager = CertificateManager()
+        CertificateManager()
         print("     ✅ CertificateManager initialized successfully")
         results["passed"] += 1
     except Exception as e:
@@ -208,7 +207,7 @@ def check_1_3_certbot_integration():
         print(f"     ✅ Let's Encrypt directory exists: {letsencrypt_dir}")
         results["passed"] += 1
     else:
-        print(f"     ℹ️  Let's Encrypt directory will be created on first certificate")
+        print("     ℹ️  Let's Encrypt directory will be created on first certificate")
         results["passed"] += 1  # OK - directory created on first use
 
     return results
@@ -377,7 +376,6 @@ def check_4_1_webserver_config():
         from configurator.security.webserver_config import (
             NginxConfigurator,
             TLSConfig,
-            WebServerConfigurator,
         )
 
         # Test 1: TLSConfig defaults
@@ -554,7 +552,7 @@ def check_6_1_cli_commands():
             timeout=10,
         )
         if result.returncode == 0:
-            print(f"     ✅ cert status executed successfully")
+            print("     ✅ cert status executed successfully")
             print(f"     Output: {result.stdout.strip()[:100]}")
             results["passed"] += 1
         else:
@@ -579,7 +577,6 @@ def check_monitoring():
             AlertLevel,
             CertificateAlert,
             CertificateMonitor,
-            ScheduledMonitor,
         )
 
         # Test AlertLevel enum
@@ -669,7 +666,7 @@ def run_unit_tests():
                 results["failed"] = failed
 
         if result.returncode != 0 and results["passed"] == 0:
-            print(f"  ❌ Unit tests failed to run")
+            print("  ❌ Unit tests failed to run")
             print(f"     {output[:500]}")
             results["failed"] = 1
 
@@ -684,7 +681,7 @@ def main():
     """Run all validation checks"""
     print_header("PROMPT 2.3 VALIDATION: SSL/TLS CERTIFICATE MANAGEMENT")
     print(f"  Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"  Validator: Antigravity AI")
+    print("  Validator: Antigravity AI")
 
     total_results = {"passed": 0, "failed": 0, "warnings": 0}
 
@@ -723,7 +720,7 @@ def main():
     pass_rate = (total_results["passed"] / total_checks * 100) if total_checks > 0 else 0
 
     print(
-        f"""
+        """
   Total Checks:  {total_checks}
   ✅ Passed:     {total_results['passed']}
   ❌ Failed:     {total_results['failed']}

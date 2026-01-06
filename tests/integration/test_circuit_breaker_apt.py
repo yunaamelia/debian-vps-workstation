@@ -1,10 +1,9 @@
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from configurator.exceptions import ModuleExecutionError
 from configurator.modules.base import ConfigurationModule
-from configurator.utils.circuit_breaker import CircuitBreakerError
 
 
 class MockModule(ConfigurationModule):

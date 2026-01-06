@@ -5,7 +5,7 @@ Manages the execution order of modules and handles errors.
 """
 
 import logging
-from typing import Any, Dict, List, Optional, Type
+from typing import Any, Dict, Optional, Type
 
 from configurator.config import ConfigManager
 from configurator.core.container import Container
@@ -14,7 +14,7 @@ from configurator.core.hooks import HooksManager, HookType
 from configurator.core.reporter import ProgressReporter
 from configurator.core.rollback import RollbackManager
 from configurator.core.validator import SystemValidator
-from configurator.exceptions import ModuleExecutionError, PrerequisiteError
+from configurator.exceptions import PrerequisiteError
 from configurator.modules.base import ConfigurationModule
 from configurator.plugins.loader import PluginManager
 from configurator.utils.circuit_breaker import CircuitBreakerManager
@@ -420,20 +420,20 @@ class Installer:
             self.hooks_manager.execute(HookType.PRE_MODULE, module_name=module_name)
 
             # Validate
-            self.reporter.update(f"Validating prerequisites...")
+            self.reporter.update("Validating prerequisites...")
             if not module.validate():
                 self.reporter.complete_phase(success=False)
                 return False
 
             # Configure/Install (Safe to run in dry mode as module checks dry_run)
-            self.reporter.update(f"Configuring..." if not dry_run else f"Configuring (Dry Run)...")
+            self.reporter.update("Configuring..." if not dry_run else "Configuring (Dry Run)...")
 
             if not module.configure():
                 self.reporter.complete_phase(success=False)
                 return False
 
             # Verify
-            self.reporter.update(f"Verifying installation...")
+            self.reporter.update("Verifying installation...")
             if not module.verify():
                 self.reporter.warning(f"Verification warnings for {module.name}")
 

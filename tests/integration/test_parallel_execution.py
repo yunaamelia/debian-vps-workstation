@@ -1,8 +1,6 @@
 import time
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from configurator.core.installer import Installer
 from configurator.modules.base import ConfigurationModule
 

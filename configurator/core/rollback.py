@@ -11,7 +11,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from configurator.exceptions import RollbackError
 from configurator.utils.command import run_command
 from configurator.utils.file import restore_file
 

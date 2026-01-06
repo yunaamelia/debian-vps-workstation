@@ -6,7 +6,6 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-import inspect
 
 from configurator.rbac.sudo_manager import (
     CommandRisk,

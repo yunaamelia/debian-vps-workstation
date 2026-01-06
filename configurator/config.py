@@ -8,7 +8,6 @@ Handles:
 - Default values
 """
 
-import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -421,7 +420,7 @@ class ConfigManager:
             error = e.errors()[0]
 
             # Extract location (e.g., security -> ssh -> port)
-            loc_parts = [str(l) for l in error["loc"]]
+            loc_parts = [str(part) for part in error["loc"]]
             loc = " -> ".join(loc_parts)
 
             msg = error["msg"]

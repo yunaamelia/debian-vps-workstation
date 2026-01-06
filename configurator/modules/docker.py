@@ -11,7 +11,6 @@ Handles:
 import json
 import os
 
-from configurator.exceptions import ModuleExecutionError
 from configurator.modules.base import ConfigurationModule
 from configurator.utils.file import write_file
 

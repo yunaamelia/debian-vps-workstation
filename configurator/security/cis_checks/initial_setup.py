@@ -1,6 +1,6 @@
 import shutil
 import subprocess
-from typing import List, Tuple
+from typing import List
 
 from configurator.security.cis_scanner import CheckResult, CISCheck, Severity, Status
 
@@ -145,7 +145,7 @@ def _remediate_sticky_bit() -> bool:
     try:
         subprocess.run(["chmod", "+t", "/tmp", "/var/tmp"], check=True)
         return True
-    except:
+    except Exception:
         return False
 
 
@@ -167,7 +167,7 @@ def _remediate_disable_automount() -> bool:
     try:
         subprocess.run(["systemctl", "disable", "--now", "autofs"], check=True)
         return True
-    except:
+    except Exception:
         return False
 
 

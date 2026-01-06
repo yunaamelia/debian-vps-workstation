@@ -47,7 +47,7 @@ def test_database_initialization():
         size = db_file.stat().st_size
         print(f"     Size: {size} bytes")
     else:
-        print(f"  ❌ Database file not created")
+        print("  ❌ Database file not created")
         return False
 
     # Test 3: Verify database schema

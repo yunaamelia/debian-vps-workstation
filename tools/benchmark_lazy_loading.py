@@ -1,14 +1,13 @@
-import importlib
-import os
 import subprocess
 import sys
 import time
 
 
 def benchmark_startup():
-    print(f"Benchmarking CLI startup...")
+    print("Benchmarking CLI startup...")
 
     times = []
+
     for _ in range(10):
         start = time.perf_counter()
         subprocess.run(["vps-configurator", "--help"], capture_output=True)

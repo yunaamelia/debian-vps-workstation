@@ -4,8 +4,6 @@ Integration tests for configuration profiles.
 Tests profile loading, merging, and validation.
 """
 
-from pathlib import Path
-
 import pytest
 
 from configurator.config import ConfigManager

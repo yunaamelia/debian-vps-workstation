@@ -4,14 +4,10 @@ Unit tests for SSH Key Manager.
 Tests data models, key generation, deployment, rotation, and hardening.
 """
 
-import json
-import os
-import subprocess
 import sys
-import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 

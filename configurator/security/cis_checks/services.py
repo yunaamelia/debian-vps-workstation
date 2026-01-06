@@ -77,7 +77,7 @@ def _remediate_mask_service(service_name: str) -> bool:
         subprocess.run(["systemctl", "disable", "--now", service_name], check=False)
         subprocess.run(["systemctl", "mask", service_name], check=True)
         return True
-    except:
+    except Exception:
         return False
 
 

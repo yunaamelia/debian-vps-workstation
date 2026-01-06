@@ -4,7 +4,7 @@ import json
 import logging
 import subprocess
 import uuid
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
@@ -253,9 +253,9 @@ class TempAccessManager:
             status=AccessStatus(data.get("status", "active")),
             notify_before_days=data.get("notify_before_days", 7),
             extended_count=data.get("extended_count", 0),
-            revoked_at=datetime.fromisoformat(data["revoked_at"])
-            if data.get("revoked_at")
-            else None,
+            revoked_at=(
+                datetime.fromisoformat(data["revoked_at"]) if data.get("revoked_at") else None
+            ),
             revoked_by=data.get("revoked_by"),
         )
 
@@ -271,9 +271,9 @@ class TempAccessManager:
             requested_at=datetime.fromisoformat(data["requested_at"]),
             status=ExtensionStatus(data.get("status", "pending")),
             approved_by=data.get("approved_by"),
-            approved_at=datetime.fromisoformat(data["approved_at"])
-            if data.get("approved_at")
-            else None,
+            approved_at=(
+                datetime.fromisoformat(data["approved_at"]) if data.get("approved_at") else None
+            ),
         )
 
     def grant_temp_access(

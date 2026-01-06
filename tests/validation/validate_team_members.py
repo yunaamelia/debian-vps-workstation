@@ -55,28 +55,28 @@ def test_member_management():
         success = team_mgr.add_member(test_team_name, test_member, skip_system=True)
 
         if success:
-            print(f"  ✅ Member added successfully")
+            print("  ✅ Member added successfully")
 
             # Verify in team
             member = team.get_member(test_member)
             if member:
-                print(f"  ✅ Member found in team registry")
+                print("  ✅ Member found in team registry")
                 print(f"     Username: {member.username}")
                 print(f"     Role: {member.role.value}")
 
                 if member.role == MemberRole.MEMBER:
-                    print(f"  ✅ Member role correct")
+                    print("  ✅ Member role correct")
             else:
-                print(f"  ❌ Member not in team registry")
+                print("  ❌ Member not in team registry")
                 return False
 
             # Check member count
             if len(team.members) == 2:
-                print(f"  ✅ Member count correct (2)")
+                print("  ✅ Member count correct (2)")
             else:
                 print(f"  ⚠️  Expected 2 members, got {len(team.members)}")
         else:
-            print(f"  ❌ Member addition failed")
+            print("  ❌ Member addition failed")
             return False
 
     except Exception as e:
@@ -92,9 +92,9 @@ def test_member_management():
     success = team_mgr.add_member(test_team_name, test_member, skip_system=True)
 
     if not success:
-        print(f"  ✅ Duplicate member rejected")
+        print("  ✅ Duplicate member rejected")
     else:
-        print(f"  ⚠️  Duplicate member not rejected")
+        print("  ⚠️  Duplicate member not rejected")
 
     # Test 4: Remove member
     print("\n4. Testing member removal...")
@@ -103,23 +103,23 @@ def test_member_management():
         success = team_mgr.remove_member(test_team_name, test_member, skip_system=True)
 
         if success:
-            print(f"  ✅ Member removed successfully")
+            print("  ✅ Member removed successfully")
 
             # Verify removal
             member = team.get_member(test_member)
             if not member:
-                print(f"  ✅ Member not in team registry")
+                print("  ✅ Member not in team registry")
             else:
-                print(f"  ❌ Member still in team registry")
+                print("  ❌ Member still in team registry")
                 return False
 
             # Check member count
             if len(team.members) == 1:
-                print(f"  ✅ Member count correct (1)")
+                print("  ✅ Member count correct (1)")
             else:
                 print(f"  ⚠️  Expected 1 member, got {len(team.members)}")
         else:
-            print(f"  ❌ Member removal failed")
+            print("  ❌ Member removal failed")
             return False
 
     except Exception as e:
@@ -143,17 +143,17 @@ def test_member_management():
         )
 
         if success:
-            print(f"  ✅ Lead transferred successfully")
+            print("  ✅ Lead transferred successfully")
 
             # Verify new lead
             lead = team.get_lead()
             if lead and lead.username == new_lead:
                 print(f"  ✅ New lead assigned: {lead.username}")
             else:
-                print(f"  ❌ Lead transfer failed")
+                print("  ❌ Lead transfer failed")
                 return False
         else:
-            print(f"  ❌ Lead transfer failed")
+            print("  ❌ Lead transfer failed")
             return False
 
     except Exception as e:

@@ -95,9 +95,9 @@ class MFAConfig:
             secret=data["secret"],
             backup_codes=data.get("backup_codes", []),
             enabled=data.get("enabled", False),
-            enrolled_at=datetime.fromisoformat(data["enrolled_at"])
-            if data.get("enrolled_at")
-            else None,
+            enrolled_at=(
+                datetime.fromisoformat(data["enrolled_at"]) if data.get("enrolled_at") else None
+            ),
             last_used=datetime.fromisoformat(data["last_used"]) if data.get("last_used") else None,
             failed_attempts=data.get("failed_attempts", 0),
             status=MFAStatus(data.get("status", "pending")),

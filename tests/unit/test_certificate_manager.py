@@ -4,7 +4,6 @@ Unit tests for SSL/TLS Certificate Manager.
 Tests data models, certificate parsing, and manager functionality.
 """
 
-import subprocess
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -113,8 +112,8 @@ class TestCertificate:
             private_key_path=Path("/test/key.pem"),
         )
 
-        assert cert.needs_renewal(threshold_days=30) == True
-        assert cert.needs_renewal(threshold_days=15) == False
+        assert cert.needs_renewal(threshold_days=30) is True
+        assert cert.needs_renewal(threshold_days=15) is False
 
     def test_is_wildcard(self):
         """Test wildcard certificate detection."""
@@ -138,8 +137,8 @@ class TestCertificate:
             private_key_path=Path("/test/key.pem"),
         )
 
-        assert wildcard.is_wildcard() == True
-        assert regular.is_wildcard() == False
+        assert wildcard.is_wildcard() is True
+        assert regular.is_wildcard() is False
 
     def test_to_dict(self):
         """Test serialization to dictionary."""
@@ -159,7 +158,7 @@ class TestCertificate:
         assert data["domain"] == "example.com"
         assert len(data["sans"]) == 2
         assert data["issuer"] == "Let's Encrypt"
-        assert data["auto_renewal"] == True
+        assert data["auto_renewal"] is True
         assert "days_remaining" in data
         assert "status" in data
 
@@ -173,11 +172,11 @@ class TestCertificateManager:
 
         with patch.object(Path, "exists", return_value=True):
             manager._certbot_available = None
-            assert manager.is_certbot_available() == True
+            assert manager.is_certbot_available() is True
 
         with patch.object(Path, "exists", return_value=False):
             manager._certbot_available = None
-            assert manager.is_certbot_available() == False
+            assert manager.is_certbot_available() is False
 
     def test_get_certbot_version(self):
         """Test getting Certbot version."""
@@ -198,7 +197,7 @@ class TestCertificateManager:
 
         with patch("socket.gethostbyname", return_value="192.168.1.1"):
             with patch.object(manager, "_get_server_ips", return_value=["192.168.1.1"]):
-                assert manager.validate_dns("example.com") == True
+                assert manager.validate_dns("example.com") is True
 
     def test_validate_dns_failure(self):
         """Test DNS validation failure."""
@@ -206,14 +205,14 @@ class TestCertificateManager:
 
         with patch("socket.gethostbyname", return_value="192.168.1.1"):
             with patch.object(manager, "_get_server_ips", return_value=["10.0.0.1"]):
-                assert manager.validate_dns("example.com") == False
+                assert manager.validate_dns("example.com") is False
 
     def test_validate_dns_skip_ip_check(self):
         """Test DNS validation with IP check skipped."""
         manager = CertificateManager()
 
         with patch("socket.gethostbyname", return_value="192.168.1.1"):
-            assert manager.validate_dns("example.com", skip_ip_check=True) == True
+            assert manager.validate_dns("example.com", skip_ip_check=True) is True
 
     def test_build_certbot_command_http(self):
         """Test building Certbot command for HTTP-01 challenge."""
@@ -375,10 +374,7 @@ class TestCertificateMonitor:
     def test_monitor_import(self):
         """Test that monitor module can be imported."""
         from configurator.security.cert_monitor import (
-            AlertConfig,
             AlertLevel,
-            CertificateAlert,
-            CertificateMonitor,
         )
 
         assert AlertLevel.CRITICAL.value == "critical"
@@ -431,14 +427,11 @@ class TestWebServerConfig:
     def test_webserver_config_import(self):
         """Test that webserver config module can be imported."""
         from configurator.security.webserver_config import (
-            ApacheConfigurator,
-            NginxConfigurator,
             TLSConfig,
-            WebServerConfigurator,
         )
 
         config = TLSConfig()
-        assert config.hsts_enabled == True
+        assert config.hsts_enabled is True
         assert len(config.protocols) == 2
 
     def test_nginx_ssl_snippet_generation(self):

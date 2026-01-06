@@ -92,14 +92,14 @@ class NetdataModule(ConfigurationModule):
         # But we can customize if needed
 
         bind_to = self.get_config("bind_to", "localhost")
-        port = self.get_config("port", 19999)
+        self.get_config("port", 19999)
 
         # If we want to expose to network
         if bind_to != "localhost":
             config_path = "/etc/netdata/netdata.conf"
 
             # Create minimal config override
-            config = f"""[web]
+            config = """[web]
     bind to = {bind_to}
     default port = {port}
 """

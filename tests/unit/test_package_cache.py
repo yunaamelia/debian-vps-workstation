@@ -2,8 +2,6 @@
 Unit tests for PackageCacheManager.
 """
 
-import hashlib
-import json
 import shutil
 import tempfile
 import unittest
@@ -11,7 +9,7 @@ import unittest.mock
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from configurator.core.package_cache import CachedPackage, PackageCacheManager
+from configurator.core.package_cache import PackageCacheManager
 
 
 class TestPackageCacheManager(unittest.TestCase):

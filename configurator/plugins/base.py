@@ -99,17 +99,14 @@ class PluginBase(ConfigurationModule, ABC):
     @abstractmethod
     def validate(self) -> bool:
         """Validate plugin can run."""
-        pass
 
     @abstractmethod
     def configure(self) -> bool:
         """Run plugin configuration."""
-        pass
 
     @abstractmethod
     def verify(self) -> bool:
         """Verify plugin completed successfully."""
-        pass
 
 
 class PluginError(Exception):

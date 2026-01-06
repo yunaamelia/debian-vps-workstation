@@ -114,7 +114,7 @@ class GitModule(ConfigurationModule):
         # Set useful defaults (system-wide)
         defaults = [
             ("init.defaultBranch", "main"),
-            ("core.autocrlf", "input"),
+            ("core.autocrl", "input"),
             ("pull.rebase", "false"),
             ("push.autoSetupRemote", "true"),
             ("color.ui", "auto"),

@@ -107,7 +107,7 @@ def test_user_offboarding():
             print(f"  ❌ Status incorrect: {updated_profile.status.value}")
             return False
     else:
-        print(f"  ❌ Profile not found")
+        print("  ❌ Profile not found")
         return False
 
     # Test 4: Verify RBAC role removed

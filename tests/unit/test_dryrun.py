@@ -1,7 +1,3 @@
-from unittest.mock import MagicMock
-
-import pytest
-
 from configurator.core.dryrun import DryRunManager
 from configurator.modules.base import ConfigurationModule
 

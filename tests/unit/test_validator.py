@@ -4,10 +4,7 @@ Unit tests for the SystemValidator class.
 
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from configurator.core.validator import SystemValidator, ValidationResult
-from configurator.exceptions import PrerequisiteError
 
 
 class TestValidationResult:

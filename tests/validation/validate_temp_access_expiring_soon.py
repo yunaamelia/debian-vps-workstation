@@ -47,7 +47,7 @@ def test_expiring_soon():
 
     temp_mgr.access_grants[test_username] = access
 
-    print(f"  Created access:")
+    print("  Created access:")
     print(f"     Expires in: {access.days_remaining()} days")
 
     # Test 2: Test get_expiring_soon()
@@ -96,15 +96,15 @@ def test_expiring_soon():
     expiring_7 = temp_mgr.get_expiring_soon(days=7)
 
     if far_username not in [a.username for a in expiring_7]:
-        print(f"  ✅ Access expiring in 25 days not in 7-day list")
+        print("  ✅ Access expiring in 25 days not in 7-day list")
     else:
-        print(f"  ❌ Access expiring in 25 days should not be in 7-day list")
+        print("  ❌ Access expiring in 25 days should not be in 7-day list")
         return False
 
     if not far_access.needs_reminder():
-        print(f"  ✅ No reminder needed for access expiring in 25 days")
+        print("  ✅ No reminder needed for access expiring in 25 days")
     else:
-        print(f"  ⚠️  Should not need reminder yet")
+        print("  ⚠️  Should not need reminder yet")
 
     # Cleanup
     print("\n5. Cleaning up...")

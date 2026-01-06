@@ -54,7 +54,7 @@ def test_audit_logging():
 
         if lines:
             last_entry = json.loads(lines[-1])
-            print(f"     Last entry:")
+            print("     Last entry:")
             print(f"       Timestamp: {last_entry['timestamp']}")
             print(f"       Action: {last_entry['action']}")
             print(f"       User: {last_entry.get('user', 'N/A')}")

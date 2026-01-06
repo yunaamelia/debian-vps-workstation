@@ -47,7 +47,7 @@ def test_expiration_detection():
     temp_mgr.access_grants[test_username] = access
     temp_mgr._save_access_registry()
 
-    print(f"  Created access:")
+    print("  Created access:")
     print(f"     Granted: {access.granted_at.strftime('%Y-%m-%d')}")
     print(f"     Expired: {access.expires_at.strftime('%Y-%m-%d')}")
 

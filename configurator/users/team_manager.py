@@ -4,7 +4,6 @@ import grp
 import json
 import logging
 import os
-import pwd
 import subprocess
 import uuid
 from dataclasses import dataclass, field
@@ -240,9 +239,9 @@ class TeamManager:
             quotas=quotas,
             permissions=data.get("permissions", []),
             status=TeamStatus(data.get("status", "active")),
-            created_at=datetime.fromisoformat(data["created_at"])
-            if data.get("created_at")
-            else None,
+            created_at=(
+                datetime.fromisoformat(data["created_at"]) if data.get("created_at") else None
+            ),
             created_by=data.get("created_by"),
         )
 

@@ -8,7 +8,6 @@ Provides structured logging with:
 """
 
 import logging
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Literal, Optional

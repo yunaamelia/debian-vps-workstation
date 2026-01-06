@@ -6,7 +6,6 @@ Handles discovery and loading of plugins from various locations.
 
 import importlib.util
 import logging
-import os
 import shutil
 import subprocess
 import sys
@@ -16,7 +15,6 @@ import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Type
-from urllib.parse import urlparse
 
 from configurator.plugins.base import PluginBase, PluginError, PluginInfo
 

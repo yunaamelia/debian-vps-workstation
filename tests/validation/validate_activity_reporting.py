@@ -54,7 +54,7 @@ def test_report_generation():
         )
 
         print("  ✅ Report generated")
-        print(f"\n  Report Summary:")
+        print("\n  Report Summary:")
         print(f"    User: {report['user']}")
         print(f"    Total activities: {report['summary']['total_activities']}")
         print(f"    SSH sessions: {report['summary']['ssh_sessions']}")

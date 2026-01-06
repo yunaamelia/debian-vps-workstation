@@ -1,6 +1,5 @@
 import logging
-import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from typing import Callable, Dict, Optional, Tuple, Type
@@ -39,7 +38,7 @@ class CircuitBreakerError(Exception):
         self.last_failure_time = last_failure_time
         self.retry_after = retry_after
 
-        message = f"""
+        message = """
 ╔════════════════════════════════════════════════════════╗
 ║           ⚠️  CIRCUIT BREAKER OPEN                     ║
 ╚════════════════════════════════════════════════════════╝
@@ -211,7 +210,7 @@ class CircuitBreaker:
 
         self.logger.info(
             f"🔄 Circuit breaker '{self.name}' entering HALF-OPEN state "
-            f"(testing if service recovered)"
+            "(testing if service recovered)"
         )
 
     def _transition_to_closed(self):

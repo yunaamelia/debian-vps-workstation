@@ -7,8 +7,6 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from configurator.rbac.sudo_manager import (
-    CommandRisk,
-    MFARequirement,
     PasswordRequirement,
     SudoCommandRule,
     SudoPolicy,

@@ -1,9 +1,6 @@
-import os
 import threading
 import time
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from configurator.utils.file_lock import file_lock
 

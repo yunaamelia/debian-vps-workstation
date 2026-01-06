@@ -1,11 +1,9 @@
 import json
-from datetime import datetime, timedelta
 from pathlib import Path
 
-import pytest
 import yaml
 
-from configurator.rbac.rbac_manager import Permission, RBACManager, Role, RoleAssignment, SudoAccess
+from configurator.rbac.rbac_manager import Permission, RBACManager, Role
 
 
 def test_permission_matching_wildcards():

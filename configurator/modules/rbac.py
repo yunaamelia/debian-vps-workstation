@@ -198,7 +198,7 @@ class RBACModule(ConfigurationModule):
         except Exception as e:
             self.logger.warning(f"  Failed to store password in secrets manager: {e}")
 
-        self.logger.info(f"  Created with temporary password (use SSH keys for login)")
+        self.logger.info("  Created with temporary password (use SSH keys for login)")
 
         # Audit Log
         try:
@@ -273,7 +273,7 @@ class RBACModule(ConfigurationModule):
             f.write(content)
 
         self.run(f"chmod 440 {sudoers_file}", check=True)
-        self.logger.info(f"  Configured sudo access")
+        self.logger.info("  Configured sudo access")
 
     def _generate_password(self, length: int = 16) -> str:
         """Generate a random password."""

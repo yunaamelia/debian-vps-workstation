@@ -2,9 +2,7 @@
 Integration between PackageCacheManager and system APT cache.
 """
 
-import glob
 import logging
-import os
 import shutil
 from pathlib import Path
 from typing import List, Optional

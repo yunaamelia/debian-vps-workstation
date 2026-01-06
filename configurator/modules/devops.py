@@ -83,7 +83,7 @@ class DevOpsModule(ConfigurationModule):
                     "kubectl version --client --short 2>/dev/null || kubectl version --client",
                     check=False,
                 )
-                self.logger.info(f"✓ kubectl installed")
+                self.logger.info("✓ kubectl installed")
             else:
                 self.logger.warning("kubectl not found")
 

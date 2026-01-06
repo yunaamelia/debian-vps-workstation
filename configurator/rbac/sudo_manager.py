@@ -390,10 +390,10 @@ class SudoPolicyManager:
         content = f"# Sudo policy for {username}\n"
         content += f"# Role: {policy.name}\n"
         content += f"# Generated: {datetime.now().isoformat()}\n"
-        content += f"# Managed by: VPS Configurator RBAC\n\n"
+        content += "# Managed by: VPS Configurator RBAC\n\n"
 
         if not policy.rules:
-            content += f"# No sudo access granted\n"
+            content += "# No sudo access granted\n"
             return content
 
         # Group rules by password requirement

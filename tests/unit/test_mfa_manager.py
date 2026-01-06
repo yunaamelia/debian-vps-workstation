@@ -2,10 +2,8 @@
 Unit tests for MFA Manager.
 """
 
-import json
 import unittest
-from datetime import datetime, timedelta
-from pathlib import Path
+from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 from configurator.security.mfa_manager import (

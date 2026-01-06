@@ -1,4 +1,5 @@
 import hashlib
+import hmac
 import json
 import logging
 import os
@@ -15,8 +16,6 @@ logger = logging.getLogger(__name__)
 
 class FIMError(ConfiguratorError):
     """Exception for FIM errors."""
-
-    pass
 
 
 @dataclass
@@ -122,6 +121,7 @@ class FileIntegrityMonitor:
 
                 baseline_data = data.get("baseline", {})
                 canonical_json = json.dumps(baseline_data, sort_keys=True)
+
                 expected_sig = self._calculate_signature(canonical_json.encode())
 
                 if not hmac.compare_digest(expected_sig, signature):
@@ -150,6 +150,7 @@ class FileIntegrityMonitor:
             output_data = {"baseline": baseline_data}
 
             if self._hmac_key:
+
                 # Sign the canonical content of baseline
                 canonical_json = json.dumps(baseline_data, sort_keys=True)
                 signature = self._calculate_signature(canonical_json.encode())

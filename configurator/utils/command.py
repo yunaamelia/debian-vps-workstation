@@ -113,7 +113,7 @@ def run_command(
         raise ModuleExecutionError(
             what=f"Command not found: {cmd_str.split()[0]}",
             why="The command or program is not installed",
-            how=f"Install the required package:\n" f"  sudo apt-get install {cmd_str.split()[0]}",
+            how="Install the required package:\n" f"  sudo apt-get install {cmd_str.split()[0]}",
         )
 
 

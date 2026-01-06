@@ -112,10 +112,10 @@ def restore_file(
 from pathlib import Path
 from typing import Optional, Union
 
-from configurator.exceptions import ModuleExecutionError
 from configurator.utils.file_lock import file_lock
 
 # Default backup directory
+
 BACKUP_DIR = Path("/var/backups/debian-vps-configurator")
 
 # ... ensure_dir, backup_file, restore_file unchanged ...
@@ -255,7 +255,7 @@ def file_contains(path: Union[str, Path], pattern: str) -> bool:
     # Naive read without lock is mostly fine for checking exists
     try:
         content = path.read_text(encoding="utf-8")
-    except:
+    except Exception:
         return False
     return pattern in content
 

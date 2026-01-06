@@ -43,7 +43,7 @@ def test_manager_initialization():
     if registry_file.parent.exists():
         print(f"  ✅ Registry directory exists: {registry_file.parent}")
     else:
-        print(f"  ❌ Registry directory not found")
+        print("  ❌ Registry directory not found")
         return False
 
     # Test 3: Check access registry
@@ -53,7 +53,7 @@ def test_manager_initialization():
         print(f"  ✅ Registry file exists: {registry_file}")
         print(f"     Active access grants: {len(temp_mgr.access_grants)}")
     else:
-        print(f"  ℹ️  Registry file will be created on first access grant")
+        print("  ℹ️  Registry file will be created on first access grant")
 
     # Test 4: Check initial state
     print("\n4. Checking initial state...")

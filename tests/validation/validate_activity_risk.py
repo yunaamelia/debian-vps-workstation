@@ -72,7 +72,7 @@ def test_risk_calculation():
         command="chmod 644 /tmp/file.txt",
     )
 
-    print(f"  Activity: Permission change")
+    print("  Activity: Permission change")
     print(f"  Risk: {event.risk_level.value}")
 
     if event.risk_level in [RiskLevel.MEDIUM, RiskLevel.HIGH]:

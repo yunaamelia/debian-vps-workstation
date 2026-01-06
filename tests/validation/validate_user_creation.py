@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
-from configurator.users.lifecycle_manager import UserLifecycleManager, UserStatus
+from configurator.users.lifecycle_manager import UserLifecycleManager
 
 
 def test_basic_user_creation():
@@ -71,12 +71,12 @@ def test_basic_user_creation():
     retrieved_profile = lifecycle.get_user_profile(test_username)
 
     if retrieved_profile:
-        print(f"  ✅ User profile found in registry")
+        print("  ✅ User profile found in registry")
         print(f"     Full name: {retrieved_profile.full_name}")
         print(f"     Email: {retrieved_profile.email}")
         print(f"     Created: {retrieved_profile.created_at}")
     else:
-        print(f"  ❌ User profile not in registry")
+        print("  ❌ User profile not in registry")
         return False
 
     # Test 3: Verify registry persistence
@@ -84,7 +84,7 @@ def test_basic_user_creation():
 
     # Check if registry file exists
     if lifecycle.USER_REGISTRY_FILE.exists():
-        print(f"  ✅ Registry file created")
+        print("  ✅ Registry file created")
 
         # Reload manager
         lifecycle2 = UserLifecycleManager(
@@ -95,12 +95,12 @@ def test_basic_user_creation():
         )
 
         if test_username in lifecycle2.users:
-            print(f"  ✅ User profile persisted correctly")
+            print("  ✅ User profile persisted correctly")
         else:
-            print(f"  ❌ User profile not persisted")
+            print("  ❌ User profile not persisted")
             return False
     else:
-        print(f"  ❌ Registry file not created")
+        print("  ❌ Registry file not created")
         return False
 
     # Cleanup
@@ -191,12 +191,12 @@ def test_integrated_user_creation():
             try:
                 if hasattr(lifecycle.rbac_manager.assign_role, "called"):
                     if lifecycle.rbac_manager.assign_role.called:
-                        print(f"  ✅ RBAC assign_role was called")
+                        print("  ✅ RBAC assign_role was called")
                     else:
-                        print(f"  ⚠️  RBAC assign_role not called")
+                        print("  ⚠️  RBAC assign_role not called")
                 else:
                     # Real RBAC manager
-                    print(f"  ✅ Using real RBAC manager")
+                    print("  ✅ Using real RBAC manager")
             except Exception as e:
                 print(f"  ℹ️  RBAC integration check skipped: {e}")
 

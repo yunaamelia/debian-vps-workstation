@@ -67,7 +67,7 @@ def test_audit_logging():
 
         if lines:
             last_entry = json.loads(lines[-1])
-            print(f"     Last entry:")
+            print("     Last entry:")
             print(f"       Timestamp: {last_entry['timestamp']}")
             print(f"       Event: {last_entry['event']}")
             print(f"       Username: {last_entry['username']}")
@@ -75,14 +75,14 @@ def test_audit_logging():
 
             # Verify it's a CREATED event
             if last_entry["event"] == LifecycleEvent.CREATED.value:
-                print(f"  ✅ CREATED event logged correctly")
+                print("  ✅ CREATED event logged correctly")
             else:
                 print(f"  ⚠️  Unexpected event: {last_entry['event']}")
         else:
             print("  ⚠️  Audit log is empty")
             return False
     else:
-        print(f"  ❌ Audit log not found")
+        print("  ❌ Audit log not found")
         return False
 
     # Test 3: Suspend user (generates another audit log)
@@ -102,7 +102,7 @@ def test_audit_logging():
         last_entry = json.loads(lines[-1])
 
         if last_entry["event"] == LifecycleEvent.SUSPENDED.value:
-            print(f"  ✅ SUSPENDED event logged correctly")
+            print("  ✅ SUSPENDED event logged correctly")
         else:
             print(f"  ⚠️  Unexpected event: {last_entry['event']}")
     except Exception as e:
@@ -126,7 +126,7 @@ def test_audit_logging():
         last_entry = json.loads(lines[-1])
 
         if last_entry["event"] == LifecycleEvent.OFFBOARDED.value:
-            print(f"  ✅ OFFBOARDED event logged correctly")
+            print("  ✅ OFFBOARDED event logged correctly")
         else:
             print(f"  ⚠️  Unexpected event: {last_entry['event']}")
     except Exception as e:
@@ -144,11 +144,11 @@ def test_audit_logging():
     print(f"  Events: {', '.join(events)}")
 
     if LifecycleEvent.CREATED.value in events:
-        print(f"  ✅ CREATED event present")
+        print("  ✅ CREATED event present")
     if LifecycleEvent.SUSPENDED.value in events:
-        print(f"  ✅ SUSPENDED event present")
+        print("  ✅ SUSPENDED event present")
     if LifecycleEvent.OFFBOARDED.value in events:
-        print(f"  ✅ OFFBOARDED event present")
+        print("  ✅ OFFBOARDED event present")
 
     # Cleanup
     import shutil

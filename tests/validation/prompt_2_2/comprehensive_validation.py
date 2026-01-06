@@ -96,7 +96,7 @@ def check_1_2_data_models():
             else:
                 results.append(check_fail(f"Missing severity: {sev}"))
                 return False
-        results.append(check_pass(f"VulnerabilitySeverity enum complete (5 levels)"))
+        results.append(check_pass("VulnerabilitySeverity enum complete (5 levels)"))
 
         # Check Vulnerability dataclass fields
         vuln_sig = inspect.signature(Vulnerability)
@@ -398,14 +398,14 @@ def check_3_1_remediation_safety():
         # Test threshold logic
         assert (
             manager._meets_threshold(VulnerabilitySeverity.CRITICAL, VulnerabilitySeverity.HIGH)
-            == True
+            is True
         )
         assert (
             manager._meets_threshold(VulnerabilitySeverity.MEDIUM, VulnerabilitySeverity.HIGH)
-            == False
+            is False
         )
         assert (
-            manager._meets_threshold(VulnerabilitySeverity.HIGH, VulnerabilitySeverity.HIGH) == True
+            manager._meets_threshold(VulnerabilitySeverity.HIGH, VulnerabilitySeverity.HIGH) is True
         )
         results.append(check_pass("Severity threshold filtering works correctly"))
 
@@ -515,7 +515,7 @@ def check_5_1_report_generation():
         # Test JSON report
         json_path = reporter.generate_json([result])
         if Path(json_path).exists():
-            results.append(check_pass(f"JSON report generated"))
+            results.append(check_pass("JSON report generated"))
 
             # Validate JSON content
             with open(json_path) as f:
@@ -531,7 +531,7 @@ def check_5_1_report_generation():
         # Test HTML report
         html_path = reporter.generate_html([result])
         if Path(html_path).exists():
-            results.append(check_pass(f"HTML report generated"))
+            results.append(check_pass("HTML report generated"))
 
             # Validate HTML content
             html_content = Path(html_path).read_text()
@@ -581,7 +581,7 @@ def check_6_1_unit_tests():
         if "failed" not in output or "0 failed" in output:
             results.append(check_pass("No test failures"))
     else:
-        results.append(check_fail(f"Unit tests failed"))
+        results.append(check_fail("Unit tests failed"))
         print(f"  Output: {result.stdout[-500:]}")
 
     return all(results)
@@ -639,7 +639,7 @@ def main():
     print("     Prompt 2.2 Post-Implementation QA")
     print("═" * 70)
     print(f"\n  Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print(f"  System: Debian VPS Configurator")
+    print("  System: Debian VPS Configurator")
 
     checks = [
         ("1.1 File Structure", check_1_1_file_structure),
@@ -683,11 +683,11 @@ def main():
     print(f"  ❌ Failed: {failed}")
 
     if failed == 0:
-        print(f"\n  🎉 ALL CHECKS PASSED!")
-        print(f"\n  Overall Status: ✅ APPROVED")
+        print("\n  🎉 ALL CHECKS PASSED!")
+        print("\n  Overall Status: ✅ APPROVED")
     else:
         print(f"\n  ⚠️  {failed} CHECK(S) FAILED")
-        print(f"\n  Overall Status: ⚠️  CONDITIONAL (needs scanner installation)")
+        print("\n  Overall Status: ⚠️  CONDITIONAL (needs scanner installation)")
 
     print("\n" + "═" * 70)
     print("     NOTES")

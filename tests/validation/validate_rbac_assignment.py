@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Test role assignment and validation"""
 
-import os
 import sys
 import tempfile
 from pathlib import Path
@@ -50,7 +49,7 @@ def test_manager_initialization():
     if Path(temp_dir).exists():
         print(f"  ✅ RBAC directory exists: {temp_dir}")
     else:
-        print(f"  ❌ RBAC directory not found")
+        print("  ❌ RBAC directory not found")
         return False, None, temp_dir
 
     # Test 3: Check roles file
@@ -62,11 +61,11 @@ def test_manager_initialization():
         print(f"     Loaded roles: {len(roles)}")
 
         if len(roles) >= 4:
-            print(f"  ✅ Default roles loaded")
+            print("  ✅ Default roles loaded")
         else:
             print(f"  ⚠️  Few roles loaded: {len(roles)}")
     else:
-        print(f"  ℹ️  Roles file will be created with defaults")
+        print("  ℹ️  Roles file will be created with defaults")
 
     # Test 4: List predefined roles
     print("\n4. Listing predefined roles...")
@@ -107,7 +106,7 @@ def test_role_assignment(rbac):
             reason="Testing role assignment",
         )
 
-        print(f"  ✅ Role assigned successfully")
+        print("  ✅ Role assigned successfully")
         print(f"     User: {assignment.user}")
         print(f"     Role: {assignment.role_name}")
         print(f"     Assigned by: {assignment.assigned_by}")
@@ -139,11 +138,11 @@ def test_role_assignment(rbac):
     )
 
     if test_user in rbac2.assignments:
-        print(f"  ✅ Assignment persisted correctly")
+        print("  ✅ Assignment persisted correctly")
         saved_assignment = rbac2.assignments[test_user]
         print(f"     Role: {saved_assignment.role_name}")
     else:
-        print(f"  ❌ Assignment not persisted")
+        print("  ❌ Assignment not persisted")
         return False
 
     # Test 3: Check assignment file
@@ -158,19 +157,19 @@ def test_role_assignment(rbac):
             data = json.load(f)
 
         if test_user in data:
-            print(f"  ✅ User assignment found in file")
+            print("  ✅ User assignment found in file")
         else:
-            print(f"  ❌ User assignment not in file")
+            print("  ❌ User assignment not in file")
             return False
     else:
-        print(f"  ❌ Assignments file not created")
+        print("  ❌ Assignments file not created")
         return False
 
     # Test 4: Assign non-existent role
     print("\n4. Testing invalid role assignment...")
     try:
         rbac.assign_role(user=test_user, role_name="nonexistent-role", assigned_by="test-script")
-        print(f"  ❌ Should have raised ValueError")
+        print("  ❌ Should have raised ValueError")
         return False
     except ValueError as e:
         print(f"  ✅ Invalid role rejected: {e}")
@@ -221,7 +220,7 @@ def test_permission_validation(rbac):
 
     if len(permissions) > 0:
         print("  ✅ User has permissions")
-        print(f"     Sample permissions (first 5):")
+        print("     Sample permissions (first 5):")
         for perm in permissions[:5]:
             print(f"       - {perm}")
     else:

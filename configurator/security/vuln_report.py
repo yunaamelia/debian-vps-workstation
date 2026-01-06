@@ -1,14 +1,11 @@
 import json
 import logging
-import os
-from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import List
 
 from configurator.security.vulnerability_scanner import (
     ScanResult,
-    Vulnerability,
     VulnerabilitySeverity,
 )
 
@@ -129,7 +126,7 @@ class VulnReportGenerator:
         .no-fix { color: #6c757d; font-style: italic; }
         """
 
-        html = f"""
+        html = """
         <!DOCTYPE html>
         <html lang="en">
         <head>
@@ -176,7 +173,7 @@ class VulnReportGenerator:
     def _build_scan_section(self, result: ScanResult) -> str:
         """Build HTML for a single scan result"""
 
-        summary = result.get_summary()
+        result.get_summary()
 
         rows = ""
         # Sort vulnerabilities by severity (Critical -> Low)
@@ -193,7 +190,7 @@ class VulnReportGenerator:
         )
 
         for v in sorted_vulns:
-            severity_class = f"badge-{v.severity.value}"
+            f"badge-{v.severity.value}"
             fix_info = (
                 f"<span class='fix-available'>Fixed in {v.fixed_version}</span>"
                 if v.fixed_version
@@ -205,7 +202,7 @@ class VulnReportGenerator:
             if v.references:
                 cve_link = f"<a href='{v.references[0]}' target='_blank'>{v.cve_id}</a>"
 
-            rows += f"""
+            rows += """
             <tr>
                 <td><span class="badge {severity_class}">{v.severity.value.upper()}</span></td>
                 <td><strong>{cve_link}</strong></td>
@@ -221,7 +218,7 @@ class VulnReportGenerator:
         if not rows:
             rows = "<tr><td colspan='5' style='text-align: center; padding: 20px;'>No vulnerabilities found! ✅</td></tr>"
 
-        return f"""
+        return """
         <div class="scan-section">
             <h2>Target: {result.target}</h2>
             <div style="margin-bottom: 15px; color: #666;">

@@ -14,8 +14,6 @@ from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional
 
-from configurator.exceptions import ConfiguratorError
-
 
 class HookType(Enum):
     """Types of hooks that can be registered."""

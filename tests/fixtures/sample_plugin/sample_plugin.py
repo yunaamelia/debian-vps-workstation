@@ -1,5 +1,3 @@
-from typing import Any, Dict
-
 from configurator.plugins.base import PluginBase, PluginInfo
 
 
