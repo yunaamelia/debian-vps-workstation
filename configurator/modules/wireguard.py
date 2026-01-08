@@ -180,12 +180,47 @@ PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING 
         self.logger.info("✓ Firewall configured")
 
     def _start_service(self):
-        """Start WireGuard service."""
+        """Start WireGuard service with graceful VPS handling."""
         self.logger.info("Starting WireGuard...")
 
-        self.enable_service("wg-quick@wg0")
+        # Check if WireGuard kernel module is available
+        result = self.run("modprobe wireguard 2>&1 || lsmod | grep -q wireguard", check=False)
+        kernel_module_available = result.success
 
-        self.logger.info("✓ WireGuard started")
+        if not kernel_module_available:
+            # Check if it's a VPS without kernel module support
+            result = self.run(
+                "grep -qE 'hypervisor|kvm|xen|vmware' /proc/cpuinfo 2>/dev/null", check=False
+            )
+            is_vps = result.success
+
+            if is_vps:
+                self.logger.warning("⚠️  WireGuard kernel module not available on this VPS")
+                self.logger.warning("   This is common on shared hosting/VPS without kernel access")
+                self.logger.warning("   WireGuard is installed but cannot start automatically")
+                self.logger.warning("")
+                self.logger.warning("   Options to resolve:")
+                self.logger.warning(
+                    "   1. Contact your VPS provider to enable WireGuard kernel module"
+                )
+                self.logger.warning("   2. Use wireguard-go (userspace implementation) instead")
+                self.logger.warning("   3. Use an alternative VPN solution (OpenVPN, Tailscale)")
+                self.state["service_started"] = False
+                return  # Don't fail, just skip service start
+
+        # Try to start the service
+        try:
+            self.enable_service("wg-quick@wg0")
+            self.logger.info("✓ WireGuard started")
+            self.state["service_started"] = True
+        except Exception as e:
+            self.logger.warning(f"⚠️  Could not start WireGuard service: {e}")
+            self.logger.warning("   WireGuard is installed but the service failed to start")
+            self.logger.warning(
+                "   This may be due to VPS kernel limitations or configuration issues"
+            )
+            self.logger.warning("   Check: journalctl -xeu wg-quick@wg0.service")
+            self.state["service_started"] = False
 
     def _generate_client_config(self):
         """Generate a sample client configuration."""
