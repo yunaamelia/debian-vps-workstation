@@ -1,7 +1,7 @@
 ---
 name: 'DevOps Expert'
 description: 'DevOps specialist following the infinity loop principle (Plan → Code → Build → Test → Release → Deploy → Operate → Monitor) with focus on automation, collaboration, and continuous improvement'
-tools: ['vscode', 'execute', 'read', 'edit', 'search', 'web', 'com.microsoft/azure/*', 'github/*', 'agent', 'todo']
+tools: ['vscode', 'execute', 'read', 'edit', 'search', 'web', 'com.microsoft/azure/*', 'github/*', 'io.github.upstash/context7/*', 'agent', 'todo']
 ---
 
 # DevOps Expert

@@ -231,7 +231,7 @@ class TestTerminalTools:
     @pytest.fixture
     def module(self):
         config = {
-            "desktop": {"zsh": {"tools": {"fzf": True, "bat": True, "exa": True, "zoxide": True}}}
+            "desktop": {"zsh": {"tools": {"fzf": True, "bat": True, "eza": True, "zoxide": True}}}
         }
         return DesktopModule(config=config, logger=Mock())
 
@@ -245,7 +245,7 @@ class TestTerminalTools:
         for pkg_call in mock_install_pkg.call_args_list:
             all_packages.extend(pkg_call[0][0])
 
-        required_tools = ["fzf", "bat", "exa", "zoxide"]
+        required_tools = ["fzf", "bat", "eza", "zoxide"]
         for tool in required_tools:
             # Note: package names might differ based on OS functionality
             assert tool in all_packages, f"Missing tool: {tool}"
@@ -255,7 +255,7 @@ class TestTerminalTools:
         """Test that tool installation respects configuration."""
         # Disable some tools
         module.config["desktop"]["zsh"]["tools"]["bat"] = False
-        module.config["desktop"]["zsh"]["tools"]["exa"] = False
+        module.config["desktop"]["zsh"]["tools"]["eza"] = False
 
         module._install_terminal_tools()
 
@@ -269,7 +269,7 @@ class TestTerminalTools:
 
         # Should NOT install disabled tools
         assert "bat" not in all_packages
-        assert "exa" not in all_packages
+        assert "eza" not in all_packages
 
 
 class TestDefaultShellConfiguration:

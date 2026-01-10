@@ -89,8 +89,10 @@ class TestXRDPOptimizationUnit(unittest.TestCase):
         # Validate session settings
         assert "IdleTimeLimit=0" in sesman_content
         assert "DisconnectedTimeLimit=0" in sesman_content
-        assert "+extension GLX" in sesman_content
-        assert "LogLevel=WARNING" in sesman_content
+        # assert "+extension GLX" in sesman_content  # Removed in new config
+        assert "LogLevel=INFO" in sesman_content
+        assert "AllowRootLogin=true" in sesman_content
+        assert "MaxSessions=10" in sesman_content
 
     @patch("configurator.modules.desktop.write_file")
     @patch("configurator.modules.desktop.backup_file")
