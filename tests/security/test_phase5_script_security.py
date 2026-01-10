@@ -21,7 +21,7 @@ class TestCustomScriptSecurity:
     @pytest.fixture
     def module(self):
         """Create module instance for testing."""
-        config = {"desktop": {"terminal_tools": {"bat": {}, "exa": {}, "fzf": {}}}}
+        config = {"desktop": {"terminal_tools": {"bat": {}, "eza": {}, "fzf": {}}}}
         return DesktopModule(
             config=config, logger=Mock(), rollback_manager=Mock(), dry_run_manager=Mock()
         )

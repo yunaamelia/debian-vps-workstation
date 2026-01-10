@@ -150,11 +150,11 @@ class TestTerminalExperience:
         [ ] dps → shows docker ps
         [ ] ..  → changes to parent directory
         [ ] cat file → shows syntax highlighting (if bat installed)
-        [ ] tree → shows tree view with icons (if exa installed)
+        [ ] tree → shows tree view with icons (if eza installed)
 
         Fallback Testing:
         [ ] If bat not installed, cat falls back to standard cat
-        [ ] If exa not installed, ls falls back to standard ls
+        [ ] If eza not installed, ls falls back to standard ls
 
         Test Commands:
         - ll
@@ -177,7 +177,7 @@ class TestTerminalExperience:
             - Line numbers visible
             - Paging disabled for inline use
 
-        [ ] exa (better ls):
+        [ ] eza (better ls):
             - ll shows icons (if terminal supports)
             - Colors appropriate
             - File types distinguished
@@ -213,13 +213,13 @@ class TestTerminalExperience:
         Validation:
         [ ] Prompt icons visible (not boxes)
         [ ] Git branch icon visible
-        [ ] Folder icon in ls output (if using exa)
+        [ ] Folder icon in ls output (if using eza)
         [ ] Arrow symbols in prompt
         [ ] No missing glyphs or tofu (□)
 
         Test Commands:
         - echo "\ue0b0 \ue0b2 \uf418 \uf41b"  # Should show various icons
-        - ll   # Should show file type icons (if exa installed)
+        - ll   # Should show file type icons (if eza installed)
 
         Font Check:
         - fc-list | grep Meslo  # Verify font installed

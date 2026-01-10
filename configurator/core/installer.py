@@ -444,7 +444,10 @@ class Installer:
             return True
 
         except Exception as e:
+            import traceback
+
             self.logger.error(f"Module {module_name} failed: {e}")
+            self.logger.debug(f"Traceback:\n{traceback.format_exc()}")
             self.reporter.complete_phase(success=False)
             return False
 

@@ -120,6 +120,12 @@ def main(ctx: click.Context, verbose: bool, quiet: bool):
     default=3,
     help="Number of workers for parallel execution",
 )
+@click.option(
+    "--verbose",
+    "-v",
+    is_flag=True,
+    help="Enable verbose output",
+)
 @click.pass_context
 def install(
     ctx: click.Context,
@@ -130,6 +136,7 @@ def install(
     dry_run: bool,
     no_parallel: bool,
     parallel_workers: int,
+    verbose: bool,
 ):
     """
     Install and configure the workstation.
@@ -145,6 +152,12 @@ def install(
       # Install with custom config
       vps-configurator install --config myconfig.yaml -y
     """
+    # Update logger if verbose flag passed to subcommand
+    if verbose:
+        ctx.obj["verbose"] = True
+        # Re-initialize logger with new setting
+        ctx.obj["logger"] = setup_logger(verbose=True, quiet=ctx.obj.get("quiet", False))
+
     logger = ctx.obj["logger"]
 
     # If no profile or config specified, suggest using wizard

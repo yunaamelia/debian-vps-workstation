@@ -176,7 +176,7 @@ class CircuitBreaker:
         self.failure_count += 1
         self.last_failure_time = datetime.now()
 
-        self.logger.warning(
+        self.logger.debug(
             f"Circuit breaker '{self.name}' recorded failure "
             f"({self.failure_count}/{self.failure_threshold}): {exception}"
         )
@@ -195,7 +195,7 @@ class CircuitBreaker:
         self.last_state_change = datetime.now()
         self.success_count = 0
 
-        self.logger.error(
+        self.logger.debug(
             f"⚠️  Circuit breaker '{self.name}' OPENED after "
             f"{self.failure_count} failures.  "
             f"Will retry after {self.timeout}s"

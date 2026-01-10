@@ -9,7 +9,7 @@
 | **Polkit Rules** | 2 files (colord, NetworkManager) | 2 files (colord, packagekit) | **Doc 2** (packagekit more useful) |
 | **Startup Scripts** | `~/.xsession` only | `~/.xsession` + alternative `~/.config/xrdp/startwm.sh` | **Doc 2** |
 | **Theme Selection** | Nordic, WhiteSur, Dracula | Nordic, WhiteSur, Arc, Dracula | **Doc 2** (more options) |
-| **Terminal Tools** | bat, exa mentioned | ✅ bat, exa, zoxide with detailed configs | **Doc 2** |
+| **Terminal Tools** | bat, eza mentioned | ✅ bat, eza, zoxide with detailed configs | **Doc 2** |
 | **Zsh Plugins** | Standard set | ✅ Extended set (kubectl, colored-man-pages) | **Doc 2** |
 | **Automation** | Manual steps | ✅ Complete setup. sh script | **Doc 2** |
 | **Troubleshooting** | 6 common issues | 7 issues + more detailed solutions | **Doc 2** |
@@ -379,7 +379,7 @@ git clone https://github.com/zsh-users/zsh-autosuggestions ${ZSH_CUSTOM:-~/.oh-m
 git clone https://github.com/zsh-users/zsh-syntax-highlighting. git ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/zsh-syntax-highlighting
 
 # Install productivity tools (Doc 2's selection is excellent)
-sudo apt install fzf bat exa zoxide -y
+sudo apt install fzf bat eza zoxide -y
 ```
 
 ### `~/.zshrc` (Combined Best)
@@ -421,9 +421,9 @@ setopt SHARE_HISTORY
 # === Aliases (Combined best from both) ===
 # Modern tools (Doc 2)
 alias cat='batcat --paging=never'
-alias ls='exa --icons'
-alias ll='exa -lah --icons'
-alias tree='exa --tree --icons'
+alias ls='eza --icons'
+alias ll='eza -lah --icons'
+alias tree='eza --tree --icons'
 
 # Traditional (Doc 1)
 alias la='ls -A'
@@ -629,7 +629,7 @@ echo "🔧 Installing essential tools..."
 sudo apt install -y \
     git curl wget vim htop \
     fonts-powerline fonts-noto fonts-roboto fonts-firacode ttf-mscorefonts-installer \
-    zsh fzf bat exa zoxide \
+    zsh fzf bat eza zoxide \
     plank \
     arc-theme papirus-icon-theme \
     gtk2-engines-murrine gtk2-engines-pixbuf sassc
@@ -713,9 +713,9 @@ setopt SHARE_HISTORY
 
 # Aliases
 alias cat='batcat --paging=never'
-alias ls='exa --icons'
-alias ll='exa -lah --icons'
-alias tree='exa --tree --icons'
+alias ls='eza --icons'
+alias ll='eza -lah --icons'
+alias tree='eza --tree --icons'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias df='df -h'
@@ -1001,7 +1001,7 @@ chmod +x ultimate-setup.sh
 | Font Config | Doc 2's XML + Doc 1's `RGBA=none` | Both | Critical insight from Doc 1 |
 | Panel Layout | Doc 1's Plank setup | Doc 1 | Cleaner approach |
 | Zsh Config | Doc 2's plugins + Doc 1's aliases | Both | Most comprehensive |
-| Terminal Tools | Doc 2's bat/exa/zoxide | Doc 2 | Better selection |
+| Terminal Tools | Doc 2's bat/eza/zoxide | Doc 2 | Better selection |
 | Kernel Tuning | Doc 2's network + Doc 1's TCP | Both | Combined optimization |
 | Automation | Enhanced script (above) | Both | Best of both |
 
@@ -1024,7 +1024,7 @@ chmod +x ultimate-setup.sh
 
 1. **Powerlevel10k** - Fast, informative prompt
 2. **zsh-autosuggestions** - Learn from history
-3. **exa + bat** - Beautiful file browsing
+3. **eza + bat** - Beautiful file browsing
 4. **zoxide** - Smart navigation
 
 ---

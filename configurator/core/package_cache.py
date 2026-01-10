@@ -122,7 +122,7 @@ class PackageCacheManager:
             self.cache_dir.mkdir(parents=True, exist_ok=True, mode=0o755)
             self.logger.debug(f"Cache directory: {self.cache_dir}")
         except Exception as e:
-            self.logger.warning(f"Could not create cache directory: {e}")
+            self.logger.debug(f"Could not create system cache directory: {e}")
             # Fallback to user cache
             self.cache_dir = Path.home() / ".cache/debian-vps-configurator/packages"
             self.cache_dir.mkdir(parents=True, exist_ok=True)

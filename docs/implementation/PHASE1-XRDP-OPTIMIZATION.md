@@ -316,7 +316,7 @@ The following features are planned for future phases:
 - **Phase 2**: XFCE compositor optimization and additional polkit rules
 - **Phase 3**: Theme and icon installation (Nordic, Papirus)
 - **Phase 4**: Zsh + Oh My Zsh + Powerlevel10k setup
-- **Phase 5**: Terminal productivity tools (bat, exa, zoxide)
+- **Phase 5**: Terminal productivity tools (bat, eza, zoxide)
 - **Phase 6**: Kernel tuning and complete automation script
 
 ---

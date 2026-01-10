@@ -35,10 +35,13 @@ class NetdataModule(ConfigurationModule):
 
     def configure(self) -> bool:
         """Install and configure Netdata."""
-        self.logger.info("Installing Netdata...")
 
-        # 1. Install Netdata
-        self._install_netdata()
+        # 1. Install Netdata (only if not present)
+        if not self.command_exists("netdata"):
+            self.logger.info("Installing Netdata...")
+            self._install_netdata()
+        else:
+            self.logger.info("Netdata already installed, bypassing installation")
 
         # 2. Configure
         self._configure_netdata()

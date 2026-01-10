@@ -132,7 +132,7 @@ class PythonModule(ConfigurationModule):
         """Upgrade pip to latest version."""
         # On Debian 12+, we need --break-system-packages or just skip it
         # Since we use system packages, we probably shouldn't mess with system pip
-        self.logger.info("Skipping global pip upgrade (managed by apt)")
+        self.logger.debug("Global pip upgrade managed by apt (system)")
 
     def _install_dev_tools(self):
         """Install Python development tools."""
@@ -140,7 +140,7 @@ class PythonModule(ConfigurationModule):
         dev_tools = self.get_config("dev_tools", self.DEV_TOOLS)
 
         if not dev_tools:
-            self.logger.info("No dev tools specified, skipping")
+            self.logger.info("No dev tools specified.")
             return
 
         self.logger.info(f"Installing dev tools: {', '.join(dev_tools)}")

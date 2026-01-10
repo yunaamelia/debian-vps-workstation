@@ -31,7 +31,7 @@ E   assert ('[ -f' in '#!/bin/bash\n# Intelligent search using ripgrep + fzf\n\n
 DEBUG: Script Content:
 #!/bin/bash
 # Universal file previewer
-# Uses bat for text files, exa for directories
+# Uses bat for text files, eza for directories
 
 FILE="$1"
 
@@ -48,8 +48,8 @@ if [ ! -e "$FILE" ]; then
 fi
 
 if [ -d "$FILE" ]; then
-    # Directory:  use exa
-    exa -lah --color=always --icons --git -- "$FILE"
+    # Directory:  use eza
+    eza -lah --color=always --icons --git -- "$FILE"
 elif [ -f "$FILE" ]; then
     # File: detect type and use appropriate tool
     MIME=$(file --mime-type -b -- "$FILE")

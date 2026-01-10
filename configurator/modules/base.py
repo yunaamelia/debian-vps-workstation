@@ -209,7 +209,26 @@ class ConfigurationModule(ABC):
         # Acquire lock to prevent parallel APT operations
         with self._APT_LOCK:
             if update_cache:
-                self.run("apt-get update", check=False)
+                # Retry apt-get update if another process has the lock
+                for retry_attempt in range(3):
+                    result = self.run("apt-get update", check=False)
+                    if result.return_code == 0:
+                        break
+                    if (
+                        "Could not get lock" in result.stderr
+                        or "Could not get lock" in result.stdout
+                    ):
+                        if retry < 2:
+                            self.logger.debug(f"APT lock busy, waiting... (attempt {retry + 1}/3)")
+                            import time
+
+                            time.sleep(5)
+                        else:
+                            self.logger.warning(
+                                "APT lock still busy after retries, continuing anyway"
+                            )
+                    else:
+                        break
 
             # Pre-populate APT cache from our local cache
             if self.apt_cache_integration and not self.dry_run:
@@ -225,11 +244,46 @@ class ConfigurationModule(ABC):
             env["DEBIAN_FRONTEND"] = "noninteractive"
 
             def _install():
-                return self.run(
-                    f"apt-get install -y {packages_str}",
-                    check=True,
-                    env=env,
-                )
+                # Retry install if another process has the lock
+                for retry_attempt in range(3):
+                    result = self.run(
+                        f"apt-get install -y {packages_str}",
+                        check=False,
+                        env=env,
+                    )
+                    if result.return_code == 0:
+                        return result
+                    if (
+                        "Could not get lock" in result.stderr
+                        or "Could not get lock" in result.stdout
+                    ):
+                        if retry < 2:
+                            self.logger.debug(
+                                f"APT lock busy during install, waiting... (attempt {retry + 1}/3)"
+                            )
+                            import time
+
+                            time.sleep(5)
+                        else:
+                            # Final retry failed, raise error
+                            raise ModuleExecutionError(
+                                what=f"Cannot install packages: {packages_str}",
+                                why="APT/dpkg lock is held by another process",
+                                how="Wait for other package operations to complete or run: sudo lsof /var/lib/dpkg/lock-frontend",
+                            )
+                    else:
+                        # Different error, raise it
+                        if result.return_code != 0:
+                            raise ModuleExecutionError(
+                                what=f"Command failed: apt-get install -y {packages_str}",
+                                why=f"Exit code: {result.return_code}\n{result.stderr}",
+                                how="""Check the command output above for details. You may need to:
+1. Check if required packages are installed
+2. Verify you have the necessary permissions
+3. Check your internet connection""",
+                            )
+                        return result
+                return result
 
             # Get apt circuit breaker
             breaker = self.circuit_breaker_manager.get_breaker(
@@ -242,7 +296,7 @@ class ConfigurationModule(ABC):
                 # Execute through circuit breaker
                 result = breaker.call(_install)
             except CircuitBreakerError as e:
-                self.logger.error(f"Circuit breaker open for apt: {e}")
+                self.logger.debug(f"Circuit breaker open for apt: {e}")
 
                 # Ask user if they want to wait or skip
                 if self.config.get("interactive"):

@@ -26,7 +26,7 @@
 
 ## 3. Productivity Tools
 
-- [ ] **Exa (ls replacement)**:
+- [ ] **Eza (ls replacement)**:
   - [ ] `ls` or `ll` shows colorful output
   - [ ] Icons visible for files/folders (if supported)
 - [ ] **Bat (cat replacement)**:
