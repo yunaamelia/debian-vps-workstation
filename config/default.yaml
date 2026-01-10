@@ -182,12 +182,28 @@ desktop:
   xrdp_port: 3389
   environment: xfce4
 
-  # === XRDP Performance Settings ===
+  # === Phase 1: XRDP Performance Settings ===
   xrdp:
     max_bpp: 24 # Color depth (24 for balance, 32 for LAN-only, 16 for slow connections)
     bitmap_cache: true # Client-side caching (huge performance win)
     security_layer: "tls" # TLS preferred over RDP security
     tcp_nodelay: true # Critical for responsiveness
+
+  # === Phase 2: XFCE Compositor Configuration ===
+  compositor:
+    # Modes: disabled | optimized | enabled
+    # - disabled: No compositing (recommended for remote, best performance)
+    # - optimized: Compositing with VSync off, no shadows (balanced)
+    # - enabled: Full compositing (LAN-only, smooth animations)
+    mode: "disabled"
+
+  # === Phase 2: Polkit Rules Configuration ===
+  polkit:
+    # Allow color management without password
+    allow_colord: true
+
+    # Allow package management without password
+    allow_packagekit: true
 
 # Programming Languages
 languages:
