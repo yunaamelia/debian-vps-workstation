@@ -85,10 +85,13 @@ Get up and running in **15 minutes**:
 git clone https://github.com/yourusername/debian-vps-configurator.git
 cd debian-vps-configurator
 
-# 2. Install (Remote or Local)
-pip install -e .
+# 2. Run Quick Install (Automated Prerequisites Setup)
+./quick-install.sh
 
-# 3. Run Automated Installation (The "Magic" Command)
+# 3. Activate virtual environment
+source venv/bin/activate
+
+# 4. Run Automated Installation (The "Magic" Command)
 vps-configurator install --profile advanced -v
 
 # What this does:
@@ -101,6 +104,20 @@ vps-configurator install --profile advanced -v
 ```
 
 **Done!** Your VPS is now hardened and ready for production.
+
+### 🚀 What Does `quick-install.sh` Do?
+
+The quick install script automates all prerequisite setup:
+
+- ✓ Checks OS compatibility (Debian 11+, Ubuntu 20.04+)
+- ✓ Verifies Python 3.9+ installation
+- ✓ Installs system dependencies (build tools, SSL, FFI libraries)
+- ✓ Creates and configures Python virtual environment
+- ✓ Installs all Python dependencies from requirements.txt
+- ✓ Installs vps-configurator in development mode
+- ✓ Verifies installation and tests basic functionality
+
+**Total setup time: 5-10 minutes**
 
 📖 **Detailed Guide:** [Quick Start Guide](docs/00-project-overview/quick-start-guide.md) (15 minutes)
 
@@ -197,7 +214,31 @@ docs/
 
 ## 📦 Installation
 
-### Option 1: Quick Install (Recommended)
+### Option 1: Quick Install with Helper Script (Recommended)
+
+```bash
+# Clone repository
+git clone https://github.com/yourusername/debian-vps-configurator.git
+cd debian-vps-configurator
+
+# Run automated setup script
+./quick-install.sh
+
+# Activate virtual environment
+source venv/bin/activate
+
+# Verify installation
+vps-configurator --version
+```
+
+The `quick-install.sh` script handles:
+- OS compatibility checks
+- System dependency installation
+- Virtual environment setup
+- Python package installation
+- Installation verification
+
+### Option 2: Manual Install from PyPI
 
 ```bash
 # Install from PyPI (when published)
@@ -207,7 +248,7 @@ pip install debian-vps-configurator
 vps-configurator init
 ```
 
-### Option 2: From Source
+### Option 3: Manual Install from Source
 
 ```bash
 # Clone repository
@@ -228,7 +269,7 @@ pip install -e .
 vps-configurator --version
 ```
 
-### Option 3: Docker (Coming Soon)
+### Option 4: Docker (Coming Soon)
 
 ```bash
 docker pull debian-vps-configurator:latest
