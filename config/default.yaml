@@ -205,6 +205,54 @@ desktop:
     # Allow package management without password
     allow_packagekit: true
 
+  # === Phase 3: Visual Customization ===
+
+  # Theme Configuration
+  themes:
+    # Themes to install (list)
+    install:
+      - nordic # Dark, high contrast (recommended for RDP)
+      - arc # Lightweight, modern
+      # - whitesur  # macOS inspired (optional, slow install)
+      # - dracula   # Vibrant colors (optional)
+
+    # Active theme to apply
+    # Options: Nordic-darker, Arc-Dark, WhiteSur-Dark, Dracula
+    active: "Nordic-darker"
+
+  # Icon Pack Configuration
+  icons:
+    # Icon packs to install
+    install:
+      - papirus # Modern, colorful (recommended)
+      # - tela      # Rounded, modern (optional)
+      # - numix     # Flat, minimalist (optional)
+
+    # Active icon pack
+    # Options: Papirus-Dark, Tela-dark, Numix-Circle
+    active: "Papirus-Dark"
+
+  # Font Configuration
+  fonts:
+    # Default system font
+    default: "Roboto 10"
+
+    # Font packages are auto-installed:
+    # - Roboto (sans-serif, UI)
+    # - Fira Code (monospace, terminal)
+    # - Noto Sans (fallback, emoji)
+
+  # Panel Layout Configuration
+  panel:
+    # Layout style: macos | windows | default
+    # - macos: Top panel + Plank dock at bottom
+    # - windows: Bottom taskbar (Windows 11 style)
+    # - default: XFCE default layout (top panel only)
+    layout: "macos"
+
+    # Plank dock auto-start
+    enable_plank: true
+
 # Programming Languages
 languages:
   python:

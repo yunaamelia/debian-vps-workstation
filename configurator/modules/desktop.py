@@ -136,13 +136,30 @@ class DesktopModule(ConfigurationModule):
         # 7. Configure Polkit rules
         self._configure_polkit_rules()
 
-        # 8. Configure session (polkit rules)
+        # === Phase 3: Visual Customization ===
+        # 8. Install themes
+        self._install_themes()
+
+        # 9. Install icon packs
+        self._install_icon_packs()
+
+        # 10. Configure fonts
+        self._configure_fonts()
+
+        # 11. Configure panel layout
+        self._configure_panel_layout()
+
+        # 12. Apply theme and icons
+        self._apply_theme_and_icons()
+
+        # === Finalization ===
+        # 13. Configure session (polkit rules)
         self._configure_session()
 
-        # 9. Start services
+        # 14. Start services
         self._start_services()
 
-        self.logger.info("✓ Remote Desktop installed with full optimizations")
+        self.logger.info("✓ Remote Desktop installed with full visual customization")
         return True
 
     def verify(self) -> bool:
@@ -182,6 +199,10 @@ class DesktopModule(ConfigurationModule):
 
         # Check Polkit rules
         self._verify_polkit_rules()
+
+        # === Phase 3: Verify themes and icons ===
+        if not self._verify_themes_and_icons():
+            checks_passed = False
 
         return checks_passed
 
@@ -786,6 +807,563 @@ ResultActive=yes
                 self.logger.warning(f"Failed to restart polkit service: {e}")
 
         return len(rules_installed) > 0
+
+    # === PHASE 3: Theme & Visual Customization ===
+
+    def _install_themes(self):
+        """
+        Install GTK themes for XFCE desktop.
+
+        Installs themes from both APT repositories and Git sources.
+        Supports multiple theme options configurable via config.
+
+        Themes installed:
+        - Nordic (Git) - Dark theme optimized for remote desktop
+        - WhiteSur (Git) - macOS Big Sur inspired theme
+        - Arc (APT) - Lightweight modern theme
+        - Dracula (Git) - High contrast vibrant theme
+        """
+        self.logger.info("Installing desktop themes...")
+
+        # Handle dry-run mode
+        if self.dry_run:
+            if self.dry_run_manager:
+                themes = self.get_config("desktop.themes.install", ["nordic"])
+                self.dry_run_manager.record_command(f"Install themes: {', '.join(themes)}")
+            self.logger.info("[DRY-RUN] Would install desktop themes")
+            return
+
+        # Get theme configuration
+        themes_config = self.get_config("desktop.themes", {})
+
+        # Install base theme dependencies
+        self.logger.info("Installing theme dependencies...")
+        theme_deps = [
+            "gtk2-engines-murrine",  # Required for many themes
+            "gtk2-engines-pixbuf",  # Icon rendering
+            "sassc",  # SASS compiler for theme building
+            "git",  # For cloning theme repos
+        ]
+        self.install_packages(theme_deps)
+
+        # Install themes based on configuration
+        themes_to_install = themes_config.get("install", ["nordic", "arc"])
+
+        for theme_name in themes_to_install:
+            theme_name_lower = theme_name.lower()
+
+            try:
+                if theme_name_lower == "nordic":
+                    self._install_nordic_theme()
+                elif theme_name_lower == "whitesur":
+                    self._install_whitesur_theme()
+                elif theme_name_lower == "arc":
+                    self._install_arc_theme()
+                elif theme_name_lower == "dracula":
+                    self._install_dracula_theme()
+                else:
+                    self.logger.warning(f"Unknown theme: {theme_name}")
+            except Exception as e:
+                self.logger.error(f"Failed to install theme '{theme_name}': {e}")
+                # Continue with other themes
+                continue
+
+        self.logger.info("✓ Themes installed")
+
+    def _install_nordic_theme(self):
+        """Install Nordic theme from GitHub."""
+        self.logger.info("Installing Nordic theme...")
+
+        theme_repo = "https://github.com/EliverLara/Nordic.git"
+        temp_dir = "/tmp/nordic-theme"
+        install_dir = "/usr/share/themes/Nordic"
+
+        # Check if already installed
+        if os.path.exists(install_dir):
+            self.logger.info("Nordic theme already installed, updating...")
+            self.run(f"rm -rf {install_dir}", check=False)
+
+        # Clone repository
+        self.run(f"rm -rf {temp_dir}", check=False)
+        self.run(f"git clone --depth=1 {theme_repo} {temp_dir}", check=True)
+
+        # Install theme
+        self.run(f"mv {temp_dir} {install_dir}", check=True)
+
+        # Cleanup
+        self.run(f"rm -rf {temp_dir}", check=False)
+
+        # Register rollback
+        if self.rollback_manager:
+            self.rollback_manager.add_command(
+                f"rm -rf {install_dir}", description="Remove Nordic theme"
+            )
+
+        self.logger.info("✓ Nordic theme installed")
+
+    def _install_whitesur_theme(self):
+        """Install WhiteSur GTK theme from GitHub."""
+        self.logger.info("Installing WhiteSur theme...")
+
+        theme_repo = "https://github.com/vinceliuice/WhiteSur-gtk-theme.git"
+        temp_dir = "/tmp/whitesur-theme"
+
+        # Clone repository
+        self.run(f"rm -rf {temp_dir}", check=False)
+        self.run(f"git clone --depth=1 {theme_repo} {temp_dir}", check=True)
+
+        # Run installer script
+        # Install to system directory (-d /usr/share/themes)
+        # Install all variants (-t all)
+        install_cmd = f"cd {temp_dir} && ./install.sh -d /usr/share/themes -t all"
+
+        result = self.run(install_cmd, check=False, shell=True)
+
+        if not result.success:
+            self.logger.warning("WhiteSur installation script failed, attempting manual install")
+            # Fallback: just copy theme files
+            self.run("mkdir -p /usr/share/themes/WhiteSur-Dark", check=True)
+            self.run(
+                f"cp -r {temp_dir}/src/* /usr/share/themes/WhiteSur-Dark/",
+                check=False,
+            )
+
+        # Cleanup
+        self.run(f"rm -rf {temp_dir}", check=False)
+
+        # Register rollback
+        if self.rollback_manager:
+            self.rollback_manager.add_command(
+                "rm -rf /usr/share/themes/WhiteSur*",
+                description="Remove WhiteSur theme",
+            )
+
+        self.logger.info("✓ WhiteSur theme installed")
+
+    def _install_arc_theme(self):
+        """Install Arc theme from APT repository."""
+        self.logger.info("Installing Arc theme...")
+
+        # Arc is available in Debian repos
+        self.install_packages(["arc-theme"])
+
+        self.logger.info("✓ Arc theme installed")
+
+    def _install_dracula_theme(self):
+        """Install Dracula theme from GitHub."""
+        self.logger.info("Installing Dracula theme...")
+
+        theme_repo = "https://github.com/dracula/gtk.git"
+        temp_dir = "/tmp/dracula-theme"
+        install_dir = "/usr/share/themes/Dracula"
+
+        # Clone repository
+        self.run(f"rm -rf {temp_dir}", check=False)
+        self.run(f"git clone --depth=1 {theme_repo} {temp_dir}", check=True)
+
+        # Install theme
+        self.run("mkdir -p /usr/share/themes", check=True)
+        self.run(f"mv {temp_dir} {install_dir}", check=True)
+
+        # Cleanup
+        self.run(f"rm -rf {temp_dir}", check=False)
+
+        # Register rollback
+        if self.rollback_manager:
+            self.rollback_manager.add_command(
+                f"rm -rf {install_dir}", description="Remove Dracula theme"
+            )
+
+        self.logger.info("✓ Dracula theme installed")
+
+    def _install_icon_packs(self):
+        """
+        Install icon packs for XFCE desktop.
+
+        Icon packs installed:
+        - Papirus (APT) - Modern, colorful, comprehensive
+        - Tela (Git) - Rounded, modern design
+        - Numix Circle (APT) - Flat, minimalist
+        """
+        self.logger.info("Installing icon packs...")
+
+        # Handle dry-run mode
+        if self.dry_run:
+            if self.dry_run_manager:
+                icons = self.get_config("desktop.icons.install", ["papirus"])
+                self.dry_run_manager.record_command(f"Install icon packs: {', '.join(icons)}")
+            self.logger.info("[DRY-RUN] Would install icon packs")
+            return
+
+        # Get icon pack configuration
+        icons_config = self.get_config("desktop.icons", {})
+        icons_to_install = icons_config.get("install", ["papirus"])
+
+        for icon_name in icons_to_install:
+            icon_name_lower = icon_name.lower()
+
+            try:
+                if icon_name_lower == "papirus":
+                    self._install_papirus_icons()
+                elif icon_name_lower == "tela":
+                    self._install_tela_icons()
+                elif icon_name_lower == "numix":
+                    self._install_numix_icons()
+                else:
+                    self.logger.warning(f"Unknown icon pack: {icon_name}")
+            except Exception as e:
+                self.logger.error(f"Failed to install icon pack '{icon_name}': {e}")
+                continue
+
+        self.logger.info("✓ Icon packs installed")
+
+    def _install_papirus_icons(self):
+        """Install Papirus icon theme from APT."""
+        self.logger.info("Installing Papirus icons...")
+
+        # Papirus is available in Debian repos
+        self.install_packages(["papirus-icon-theme"])
+
+        self.logger.info("✓ Papirus icons installed")
+
+    def _install_tela_icons(self):
+        """Install Tela icon theme from GitHub."""
+        self.logger.info("Installing Tela icons...")
+
+        icon_repo = "https://github.com/vinceliuice/Tela-icon-theme.git"
+        temp_dir = "/tmp/tela-icons"
+
+        # Clone repository
+        self.run(f"rm -rf {temp_dir}", check=False)
+        self.run(f"git clone --depth=1 {icon_repo} {temp_dir}", check=True)
+
+        # Run installer script (installs all variants)
+        install_cmd = f"cd {temp_dir} && ./install.sh -a"
+        self.run(install_cmd, check=True, shell=True)
+
+        # Cleanup
+        self.run(f"rm -rf {temp_dir}", check=False)
+
+        # Register rollback
+        if self.rollback_manager:
+            self.rollback_manager.add_command(
+                "rm -rf /usr/share/icons/Tela*", description="Remove Tela icons"
+            )
+
+        self.logger.info("✓ Tela icons installed")
+
+    def _install_numix_icons(self):
+        """Install Numix Circle icon theme from APT."""
+        self.logger.info("Installing Numix icons...")
+
+        # Numix Circle available in repos
+        self.install_packages(["numix-icon-theme-circle"])
+
+        self.logger.info("✓ Numix icons installed")
+
+    def _configure_fonts(self):
+        """
+        Configure font rendering optimized for remote desktop.
+
+        Key optimizations:
+        - Disable subpixel rendering (RGBA=none) - critical for RDP
+        - Enable hinting with hintslight
+        - Install modern font families
+        - Configure fontconfig for all users
+        """
+        self.logger.info("Configuring fonts for remote desktop...")
+
+        # Handle dry-run mode
+        if self.dry_run:
+            if self.dry_run_manager:
+                self.dry_run_manager.record_command("Configure fonts for remote desktop")
+            self.logger.info("[DRY-RUN] Would configure fonts")
+            return
+
+        # Install font packages
+        self.logger.info("Installing font packages...")
+        font_packages = [
+            "fonts-firacode",  # Monospace with ligatures
+            "fonts-noto",  # Google Noto (comprehensive)
+            "fonts-noto-color-emoji",  # Emoji support
+            "fonts-roboto",  # Modern sans-serif
+            "ttf-mscorefonts-installer",  # Microsoft core fonts (Arial, etc.)
+        ]
+
+        # Pre-accept EULA for mscorefonts
+        self.run(
+            "echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula "
+            "select true | debconf-set-selections",
+            check=False,
+        )
+
+        self.install_packages(font_packages)
+
+        # Configure fontconfig for all users
+        self._configure_fontconfig_system()
+
+        # Rebuild font cache
+        self.logger.info("Rebuilding font cache...")
+        self.run("fc-cache -fv", check=False)
+
+        self.logger.info("✓ Fonts configured")
+
+    def _configure_fontconfig_system(self):
+        """Create system-wide fontconfig configuration."""
+        fontconfig_content = """<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+<fontconfig>
+  <!-- Font rendering optimized for remote desktop -->
+  <match target="font">
+    <!-- Enable antialiasing -->
+    <edit mode="assign" name="antialias">
+      <bool>true</bool>
+    </edit>
+
+    <!-- Enable hinting -->
+    <edit mode="assign" name="hinting">
+      <bool>true</bool>
+    </edit>
+
+    <!-- Use slight hinting (better for remote) -->
+    <edit mode="assign" name="hintstyle">
+      <const>hintslight</const>
+    </edit>
+
+    <!-- CRITICAL: Disable subpixel rendering for RDP -->
+    <!-- Subpixel rendering causes blurry text over remote connections -->
+    <edit mode="assign" name="rgba">
+      <const>none</const>
+    </edit>
+
+    <!-- LCD filter (only applies if RGBA enabled, but set for completeness) -->
+    <edit mode="assign" name="lcdfilter">
+      <const>lcddefault</const>
+    </edit>
+  </match>
+
+  <!-- Font preferences -->
+  <alias>
+    <family>sans-serif</family>
+    <prefer>
+      <family>Roboto</family>
+      <family>Noto Sans</family>
+      <family>DejaVu Sans</family>
+    </prefer>
+  </alias>
+
+  <alias>
+    <family>serif</family>
+    <prefer>
+      <family>Noto Serif</family>
+      <family>DejaVu Serif</family>
+    </prefer>
+  </alias>
+
+  <alias>
+    <family>monospace</family>
+    <prefer>
+      <family>Fira Code</family>
+      <family>Noto Sans Mono</family>
+      <family>DejaVu Sans Mono</family>
+    </prefer>
+  </alias>
+</fontconfig>
+"""
+
+        fontconfig_path = "/etc/fonts/local.conf"
+
+        # Backup if exists
+        if os.path.exists(fontconfig_path):
+            backup_file(fontconfig_path)
+
+        write_file(fontconfig_path, fontconfig_content, mode="w")
+
+        # Register rollback
+        if self.rollback_manager:
+            self.rollback_manager.add_command(
+                f"rm -f {fontconfig_path}", description="Remove fontconfig customization"
+            )
+
+    def _configure_panel_layout(self):
+        """
+        Configure XFCE panel layout and install Plank dock.
+
+        Creates macOS-like layout:
+        - Top panel: menu, window buttons, system tray
+        - Bottom dock: Plank application launcher
+        """
+        self.logger.info("Configuring panel layout...")
+
+        # Handle dry-run mode
+        if self.dry_run:
+            if self.dry_run_manager:
+                layout = self.get_config("desktop.panel.layout", "macos")
+                self.dry_run_manager.record_command(f"Configure panel layout: {layout}")
+            self.logger.info("[DRY-RUN] Would configure panel layout")
+            return
+
+        # Install Plank dock
+        self.logger.info("Installing Plank dock...")
+        self.install_packages(["plank"])
+
+        # Setup Plank autostart
+        self._setup_plank_autostart()
+
+        self.logger.info("✓ Panel layout configured")
+
+    def _setup_plank_autostart(self):
+        """Configure Plank to auto-start for all users."""
+        users = [
+            u.pw_name
+            for u in pwd.getpwall()
+            if u.pw_uid >= self.MIN_USER_UID and u.pw_uid < self.MAX_USER_UID
+        ]
+
+        plank_desktop_content = """[Desktop Entry]
+Type=Application
+Exec=plank
+Hidden=false
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name=Plank
+Comment=Dock
+"""
+
+        for user in users:
+            if not self._validate_user_safety(user):
+                continue
+
+            try:
+                user_home = pwd.getpwnam(user).pw_dir
+                autostart_dir = os.path.join(user_home, ".config", "autostart")
+                plank_desktop_path = os.path.join(autostart_dir, "plank.desktop")
+
+                # Create autostart directory
+                safe_user = shlex.quote(user)
+                safe_dir = shlex.quote(autostart_dir)
+                self.run(f"sudo -u {safe_user} mkdir -p {safe_dir}", check=False)
+
+                # Write autostart file
+                safe_path = shlex.quote(plank_desktop_path)
+                self.run(
+                    f"sudo -u {safe_user} tee {safe_path} > /dev/null",
+                    input=plank_desktop_content.encode(),
+                    check=True,
+                )
+
+                self.logger.info(f"✓ Plank autostart configured for user: {user}")
+
+            except Exception as e:
+                self.logger.error(f"Failed to configure Plank for user {user}: {e}")
+                continue
+
+    def _apply_theme_and_icons(self):
+        """
+        Apply selected theme and icon pack to XFCE.
+
+        Applies configuration for all users.
+        """
+        self.logger.info("Applying theme and icon settings...")
+
+        # Handle dry-run mode
+        if self.dry_run:
+            if self.dry_run_manager:
+                theme = self.get_config("desktop.themes.active", "Nordic-darker")
+                icons = self.get_config("desktop.icons.active", "Papirus-Dark")
+                self.dry_run_manager.record_command(f"Apply theme: {theme}, icons: {icons}")
+            self.logger.info("[DRY-RUN] Would apply theme and icons")
+            return
+
+        # Get theme configuration
+        theme_name = self.get_config("desktop.themes.active", "Nordic-darker")
+        icon_name = self.get_config("desktop.icons.active", "Papirus-Dark")
+
+        users = [
+            u.pw_name
+            for u in pwd.getpwall()
+            if u.pw_uid >= self.MIN_USER_UID and u.pw_uid < self.MAX_USER_UID
+        ]
+
+        for user in users:
+            if not self._validate_user_safety(user):
+                continue
+
+            try:
+                safe_user = shlex.quote(user)
+
+                # Apply GTK theme
+                self.run(
+                    f"sudo -u {safe_user} xfconf-query -c xsettings "
+                    f"-p /Net/ThemeName -s '{theme_name}'",
+                    check=False,
+                )
+
+                # Apply icon theme
+                self.run(
+                    f"sudo -u {safe_user} xfconf-query -c xsettings "
+                    f"-p /Net/IconThemeName -s '{icon_name}'",
+                    check=False,
+                )
+
+                # Apply window manager theme
+                self.run(
+                    f"sudo -u {safe_user} xfconf-query -c xfwm4 "
+                    f"-p /general/theme -s '{theme_name}'",
+                    check=False,
+                )
+
+                self.logger.info(f"✓ Theme applied for user: {user}")
+
+            except Exception as e:
+                self.logger.error(f"Failed to apply theme for user {user}: {e}")
+                continue
+
+        self.logger.info(f"✓ Theme: {theme_name}, Icons: {icon_name}")
+
+    def _verify_themes_and_icons(self) -> bool:
+        """Verify themes and icons are installed and applied."""
+        checks_passed = True
+
+        # Verify theme installation
+        theme_name = self.get_config("desktop.themes.active", "Nordic-darker")
+        theme_path = f"/usr/share/themes/{theme_name}"
+
+        if os.path.exists(theme_path):
+            self.logger.info(f"✓ Theme installed: {theme_name}")
+        else:
+            self.logger.warning(f"Theme not found: {theme_name} at {theme_path}")
+            checks_passed = False
+
+        # Verify icon pack installation
+        icon_name = self.get_config("desktop.icons.active", "Papirus-Dark")
+        icon_path = f"/usr/share/icons/{icon_name}"
+
+        if os.path.exists(icon_path):
+            self.logger.info(f"✓ Icon pack installed: {icon_name}")
+        else:
+            self.logger.warning(f"Icon pack not found: {icon_name}")
+            checks_passed = False
+
+        # Verify Plank installation
+        if self.command_exists("plank"):
+            self.logger.info("✓ Plank dock installed")
+        else:
+            self.logger.warning("Plank dock not found")
+
+        # Verify fonts
+        font_families = ["Roboto", "Fira Code", "Noto Sans"]
+        result = self.run("fc-list : family", check=False, force_execute=True)
+
+        if result.success:
+            installed_fonts = result.stdout
+            for font in font_families:
+                if font in installed_fonts:
+                    self.logger.info(f"✓ Font installed: {font}")
+                else:
+                    self.logger.warning(f"Font not found: {font}")
+
+        return checks_passed
 
     def _verify_compositor_config(self, expected_mode: str) -> bool:
         """Verify compositor configuration for all users."""
