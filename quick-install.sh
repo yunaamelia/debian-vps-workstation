@@ -200,9 +200,10 @@ trap 'error_handler $LINENO' ERR
 # Check if running as root
 check_root() {
     if [ "$EUID" -eq 0 ]; then
-        print_error "Please do not run this script as root!"
-        print_info "Run as normal user: ./quick-install.sh"
-        exit 1
+        print_warning "Running as root - will install system-wide (no venv)"
+        ROOT_MODE=true
+    else
+        ROOT_MODE=false
     fi
 }
 
@@ -295,6 +296,13 @@ install_system_deps() {
 
 # Setup virtual environment
 setup_venv() {
+    # Skip venv for root
+    if [ "$ROOT_MODE" = true ]; then
+        print_info "Running as root - skipping virtual environment"
+        create_checkpoint "venv_created"
+        return 0
+    fi
+
     if check_checkpoint "venv_created"; then
         print_info "Virtual environment already created (checkpoint found)"
         return 0
@@ -336,20 +344,33 @@ install_python_deps() {
 
     backup_state "before_python_deps"
 
-    print_info "Activating virtual environment..."
-    source venv/bin/activate
+    if [ "$ROOT_MODE" = true ]; then
+        print_info "Installing system-wide (root mode)..."
+        print_info "Upgrading pip..."
+        pip3 install --upgrade pip setuptools wheel -q --break-system-packages
 
-    print_info "Upgrading pip..."
-    pip install --upgrade pip setuptools wheel -q
+        print_info "Installing project dependencies..."
+        pip3 install -r requirements.txt -q --break-system-packages
 
-    print_info "Installing project dependencies..."
-    pip install -r requirements.txt -q
+        print_info "Installing project in development mode..."
+        pip3 install -e . -q --break-system-packages
+    else
+        print_info "Activating virtual environment..."
+        source venv/bin/activate
 
-    print_info "Installing project in development mode..."
-    pip install -e . -q
+        print_info "Upgrading pip..."
+        pip install --upgrade pip setuptools wheel -q
+
+        print_info "Installing project dependencies..."
+        pip install -r requirements.txt -q
+
+        print_info "Installing project in development mode..."
+        pip install -e . -q
+    fi
 
     print_success "Python dependencies installed"
     create_checkpoint "python_deps_installed"
+}
 }
 
 # Verify installation
@@ -361,7 +382,9 @@ verify_installation() {
 
     print_header "Verifying Installation"
 
-    source venv/bin/activate
+    if [ "$ROOT_MODE" != true ]; then
+        source venv/bin/activate
+    fi
 
     if command -v vps-configurator &> /dev/null; then
         VERSION=$(vps-configurator --version 2>&1 | head -n1)
@@ -387,41 +410,51 @@ verify_installation() {
 show_next_steps() {
     print_header "Installation Complete! 🎉"
 
-    cat << EOF
-$(print_success "All prerequisites have been installed successfully!")
+    print_success "All prerequisites have been installed successfully!"
+    echo ""
 
-$(print_info "Checkpoint Summary:")
-$(list_checkpoints)
+    print_info "Checkpoint Summary:"
+    list_checkpoints
+    echo ""
 
-$(print_info "Next Steps:")
+    print_info "Next Steps:"
+    echo ""
 
-1. Activate the virtual environment:
-   $(print_msg "$YELLOW" "source venv/bin/activate")
+    if [ "$ROOT_MODE" = true ]; then
+        echo "1. Run the advanced installation directly:"
+        print_msg "$YELLOW" "   vps-configurator install --profile advanced -v"
+    else
+        echo "1. Activate the virtual environment:"
+        print_msg "$YELLOW" "   source venv/bin/activate"
+        echo ""
+        echo "2. Run the advanced installation:"
+        print_msg "$YELLOW" "   vps-configurator install --profile advanced -v"
+    fi
 
-2. Run the advanced installation:
-   $(print_msg "$YELLOW" "vps-configurator install --profile advanced -v")
+    echo ""
+    echo "Or explore available commands:"
+    print_msg "$YELLOW" "   vps-configurator --help"
+    echo ""
 
-3. Or explore available commands:
-   $(print_msg "$YELLOW" "vps-configurator --help")
+    print_info "What the advanced profile includes:"
+    echo "   ✓ System security hardening (UFW, Fail2ban, SSH)"
+    echo "   ✓ Development tools (Python, Node, Go, Rust, Java, PHP)"
+    echo "   ✓ IDEs and editors (VS Code, Cursor, Neovim)"
+    echo "   ✓ Desktop environment (XRDP + XFCE)"
+    echo "   ✓ Container platform (Docker + Docker Compose)"
+    echo ""
 
-$(print_info "What the advanced profile includes:")
-   ✓ System security hardening (UFW, Fail2ban, SSH)
-   ✓ Development tools (Python, Node, Go, Rust, Java, PHP)
-   ✓ IDEs and editors (VS Code, Cursor, Neovim)
-   ✓ Desktop environment (XRDP + XFCE)
-   ✓ Container platform (Docker + Docker Compose)
+    print_info "Estimated installation time: 15-30 minutes"
+    echo ""
 
-$(print_info "Estimated installation time: 15-30 minutes")
+    print_info "Documentation:"
+    echo "   📘 Quick Start: docs/00-project-overview/quick-start-guide.md"
+    echo "   📘 Full Docs: docs/00-project-overview/master-index.md"
+    echo ""
 
-$(print_info "Documentation:")
-   📘 Quick Start: docs/00-project-overview/quick-start-guide.md
-   📘 Full Docs: docs/00-project-overview/master-index.md
-
-$(print_info "Cleanup:")
-   To remove checkpoints and backups:
-   $(print_msg "$YELLOW" "rm -rf $CHECKPOINT_DIR $BACKUP_DIR")
-
-EOF
+    print_info "Cleanup:"
+    echo "   To remove checkpoints and backups:"
+    print_msg "$YELLOW" "   rm -rf $CHECKPOINT_DIR $BACKUP_DIR"
 }
 
 # Main execution
