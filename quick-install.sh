@@ -346,14 +346,15 @@ install_python_deps() {
     if [ "$ROOT_MODE" = true ]; then
         print_info "Installing system-wide (root mode)..."
         # Skip pip upgrade - system pip is managed by Debian
+        # Use --ignore-installed to avoid conflicts with Debian packages
         print_info "Installing setuptools and wheel..."
-        pip3 install setuptools wheel -q --break-system-packages 2>/dev/null || true
+        pip3 install setuptools wheel -q --break-system-packages --ignore-installed 2>/dev/null || true
 
         print_info "Installing project dependencies..."
-        pip3 install -r requirements.txt -q --break-system-packages
+        pip3 install -r requirements.txt -q --break-system-packages --ignore-installed
 
         print_info "Installing project in development mode..."
-        pip3 install -e . -q --break-system-packages
+        pip3 install -e . -q --break-system-packages --ignore-installed
     else
         print_info "Activating virtual environment..."
         source venv/bin/activate
