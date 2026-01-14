@@ -62,7 +62,9 @@ class TestXRDPOptimizationUnit(unittest.TestCase):
     ):
         """Test that _optimize_xrdp_performance generates valid XRDP config."""
         # Execute
-        self.module._optimize_xrdp_performance()
+        # We need to mock os.path.exists to return True for these files so backup is attempted
+        with patch("os.path.exists", return_value=True):
+            self.module._optimize_xrdp_performance()
 
         # Verify backups created
         assert mock_backup.call_count == 2

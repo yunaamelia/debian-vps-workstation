@@ -137,6 +137,10 @@ class ConfigurationError(ConfiguratorError):
         if config_key and issue:
             base_what = f"Configuration error in '{config_key}'"
             base_why = issue
+        elif config_key and not issue:
+            # Handle case where single argument is passed as message
+            base_what = config_key
+            base_why = kwargs.get("why", "Invalid configuration")
         elif what:
             base_what = what
             base_why = kwargs.get("why", "Invalid configuration")

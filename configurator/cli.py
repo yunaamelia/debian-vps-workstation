@@ -21,6 +21,9 @@ from configurator import __version__
 from configurator.core.lazy_loader import LazyLoader
 from configurator.logger import setup_logger
 
+# Performance Note: All heavy modules are lazy loaded to ensure sub-100ms startup time.
+# Only essential imports (click, rich) are kept at module level.
+
 # Lazy load heavy components
 ConfigManager = LazyLoader("configurator.config", "ConfigManager")
 Installer = LazyLoader("configurator.core.installer", "Installer")
