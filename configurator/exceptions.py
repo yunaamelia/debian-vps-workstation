@@ -133,15 +133,31 @@ class ConfigurationError(ConfiguratorError):
     vps-configurator validate --config your-config.yaml
     """
 
-    def __init__(self, config_key: str, issue: str, **kwargs):
-        what = f"Configuration error in '{config_key}'"
-        why = issue
+    def __init__(self, config_key: Optional[str] = None, issue: Optional[str] = None, what: Optional[str] = None, **kwargs):
+        if config_key and issue:
+            base_what = f"Configuration error in '{config_key}'"
+            base_why = issue
+        elif config_key and not issue:
+            # Handle case where single argument is passed as message
+            base_what = config_key
+            base_why = kwargs.get("why", "Invalid configuration")
+        elif what:
+            base_what = what
+            base_why = kwargs.get("why", "Invalid configuration")
+        else:
+            base_what = "Configuration error"
+            base_why = "Unknown configuration issue"
+
         how = (
             "1. Validate config: vps-configurator validate --config <file>\n"
             "2. Check syntax: yamllint config/your-config.yaml\n"
             "3. Compare with: config/default.yaml (working example)"
         )
-        super().__init__(what=what, why=why, how=how, **kwargs)
+
+        # Pass remaining kwargs to super, using our calculated what/why/how as defaults if not overridden
+        kwargs.setdefault("why", base_why)
+        kwargs.setdefault("how", how)
+        super().__init__(what=base_what, **kwargs)
 
 
 class ModuleExecutionError(ConfiguratorError):

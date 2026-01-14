@@ -1,42 +1,7 @@
-import subprocess
 from typing import List
 
-from configurator.security.cis_scanner import CheckResult, CISCheck, Severity, Status
-
-
-def _check_sysctl(param: str, expected_value: str) -> CheckResult:
-    """Check sysctl parameter"""
-    try:
-        # sysctl -n param
-        result = subprocess.run(["sysctl", "-n", param], capture_output=True, text=True)
-        if result.returncode != 0:
-            return CheckResult(check=None, status=Status.ERROR, message=f"Failed to read {param}")
-
-        actual_value = result.stdout.strip()
-        # Clean up whitespace
-        actual_value = actual_value.split()[0] if actual_value else ""
-
-        if str(actual_value) == str(expected_value):
-            return CheckResult(check=None, status=Status.PASS, message=f"{param} is {actual_value}")
-        else:
-            return CheckResult(
-                check=None,
-                status=Status.FAIL,
-                message=f"{param} is {actual_value} (expected {expected_value})",
-                remediation_available=True,
-                details={"actual": actual_value, "expected": expected_value},
-            )
-    except Exception as e:
-        return CheckResult(check=None, status=Status.ERROR, message=str(e))
-
-
-def _remediate_sysctl(param: str, value: str) -> bool:
-    try:
-        subprocess.run(["sysctl", "-w", f"{param}={value}"], check=True)
-        # In a real implementation this should write to /etc/sysctl.d/99-cis.conf
-        return True
-    except Exception:
-        return False
+from configurator.security.cis_checks.utils import check_sysctl_param, remediate_sysctl_param
+from configurator.security.cis_scanner import CISCheck, Severity
 
 
 def get_checks() -> List[CISCheck]:
@@ -165,8 +130,8 @@ def get_checks() -> List[CISCheck]:
                 rationale="Network hardening.",
                 severity=sev,
                 category="Network",
-                check_function=lambda p=param, v=val: _check_sysctl(p, v),
-                remediation_function=lambda p=param, v=val: _remediate_sysctl(p, v),
+                check_function=lambda p=param, v=val: check_sysctl_param(p, v),
+                remediation_function=lambda p=param, v=val: remediate_sysctl_param(p, v),
             )
         )
 

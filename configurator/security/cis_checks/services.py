@@ -1,84 +1,12 @@
-import shutil
-import subprocess
 from typing import List
 
-from configurator.security.cis_scanner import CheckResult, CISCheck, Severity, Status
-
-
-def _check_package_removed(package_name: str) -> CheckResult:
-    """Generic check for removed package"""
-    if shutil.which("dpkg") is None:
-        return CheckResult(check=None, status=Status.ERROR, message="dpkg not found")
-
-    try:
-        # dpkg -s returns 0 if installed, 1 if not
-        result = subprocess.run(["dpkg", "-s", package_name], capture_output=True, text=True)
-        if result.returncode != 0:
-            return CheckResult(
-                check=None, status=Status.PASS, message=f"{package_name} is not installed"
-            )
-        else:
-            # Check if it's actually installed or just config-files (purged vs removed)
-            if "Status: install ok installed" in result.stdout:
-                return CheckResult(
-                    check=None,
-                    status=Status.FAIL,
-                    message=f"{package_name} is installed",
-                    remediation_available=True,
-                )
-            else:
-                return CheckResult(
-                    check=None,
-                    status=Status.PASS,
-                    message=f"{package_name} is not installed (config files may remain)",
-                )
-    except Exception as e:
-        return CheckResult(check=None, status=Status.ERROR, message=str(e))
-
-
-def _remediate_remove_package(package_name: str) -> bool:
-    try:
-        subprocess.run(["apt-get", "purge", "-y", package_name], check=True)
-        return True
-    except Exception:
-        return False
-
-
-def _check_service_masked(service_name: str) -> CheckResult:
-    """Check if a service is masked/disabled"""
-    try:
-        # systemctl list-unit-files | grep service_name
-        # OR systemctl is-enabled
-        res = subprocess.run(
-            ["systemctl", "is-enabled", service_name], capture_output=True, text=True
-        )
-        status = res.stdout.strip()
-        if status in ["masked", "disabled"]:
-            return CheckResult(
-                check=None, status=Status.PASS, message=f"{service_name} is {status}"
-            )
-        elif res.returncode != 0 and "No such file or directory" in res.stderr:
-            return CheckResult(
-                check=None, status=Status.PASS, message=f"{service_name} is not installed"
-            )
-        else:
-            return CheckResult(
-                check=None,
-                status=Status.FAIL,
-                message=f"{service_name} is {status} (should be disabled/masked)",
-                remediation_available=True,
-            )
-    except Exception as e:
-        return CheckResult(check=None, status=Status.ERROR, message=str(e))
-
-
-def _remediate_mask_service(service_name: str) -> bool:
-    try:
-        subprocess.run(["systemctl", "disable", "--now", service_name], check=False)
-        subprocess.run(["systemctl", "mask", service_name], check=True)
-        return True
-    except Exception:
-        return False
+from configurator.security.cis_checks.utils import (
+    check_package_removed,
+    remediate_remove_package,
+    check_service_status,
+    remediate_mask_service,
+)
+from configurator.security.cis_scanner import CISCheck, Severity
 
 
 def get_checks() -> List[CISCheck]:
@@ -100,8 +28,8 @@ def get_checks() -> List[CISCheck]:
                 rationale="Legacy super-server.",
                 severity=Severity.HIGH,
                 category="Services",
-                check_function=lambda p=pkg: _check_package_removed(p),
-                remediation_function=lambda p=pkg: _remediate_remove_package(p),
+                check_function=lambda p=pkg: check_package_removed(p),
+                remediation_function=lambda p=pkg: remediate_remove_package(p),
             )
         )
 
@@ -137,8 +65,8 @@ def get_checks() -> List[CISCheck]:
                 rationale="Reduce attack surface.",
                 severity=severity,
                 category="Services",
-                check_function=lambda p=pkg: _check_package_removed(p),
-                remediation_function=lambda p=pkg: _remediate_remove_package(p),
+                check_function=lambda p=pkg: check_package_removed(p),
+                remediation_function=lambda p=pkg: remediate_remove_package(p),
             )
         )
 
