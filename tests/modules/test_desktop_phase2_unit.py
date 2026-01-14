@@ -15,10 +15,8 @@ class TestCompositorConfiguration:
     @pytest.fixture
     def module(self):
         config = {
-            "desktop": {
-                "compositor": {"mode": "disabled"},
-                "polkit": {"allow_colord": True},
-            }
+            "compositor": {"mode": "disabled"},
+            "polkit": {"allow_colord": True},
         }
         dry_run_manager = Mock()
         dry_run_manager.is_enabled = False
@@ -56,9 +54,12 @@ class TestCompositorConfiguration:
         assert '<property name="zoom_desktop" type="bool" value="true"/>' in xml
         assert '<property name="show_frame_shadow" type="bool" value="true"/>' in xml
 
+    @patch("configurator.utils.file.write_file")
     @patch("configurator.modules.desktop.pwd")
     @patch.object(DesktopModule, "run")
-    def test_optimize_xfce_compositor_processes_all_users(self, mock_run, mock_pwd, module):
+    def test_optimize_xfce_compositor_processes_all_users(
+        self, mock_run, mock_pwd, mock_write, module
+    ):
         """Test that compositor config is created for all regular users."""
         # Mock multiple users
         users = []
@@ -77,13 +78,14 @@ class TestCompositorConfiguration:
                 module._optimize_xfce_compositor()
 
         # Verify config created for each user
-        # At least mkdir, tee, chmod per user = 3 calls per user minimum
-        assert mock_run.call_count >= 3  # At least 1 command per user
+        # Verify config created for each user
+        # Should call write_file
+        assert mock_write.call_count >= 3
 
         # Verify all usernames appear in commands
-        all_commands = " ".join(str(c) for c in mock_run.call_args_list)
+        all_writes = " ".join(str(c) for c in mock_write.call_args_list)
         for i in range(3):
-            assert f"user{i}" in all_commands
+            assert f"user{i}" in all_writes
 
     @patch("configurator.modules.desktop.pwd")
     @patch.object(DesktopModule, "run")
@@ -146,10 +148,10 @@ class TestPolkitConfiguration:
 
     @pytest.fixture
     def module(self):
-        config = {"desktop": {"polkit": {"allow_colord": True, "allow_packagekit": True}}}
+        config = {"polkit": {"allow_colord": True, "allow_packagekit": True}}
         return DesktopModule(config=config, logger=Mock(), rollback_manager=Mock())
 
-    @patch("configurator.modules.desktop.write_file")
+    @patch("configurator.utils.file.write_file")
     @patch("configurator.modules.desktop.os.path.isdir", return_value=True)
     @patch.object(DesktopModule, "run")
     def test_configure_polkit_creates_both_rules(self, mock_run, mock_isdir, mock_write, module):
@@ -163,7 +165,7 @@ class TestPolkitConfiguration:
         assert any("colord" in path for path in written_paths)
         assert any("packagekit" in path for path in written_paths)
 
-    @patch("configurator.modules.desktop.write_file")
+    @patch("configurator.utils.file.write_file")
     @patch("configurator.modules.desktop.os.path.isdir", return_value=True)
     @patch.object(DesktopModule, "run")
     def test_polkit_rules_have_correct_format(self, mock_run, mock_isdir, mock_write, module):
@@ -181,25 +183,27 @@ class TestPolkitConfiguration:
             assert "ResultInactive=" in content
             assert "ResultActive=" in content
 
-    @patch("configurator.modules.desktop.write_file")
+    @patch("configurator.utils.file.write_file")
+    @patch("configurator.modules.desktop.os.makedirs")
     @patch("configurator.modules.desktop.os.path.isdir", return_value=False)
     @patch.object(DesktopModule, "run")
-    def test_polkit_creates_directory_if_missing(self, mock_run, mock_isdir, mock_write, module):
+    def test_polkit_creates_directory_if_missing(
+        self, mock_run, mock_isdir, mock_makedirs, mock_write, module
+    ):
         """Test that Polkit directory is created if it doesn't exist."""
         module._configure_polkit_rules()
 
-        # Verify mkdir was called
-        mkdir_calls = [str(c) for c in mock_run.call_args_list if "mkdir" in str(c)]
-        assert len(mkdir_calls) >= 1
-        assert "polkit-1" in mkdir_calls[0]
+        # Verify makedirs was called
+        assert mock_makedirs.called
+        assert "polkit-1" in mock_makedirs.call_args[0][0]
 
-    @patch("configurator.modules.desktop.write_file")
+    @patch("configurator.utils.file.write_file")
     @patch("configurator.modules.desktop.os.path.isdir", return_value=True)
     @patch.object(DesktopModule, "run")
     def test_polkit_respects_config_flags(self, mock_run, mock_isdir, mock_write, module):
         """Test that Polkit rules respect configuration flags."""
         # Disable packagekit rule
-        module.config["desktop"]["polkit"]["allow_packagekit"] = False
+        module.config["polkit"]["allow_packagekit"] = False
 
         module._configure_polkit_rules()
 
@@ -208,7 +212,7 @@ class TestPolkitConfiguration:
         assert any("colord" in path for path in written_paths)
         assert not any("packagekit" in path for path in written_paths)
 
-    @patch("configurator.modules.desktop.write_file")
+    @patch("configurator.utils.file.write_file")
     @patch("configurator.modules.desktop.os.path.isdir", return_value=True)
     @patch.object(DesktopModule, "run")
     def test_polkit_restarts_service(self, mock_run, mock_isdir, mock_write, module):
@@ -228,7 +232,7 @@ class TestVerificationMethods:
 
     @pytest.fixture
     def module(self):
-        config = {"desktop": {"compositor": {"mode": "disabled"}}}
+        config = {"compositor": {"mode": "disabled"}}
         return DesktopModule(config=config, logger=Mock())
 
     @patch("configurator.modules.desktop.pwd")
@@ -279,13 +283,14 @@ class TestDryRunMode:
 
     @pytest.fixture
     def module(self):
-        config = {"desktop": {"compositor": {"mode": "disabled"}}}
+        config = {"compositor": {"mode": "disabled"}}
         module = DesktopModule(config=config, logger=Mock(), dry_run_manager=Mock())
         module.dry_run = True
         return module
 
+    @patch("configurator.modules.desktop.os.path.isdir", return_value=True)
     @patch("configurator.modules.desktop.pwd")
-    def test_compositor_dry_run_no_file_writes(self, mock_pwd, module):
+    def test_compositor_dry_run_no_file_writes(self, mock_pwd, mock_isdir, module):
         """Test that dry-run mode doesn't write files."""
         mock_user = Mock()
         mock_user.pw_name = "testuser"
@@ -301,9 +306,9 @@ class TestDryRunMode:
         assert mock_run.call_count == 0
 
         # Dry-run manager should record action
-        assert module.dry_run_manager.record_command.called
+        assert module.dry_run_manager.record_file_write.called
 
-    @patch("configurator.modules.desktop.write_file")
+    @patch("configurator.utils.file.write_file")
     @patch("configurator.modules.desktop.os.path.isdir", return_value=True)
     def test_polkit_dry_run_no_file_writes(self, mock_isdir, mock_write, module):
         """Test that Polkit dry-run doesn't write files."""

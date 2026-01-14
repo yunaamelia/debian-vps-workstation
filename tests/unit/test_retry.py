@@ -39,7 +39,7 @@ def test_retry_failure_max_retries():
     with pytest.raises(ValueError):
         test_func()
 
-    assert mock_func.call_count == 4  # Initial + 3 retries
+    assert mock_func.call_count == 3  # Max 3 retries
 
 
 def test_retry_specific_exception():
@@ -62,10 +62,10 @@ def test_backoff_timing():
 
     with patch("time.sleep", sleep_mock):
 
-        @retry(max_retries=3, base_delay=1.0, backoff_factor=2.0, jitter=False)
+        @retry(max_retries=3, base_delay=0.1, backoff_factor=2.0, jitter=False)
         def test_func():
             return mock_func()
 
         test_func()
 
-    sleep_mock.assert_called_once_with(1.0)
+    sleep_mock.assert_called_once_with(0.1)

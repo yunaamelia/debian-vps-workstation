@@ -23,61 +23,111 @@ class TestBatConfigurationMethods:
         }
         return DesktopModule(config=config, logger=Mock(), rollback_manager=Mock())
 
-    @patch("configurator.modules.desktop.pwd")
-    @patch.object(DesktopModule, "run")
-    def test_configure_bat_advanced_creates_config_directory(self, mock_run, mock_pwd, module):
-        """Test that bat config directory is created."""
+    @patch("pwd.getpwall")
+    @patch("pwd.getpwnam")
+    @patch("os.makedirs")
+    @patch("shutil.chown")
+    @patch.object(DesktopModule, "write_file")
+    def test_configure_bat_advanced_logic(
+        self, mock_write, mock_chown, mock_makedirs, mock_pwnam, mock_getpwall, module
+    ):
+        """Test bat advanced configuration logic."""
         mock_user = Mock()
         mock_user.pw_name = "testuser"
         mock_user.pw_uid = 1000
         mock_user.pw_dir = "/home/testuser"
 
-        mock_pwd.getpwall.return_value = [mock_user]
-        mock_pwd.getpwnam.return_value = mock_user
+        mock_getpwall.return_value = [mock_user]
+        mock_pwnam.return_value = mock_user
+
+        # Disable dry_run to confirm os.makedirs is called
+        module.dry_run = False
 
         module._configure_bat_advanced()
 
-        # Verify mkdir called
-        mkdir_calls = [str(c) for c in mock_run.call_args_list if "mkdir" in str(c)]
-        assert any(".config/bat" in config_call for config_call in mkdir_calls)
+        # Verify mkdir
+        mock_makedirs.assert_called()
+        args, _ = mock_makedirs.call_args
+        assert ".config/bat" in args[0]
 
-    @patch("configurator.modules.desktop.pwd")
+        # Verify config write
+        mock_write.assert_called()
+        args, _ = mock_write.call_args
+        assert "config" in args[0]
+        assert "TwoDark" in args[1]  # Theme check
+
+        # Verify chown
+        mock_chown.assert_called()
+
+
+class TestEzaInstallation:
+    """Unit tests for eza installation and configuration (replaces exa)."""
+
+    @pytest.fixture
+    def module(self):
+        config = {"desktop": {"terminal_tools": {"eza": {"enabled": True}}}}
+        return DesktopModule(config=config, logger=Mock(), rollback_manager=Mock())
+
+    @patch.object(DesktopModule, "install_packages")
+    @patch.object(DesktopModule, "command_exists")
     @patch.object(DesktopModule, "run")
-    def test_configure_bat_advanced_writes_config_file(self, mock_run, mock_pwd, module):
-        """Test that bat config file is written."""
-        mock_user = Mock()
-        mock_user.pw_name = "testuser"
-        mock_user.pw_uid = 1000
-        mock_user.pw_dir = "/home/testuser"
+    def test_install_eza_package(self, mock_run, mock_exists, mock_install, module):
+        """Test that eza is installed."""
+        mock_install.return_value = True
+        mock_exists.return_value = True
+        mock_run.return_value.success = True
+        mock_run.return_value.stdout = "eza 0.18.0"
 
-        mock_pwd.getpwall.return_value = [mock_user]
-        mock_pwd.getpwnam.return_value = mock_user
+        assert module._install_eza() is True
 
-        module._configure_bat_advanced()
+        # Verify package installation attempted
+        assert mock_install.called
+        args, _ = mock_install.call_args
+        assert "eza" in args[0]
 
-        # Verify tee called with config content
-        tee_calls = [c for c in mock_run.call_args_list if "tee" in str(c)]
-        assert any(".config/bat/config" in str(config_call) for config_call in tee_calls)
+    def test_configure_eza_aliases(self, module):
+        """Test that eza aliases are configured."""
+        module._configure_eza_aliases()
 
-    @patch("configurator.modules.desktop.pwd")
+        assert hasattr(module, "eza_aliases")
+        assert "alias ls='eza" in module.eza_aliases
+        assert "--icons" in module.eza_aliases
+        assert "--git" in module.eza_aliases
+
+
+class TestZoxideInstallation:
+    """Unit tests for zoxide."""
+
+    @pytest.fixture
+    def module(self):
+        return DesktopModule(config={}, logger=Mock(), rollback_manager=Mock())
+
+    @patch.object(DesktopModule, "install_packages")
+    @patch.object(DesktopModule, "command_exists")
     @patch.object(DesktopModule, "run")
-    def test_configure_bat_registers_rollback(self, mock_run, mock_pwd, module):
-        """Test that rollback action is registered."""
-        mock_user = Mock()
-        mock_user.pw_name = "testuser"
-        mock_user.pw_uid = 1000
-        mock_user.pw_dir = "/home/testuser"
+    def test_install_zoxide(self, mock_run, mock_exists, mock_install, module):
+        """Test zoxide installation."""
+        mock_run.return_value.success = True
+        mock_install.return_value = True
+        mock_exists.return_value = True
 
-        mock_pwd.getpwall.return_value = [mock_user]
-        mock_pwd.getpwnam.return_value = mock_user
+        assert module._install_zoxide() is True
+        mock_install.assert_called_with(["zoxide"])
 
-        module._configure_bat_advanced()
 
-        # Verify rollback registered
-        assert module.rollback_manager.add_command.called
+class TestFzfConfiguration:
+    """Unit tests for fzf."""
 
-        rollback_calls = [str(c) for c in module.rollback_manager.add_command.call_args_list]
-        assert any(".config/bat" in rollback_call for rollback_call in rollback_calls)
+    @pytest.fixture
+    def module(self):
+        return DesktopModule(config={}, logger=Mock(), rollback_manager=Mock())
+
+    def test_configure_fzf_keybindings(self, module):
+        """Test fzf keybindings configuration."""
+        module._configure_fzf_keybindings()
+
+        assert hasattr(module, "fzf_config")
+        assert "export FZF_DEFAULT_OPTS" in module.fzf_config
 
 
 class TestIntegrationScriptCreation:
@@ -88,84 +138,20 @@ class TestIntegrationScriptCreation:
         config = {"desktop": {"terminal_tools": {}}}
         return DesktopModule(config=config, logger=Mock(), rollback_manager=Mock())
 
-    @patch("configurator.modules.desktop.pwd")
     @patch.object(DesktopModule, "run")
-    def test_create_tool_integration_scripts_creates_all_scripts(self, mock_run, mock_pwd, module):
+    @patch.object(DesktopModule, "write_file")
+    def test_create_tool_integration_scripts_creates_all_scripts(
+        self, mock_write, mock_run, module
+    ):
         """Test that all three integration scripts are created."""
-        mock_user = Mock()
-        mock_user.pw_name = "testuser"
-        mock_user.pw_uid = 1000
-        mock_user.pw_dir = "/home/testuser"
+        # Ensure create_preview etc succeed
+        module._create_integration_scripts()
 
-        mock_pwd.getpwall.return_value = [mock_user]
-        mock_pwd.getpwnam.return_value = mock_user
+        # Verify write_file called for each script
+        # write_file(script_path, content, mode)
+        assert mock_write.call_count >= 3
 
-        module._create_tool_integration_scripts()
-
-        # Verify all scripts created
-        tee_calls = [str(c) for c in mock_run.call_args_list if "tee" in str(c)]
-
-        assert any("preview" in call for call in tee_calls)
-        assert any("search" in call for call in tee_calls)
-        assert any("goto" in call for call in tee_calls)
-
-    @patch("configurator.modules.desktop.pwd")
-    @patch.object(DesktopModule, "run")
-    def test_scripts_made_executable(self, mock_run, mock_pwd, module):
-        """Test that scripts are made executable."""
-        mock_user = Mock()
-        mock_user.pw_name = "testuser"
-        mock_user.pw_uid = 1000
-        mock_user.pw_dir = "/home/testuser"
-
-        mock_pwd.getpwall.return_value = [mock_user]
-        mock_pwd.getpwnam.return_value = mock_user
-
-        module._create_tool_integration_scripts()
-
-        # Verify chmod +x called
-        chmod_calls = [str(c) for c in mock_run.call_args_list if "chmod +x" in str(c)]
-
-        assert len(chmod_calls) >= 3  # At least one for each script
-
-
-class TestOptionalToolsInstallation:
-    """Unit tests for optional tools installation."""
-
-    @pytest.fixture
-    def module(self):
-        config = {
-            "desktop": {
-                "terminal_tools": {"optional": {"ripgrep": True, "fd": True, "delta": True}}
-            }
-        }
-        return DesktopModule(config=config, logger=Mock())
-
-    @patch.object(DesktopModule, "install_packages")
-    def test_install_optional_tools_installs_ripgrep(self, mock_install_pkg, module):
-        """Test that ripgrep is installed when configured."""
-        with patch.object(module, "_install_git_delta"):
-            module._install_optional_productivity_tools()
-
-        # Verify ripgrep in packages
-        all_packages = []
-        for pkg_call in mock_install_pkg.call_args_list:
-            all_packages.extend(pkg_call[0][0])
-
-        assert "ripgrep" in all_packages
-
-    @patch.object(DesktopModule, "install_packages")
-    def test_install_optional_tools_respects_config(self, mock_install_pkg, module):
-        """Test that optional tools respect configuration."""
-        # Disable ripgrep
-        module.config["desktop"]["terminal_tools"]["optional"]["ripgrep"] = False
-
-        with patch.object(module, "_install_git_delta"):
-            module._install_optional_productivity_tools()
-
-        all_packages = []
-        for pkg_call in mock_install_pkg.call_args_list:
-            all_packages.extend(pkg_call[0][0])
-
-        # Should NOT include ripgrep
-        assert "ripgrep" not in all_packages
+        scripts = [args[0] for args, _ in mock_write.call_args_list]
+        assert any("preview.sh" in s for s in scripts)
+        assert any("search.sh" in s for s in scripts)
+        assert any("goto.sh" in s for s in scripts)

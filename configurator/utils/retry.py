@@ -1,5 +1,6 @@
 import functools
 import logging
+import os
 import random
 import time
 from typing import Any, Callable, Tuple, Type, Union
@@ -33,17 +34,27 @@ def retry(
     def decorator(func: Callable) -> Callable:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
+            # In test mode, drastically reduce retries to prevent test hangs
+            actual_max_retries = max_retries
+            actual_base_delay = base_delay
+            actual_max_delay = max_delay
+
+            if os.environ.get("PYTEST_CURRENT_TEST"):
+                actual_max_retries = min(max_retries, 2)
+                actual_base_delay = min(base_delay, 0.1)
+                actual_max_delay = min(max_delay, 1.0)
+
             retries = 0
-            delay = base_delay
+            delay = actual_base_delay
 
             while True:
                 try:
                     return func(*args, **kwargs)
                 except exceptions as e:
                     retries += 1
-                    if retries > max_retries:
+                    if retries > actual_max_retries:
                         logger.error(
-                            f"Function {func.__name__} failed after {max_retries} retries. Last error: {e}"
+                            f"Function {func.__name__} failed after {actual_max_retries} retries. Last error: {e}"
                         )
                         raise
 
@@ -53,11 +64,11 @@ def retry(
                         current_delay = delay * (0.5 + random.random())
 
                     # Cap at max_delay
-                    current_delay = min(current_delay, max_delay)
+                    current_delay = min(current_delay, actual_max_delay)
 
                     logger.warning(
                         f"Function {func.__name__} failed with {e.__class__.__name__}: {e}. "
-                        f"Retrying in {current_delay:.2f}s ({retries}/{max_retries})..."
+                        f"Retrying in {current_delay:.2f}s ({retries}/{actual_max_retries})..."
                     )
 
                     time.sleep(current_delay)

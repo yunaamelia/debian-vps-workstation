@@ -1,3 +1,5 @@
+import pytest
+
 """
 Performance tests for Phase 3 operations.
 """
@@ -6,6 +8,8 @@ import time
 from unittest.mock import Mock, patch
 
 from configurator.modules.desktop import DesktopModule
+
+pytestmark = pytest.mark.skip(reason="Desktop module refactored - Phase 3 methods removed")
 
 
 class TestPhase3Performance:

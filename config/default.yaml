@@ -275,7 +275,7 @@ desktop:
     tools:
       fzf: true # Fuzzy finder (Ctrl+R for history)
       bat: true # Better cat with syntax highlighting
-      exa: true # Better ls with colors/icons
+      eza: true # Better ls with colors/icons
       zoxide: true # Smarter cd that learns
 
     # Set Zsh as default shell for users
@@ -438,6 +438,96 @@ ssl_certificates:
     hsts_enabled: true
     hsts_max_age: 31536000
     ocsp_stapling: true
+
+# ═══════════════════════════════════════════════════════════
+# Phase 2: Advanced Security Features
+# ═══════════════════════════════════════════════════════════
+
+security_advanced:
+  # CIS Benchmark Scanner
+  cis_scanner:
+    enabled: true
+    level: 1 # 1 or 2 (Level 1: Basic hardening, Level 2: Strict)
+    auto_remediate: false # Automatically fix issues (use with caution)
+    report_path: "/var/log/cis-scan-report.html"
+    scan_schedule: "weekly" # daily/weekly/monthly
+    categories:
+      - initial_setup
+      - services
+      - network
+      - logging_auditing
+      - access_authentication
+      - system_maintenance
+
+  # Vulnerability Scanner
+  vulnerability_scanner:
+    enabled: true
+    scanner: "trivy" # trivy/lynis/both
+    scan_on_install: true
+    scan_schedule: "daily"
+    severity_threshold: "HIGH" # LOW/MEDIUM/HIGH/CRITICAL
+    report_path: "/var/log/vuln-scan-report.json"
+    auto_update_db: true
+    notify_on_critical: true
+
+  # SSL/TLS Manager
+  ssl_manager:
+    enabled: false # Enable for public-facing servers
+    provider: "letsencrypt" # letsencrypt/selfsigned
+    domains: [] # ["example.com", "www.example.com"]
+    email: "" # Required for Let's Encrypt
+    auto_renew: true
+    renew_days_before: 30
+    web_server: "nginx" # nginx/apache
+
+  # SSH Key Management
+  ssh_key_manager:
+    enabled: true
+    generate_keys: true
+    key_type: "ed25519" # rsa/ed25519/ecdsa
+    key_size: 4096 # For RSA
+    distribute_keys: false # Distribute to authorized_keys
+    key_rotation_days: 365 # Rotate keys annually
+    disable_password_auth: false # Only allow key-based auth
+
+  # Multi-Factor Authentication
+  mfa:
+    enabled: false # Requires careful setup
+    method: "totp" # totp/u2f/both
+    provider: "google-authenticator"
+    enforce_for_sudo: true
+    enforce_for_ssh: true
+    backup_codes: true
+    backup_codes_count: 10
+
+  # Supply Chain Security
+  supply_chain:
+    enabled: true
+    verify_checksums: true
+    verify_signatures: true
+    allowed_sources:
+      github:
+        - "github.com/ohmyzsh/ohmyzsh"
+        - "github.com/romkatv/powerlevel10k"
+        - "github.com/EliverLara/Nordic"
+      apt:
+        - "deb.debian.org"
+        - "security.debian.org"
+    checksum_database: "/etc/vps-configurator/checksums.db"
+    signature_verification: "gpg"
+
+  # Input Validation
+  input_validation:
+    strict_mode: true
+    username_pattern: "^[a-z][a-z0-9_-]{2,31}$"
+    path_whitelist:
+      - "/etc/xrdp/"
+      - "/etc/ssh/"
+      - "/usr/share/themes/"
+      - "/usr/share/icons/"
+      - "/home/*/"
+    command_whitelist_enabled: false
+    log_validation_failures: true
 
 # Installation Options
 interactive: true
