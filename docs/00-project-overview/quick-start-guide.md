@@ -39,7 +39,7 @@ apt update && apt upgrade -y
 apt install python3 python3-pip python3-venv git -y
 
 # Clone repository
-git clone https://github.com/yourusername/debian-vps-configurator.git
+git clone https://github.com/yunaamelia/debian-vps-workstation.git
 cd debian-vps-configurator
 
 # Create virtual environment

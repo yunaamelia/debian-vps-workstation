@@ -82,7 +82,7 @@ Get up and running in **15 minutes**:
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/yourusername/debian-vps-configurator.git
+git clone https://github.com/yunaamelia/debian-vps-workstation.git
 cd debian-vps-configurator
 
 # 2. Run Quick Install (Automated Prerequisites Setup)
@@ -218,7 +218,7 @@ docs/
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/debian-vps-configurator.git
+git clone https://github.com/yunaamelia/debian-vps-workstation.git
 cd debian-vps-configurator
 
 # Run automated setup script
@@ -252,7 +252,7 @@ vps-configurator init
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/debian-vps-configurator.git
+git clone https://github.com/yunaamelia/debian-vps-workstation.git
 cd debian-vps-configurator
 
 # Create virtual environment
@@ -539,7 +539,7 @@ We welcome contributions! This project is currently in the **design/documentatio
 
 ```bash
 # Fork and clone
-git clone https://github.com/yourusername/debian-vps-configurator.git
+git clone https://github.com/yunaamelia/debian-vps-workstation.git
 cd debian-vps-configurator
 
 # Create branch
@@ -585,8 +585,8 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 ### Community
 
-- **GitHub Issues:** [Report bugs or request features](https://github.com/yourusername/debian-vps-configurator/issues)
-- **GitHub Discussions:** [Ask questions, share ideas](https://github.com/yourusername/debian-vps-configurator/discussions)
+- **GitHub Issues:** [Report bugs or request features](https://github.com/yunaamelia/debian-vps-workstation/issues)
+- **GitHub Discussions:** [Ask questions, share ideas](https://github.com/yunaamelia/debian-vps-workstation/discussions)
 - **Email:** support@vps-configurator.com (for private inquiries)
 
 ### Professional Support
@@ -694,7 +694,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 
 - **Website:** https://vps-configurator.dev (future)
 - **Email:** info@vps-configurator.com
-- **GitHub:** https://github.com/yourusername/debian-vps-configurator
+- **GitHub:** https://github.com/yunaamelia/debian-vps-workstation
 - **Twitter:** @vpsconfigurator (future)
 
 ---

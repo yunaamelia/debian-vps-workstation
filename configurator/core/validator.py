@@ -119,7 +119,7 @@ class SystemValidator:
                     + "\n".join(f"  • {r.name}: {r.message}" for r in failed_required),
                     how="Please address the issues listed above and try again.\n"
                     "See documentation for system requirements.",
-                    docs_link="https://github.com/youruser/debian-vps-configurator#requirements",
+                    docs_link="https://github.com/yunaamelia/debian-vps-workstation#requirements",
                 )
             return False
 

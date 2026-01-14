@@ -436,9 +436,9 @@ If you can't solve your issue:
    journalctl -u xrdp
    ```
 
-2. **Check GitHub Issues**: [Known Issues](https://github.com/youruser/debian-vps-configurator/issues)
+2. **Check GitHub Issues**: [Known Issues](https://github.com/yunaamelia/debian-vps-workstation/issues)
 
-3. **Ask in Discussions**: [Community Help](https://github.com/youruser/debian-vps-configurator/discussions)
+3. **Ask in Discussions**: [Community Help](https://github.com/yunaamelia/debian-vps-workstation/discussions)
 
 4. **Open new issue** with:
    - Full error message

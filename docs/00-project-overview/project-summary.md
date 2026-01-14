@@ -871,7 +871,7 @@ Total Documentation: 30+ comprehensive guides
 
 ```bash
 # Clone repository
-git clone https://github.com/yourusername/debian-vps-configurator
+git clone https://github.com/yunaamelia/debian-vps-workstation
 cd debian-vps-configurator
 
 # Install dependencies
@@ -1106,7 +1106,7 @@ Coverage: 87% (target: 85%+)
 
 ### Community
 
-- **Repository:** github.com/yourusername/debian-vps-configurator
+- **Repository:** github.com/yunaamelia/debian-vps-workstation
 - **Discussions:** GitHub Discussions
 - **Chat:** Discord/Slack (planned)
 

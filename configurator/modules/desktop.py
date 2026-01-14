@@ -23,6 +23,9 @@ class DesktopModule(ConfigurationModule):
 
     name = "desktop"
     description = "Desktop Environment (XRDP + XFCE)"
+    depends_on = ["system", "security"]  # Requires system setup and firewall rules
+    priority = 30
+    mandatory = False
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

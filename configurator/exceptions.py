@@ -83,8 +83,8 @@ class ConfiguratorError(Exception):
                 "",
                 "Need more help?",
                 "  • View logs: tail -f /var/log/debian-vps-configurator/install.log",
-                "  • Community: https://github.com/youruser/debian-vps-configurator/discussions",
-                "  • Report bug: https://github.com/youruser/debian-vps-configurator/issues",
+                "  • Community: https://github.com/yunaamelia/debian-vps-workstation/discussions",
+                "  • Report bug: https://github.com/yunaamelia/debian-vps-workstation/issues",
                 "",
             ]
         )
@@ -96,23 +96,52 @@ class PrerequisiteError(ConfiguratorError):
     """
     Raised when system prerequisites are not met.
 
-    Examples:
-    - Wrong Debian version
-    - Insufficient RAM or disk space
+    Common Causes:
+    - Wrong Debian version (requires Debian 12/13)
+    - Insufficient RAM (<1GB) or disk space (<10GB)
     - Missing root/sudo access
     - No internet connectivity
+
+    Resolution:
+    Check system requirements at:
+    https://github.com/yunaamelia/debian-vps-workstation#requirements
     """
+
+    def __init__(self, requirement: str, current_value: str, **kwargs):
+        what = f"System does not meet requirement: {requirement}"
+        why = f"Current value: {current_value}"
+        how = (
+            "1. Check system specs: vps-configurator check-system\n"
+            "2. Review requirements: cat README.md | grep -A 10 'Requirements'\n"
+            "3. Upgrade system or adjust configuration"
+        )
+        super().__init__(what=what, why=why, how=how, **kwargs)
 
 
 class ConfigurationError(ConfiguratorError):
     """
     Raised when there's a configuration problem.
 
-    Examples:
+    Common Causes:
     - Invalid YAML syntax
     - Missing required configuration values
-    - Invalid configuration values
+    - Invalid configuration values (wrong type, out of range)
+    - Conflicting configuration options
+
+    Resolution:
+    Validate your configuration file with:
+    vps-configurator validate --config your-config.yaml
     """
+
+    def __init__(self, config_key: str, issue: str, **kwargs):
+        what = f"Configuration error in '{config_key}'"
+        why = issue
+        how = (
+            "1. Validate config: vps-configurator validate --config <file>\n"
+            "2. Check syntax: yamllint config/your-config.yaml\n"
+            "3. Compare with: config/default.yaml (working example)"
+        )
+        super().__init__(what=what, why=why, how=how, **kwargs)
 
 
 class ModuleExecutionError(ConfiguratorError):
@@ -141,22 +170,57 @@ class RollbackError(ConfiguratorError):
     """
     Raised when rollback fails.
 
-    Examples:
-    - Cannot undo changes
-    - Backup not found
-    - Restore operation failed
+    Common Causes:
+    - Cannot undo changes (files already deleted)
+    - Backup not found or corrupted
+    - Restore operation failed (permission denied)
+    - Package removal conflicts
+
+    Manual Recovery:
+    1. Check rollback log: /var/log/vps-configurator/rollback.log
+    2. Identify failed operation
+    3. Manually revert changes
+    4. Use: vps-configurator rollback --force (if safe)
     """
+
+    def __init__(self, module_name: str, failed_operation: str, **kwargs):
+        what = f"Rollback failed for module '{module_name}'"
+        why = f"Failed operation: {failed_operation}"
+        how = (
+            "1. Check rollback log: tail -50 /var/log/vps-configurator/rollback.log\n"
+            "2. Manual cleanup may be required\n"
+            "3. See: docs/advanced/rollback-behavior.md"
+        )
+        super().__init__(what=what, why=why, how=how, **kwargs)
 
 
 class NetworkError(ConfiguratorError):
     """
     Raised for network-related errors.
 
-    Examples:
-    - Cannot reach package repository
-    - Download failed
-    - Connection timeout
+    Common Causes:
+    - Cannot reach package repository (DNS failure)
+    - Download failed (timeout, connection reset)
+    - Connection timeout (slow network)
+    - Firewall blocking outbound connections
+
+    Troubleshooting:
+    1. Check internet: ping -c 3 8.8.8.8
+    2. Check DNS: ping -c 3 deb.debian.org
+    3. Check firewall: iptables -L -n -v
+    4. Try again: Network issues may be temporary
     """
+
+    def __init__(self, url: str, error_details: str, **kwargs):
+        what = "Network operation failed"
+        why = f"Cannot access: {url}\nError: {error_details}"
+        how = (
+            "1. Check internet: ping -c 3 8.8.8.8\n"
+            "2. Check DNS: host deb.debian.org\n"
+            "3. Check proxy/firewall settings\n"
+            "4. Retry: vps-configurator install --retry"
+        )
+        super().__init__(what=what, why=why, how=how, **kwargs)
 
 
 class UserCancelledError(ConfiguratorError):

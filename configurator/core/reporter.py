@@ -222,8 +222,8 @@ class ProgressReporter:
    $ node --version
 
 [bold]4. Read documentation:[/bold]
-   • Quick Start: https://github.com/youruser/debian-vps-configurator#quickstart
-   • Troubleshooting: https://github.com/youruser/debian-vps-configurator/issues
+   • Quick Start: https://github.com/yunaamelia/debian-vps-workstation#quickstart
+   • Troubleshooting: https://github.com/yunaamelia/debian-vps-workstation/issues
 
 [dim]Logs are saved to: /var/log/debian-vps-configurator/install.log[/dim]
         """

@@ -65,7 +65,7 @@ class SystemModule(ConfigurationModule):
                 what=f"Unsupported operating system: {os_info.pretty_name}",
                 why="This tool is designed for Debian 13 (Trixie) only",
                 how="Please use a fresh Debian 13 VPS",
-                docs_link="https://github.com/youruser/debian-vps-configurator#requirements",
+                docs_link="https://github.com/yunaamelia/debian-vps-workstation#requirements",
             )
 
         if not os_info.is_debian_13:

@@ -55,10 +55,10 @@ dev = [
 vps-configurator = "configurator.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/youruser/debian-vps-configurator"
-Documentation = "https://github.com/youruser/debian-vps-configurator#readme"
-Repository = "https://github.com/youruser/debian-vps-configurator"
-Issues = "https://github.com/youruser/debian-vps-configurator/issues"
+Homepage = "https://github.com/yunaamelia/debian-vps-workstation"
+Documentation = "https://github.com/yunaamelia/debian-vps-workstation#readme"
+Repository = "https://github.com/yunaamelia/debian-vps-workstation"
+Issues = "https://github.com/yunaamelia/debian-vps-workstation/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]

@@ -184,7 +184,7 @@ su - vpsconfig
 
 # Clone repository
 cd /opt/vps-configurator/app
-git clone https://github.com/yourusername/debian-vps-configurator.git .
+git clone https://github.com/yunaamelia/debian-vps-workstation.git .
 
 # Create virtual environment
 python3 -m venv venv

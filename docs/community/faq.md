@@ -254,9 +254,9 @@ sudo python -m configurator rollback
 Yes!
 
 1. 📖 Read the [Troubleshooting Guide](../installation/troubleshooting.md)
-2. 🔍 Search [GitHub Issues](https://github.com/youruser/debian-vps-configurator/issues)
-3. 💬 Ask in [Discussions](https://github.com/youruser/debian-vps-configurator/discussions)
-4. 🐛 [Open an issue](https://github.com/youruser/debian-vps-configurator/issues/new) with logs
+2. 🔍 Search [GitHub Issues](https://github.com/yunaamelia/debian-vps-workstation/issues)
+3. 💬 Ask in [Discussions](https://github.com/yunaamelia/debian-vps-workstation/discussions)
+4. 🐛 [Open an issue](https://github.com/yunaamelia/debian-vps-workstation/issues/new) with logs
 
 ---
 
@@ -269,7 +269,7 @@ Yes!
 3. Make your changes
 4. Submit a pull request
 
-See [CONTRIBUTING.md](https://github.com/youruser/debian-vps-configurator/blob/main/CONTRIBUTING.md)
+See [CONTRIBUTING.md](https://github.com/yunaamelia/debian-vps-workstation/blob/main/CONTRIBUTING.md)
 
 ### Can I add support for other distros?
 
@@ -292,4 +292,4 @@ Open an issue with:
 
 ## Didn't find your answer?
 
-Ask in [GitHub Discussions](https://github.com/youruser/debian-vps-configurator/discussions)!
+Ask in [GitHub Discussions](https://github.com/yunaamelia/debian-vps-workstation/discussions)!

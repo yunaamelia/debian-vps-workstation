@@ -111,7 +111,7 @@ su - developer
 ### Option 1: Quick Install (One-Line)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/youruser/debian-vps-configurator/main/scripts/bootstrap.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/yunaamelia/debian-vps-workstation/main/scripts/bootstrap.sh | sudo bash
 ```
 
 ### Option 2: Manual Installation
@@ -121,7 +121,7 @@ curl -fsSL https://raw.githubusercontent.com/youruser/debian-vps-configurator/ma
 sudo apt update && sudo apt install -y git python3-venv
 
 # Clone the repository
-git clone https://github.com/youruser/debian-vps-configurator.git
+git clone https://github.com/yunaamelia/debian-vps-workstation.git
 cd debian-vps-configurator
 
 # Create virtual environment
@@ -332,12 +332,12 @@ sudo python -m configurator rollback
 
 - Read the [Configuration Reference](../configuration/overview.md)
 - Check the [FAQ](../community/faq.md)
-- Join the [Community](https://github.com/youruser/debian-vps-configurator/discussions)
+- Join the [Community](https://github.com/yunaamelia/debian-vps-workstation/discussions)
 
 ---
 
 **Need Help?**
 
-- 📖 [Documentation](https://github.com/youruser/debian-vps-configurator/wiki)
-- 💬 [Discussions](https://github.com/youruser/debian-vps-configurator/discussions)
-- 🐛 [Report Issues](https://github.com/youruser/debian-vps-configurator/issues)
+- 📖 [Documentation](https://github.com/yunaamelia/debian-vps-workstation/wiki)
+- 💬 [Discussions](https://github.com/yunaamelia/debian-vps-workstation/discussions)
+- 🐛 [Report Issues](https://github.com/yunaamelia/debian-vps-workstation/issues)

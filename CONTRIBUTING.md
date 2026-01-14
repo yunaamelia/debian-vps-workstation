@@ -35,7 +35,7 @@ Be respectful and inclusive. We welcome contributors of all experience levels.
 
 Before starting major work:
 
-1. Check [existing issues](https://github.com/youruser/debian-vps-configurator/issues)
+1. Check [existing issues](https://github.com/yunaamelia/debian-vps-workstation/issues)
 2. Open an issue to discuss your idea
 3. Wait for feedback before coding
 
@@ -356,7 +356,7 @@ raise ModuleExecutionError(
 
 ## Questions?
 
-- Open a [discussion](https://github.com/youruser/debian-vps-configurator/discussions)
+- Open a [discussion](https://github.com/yunaamelia/debian-vps-workstation/discussions)
 - Join the community chat
 - Ask in your pull request
 
