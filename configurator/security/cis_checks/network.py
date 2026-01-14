@@ -8,7 +8,8 @@ def _check_sysctl(param: str, expected_value: str) -> CheckResult:
     """Check sysctl parameter"""
     try:
         # sysctl -n param
-        result = subprocess.run(["sysctl", "-n", param], capture_output=True, text=True)
+        # Check=False because we manually handle returncode
+        result = subprocess.run(["sysctl", "-n", param], capture_output=True, text=True, check=False)
         if result.returncode != 0:
             return CheckResult(check=None, status=Status.ERROR, message=f"Failed to read {param}")
 

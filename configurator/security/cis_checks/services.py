@@ -12,7 +12,8 @@ def _check_package_removed(package_name: str) -> CheckResult:
 
     try:
         # dpkg -s returns 0 if installed, 1 if not
-        result = subprocess.run(["dpkg", "-s", package_name], capture_output=True, text=True)
+        # Use explicit check=False since we handle the return code manually
+        result = subprocess.run(["dpkg", "-s", package_name], capture_output=True, text=True, check=False)
         if result.returncode != 0:
             return CheckResult(
                 check=None, status=Status.PASS, message=f"{package_name} is not installed"
@@ -74,6 +75,7 @@ def _check_service_masked(service_name: str) -> CheckResult:
 
 def _remediate_mask_service(service_name: str) -> bool:
     try:
+        # Check=False is acceptable here as service might not be running
         subprocess.run(["systemctl", "disable", "--now", service_name], check=False)
         subprocess.run(["systemctl", "mask", service_name], check=True)
         return True
