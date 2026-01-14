@@ -89,9 +89,8 @@ class TestXRDPOptimizationUnit(unittest.TestCase):
         # Validate session settings
         assert "IdleTimeLimit=0" in sesman_content
         assert "DisconnectedTimeLimit=0" in sesman_content
-        # assert "+extension GLX" in sesman_content  # Removed in new config
         assert "LogLevel=INFO" in sesman_content
-        assert "AllowRootLogin=true" in sesman_content
+        assert "AllowRootLogin=false" in sesman_content
         assert "MaxSessions=10" in sesman_content
 
     @patch("configurator.modules.desktop.write_file")
@@ -116,6 +115,27 @@ class TestXRDPOptimizationUnit(unittest.TestCase):
         assert "max_bpp=32" in xrdp_content
         assert "bitmap_cache=false" in xrdp_content
         assert "security_layer=rdp" in xrdp_content
+
+    @patch("configurator.modules.desktop.write_file")
+    @patch("configurator.modules.desktop.backup_file")
+    @patch.object(DesktopModule, "run")
+    def test_sesman_ini_vncparams(self, mock_run, mock_backup, mock_write):
+        """Test that sesman.ini includes correct Xvnc parameters."""
+        self.module._optimize_xrdp_performance()
+
+        # Get sesman.ini content
+        sesman_ini_call = [
+            c for c in mock_write.call_args_list if "/etc/xrdp/sesman.ini" in str(c)
+        ][0]
+        sesman_content = sesman_ini_call[0][1]
+
+        # Validate Xvnc section parameters
+        assert "[Xvnc]" in sesman_content
+        assert "param=-bs" in sesman_content, "Should disable backing store support"
+        assert "param=-ac" in sesman_content, "Should disable host-based access control"
+        assert "param=-nolisten" in sesman_content, "Should use -nolisten"
+        assert "param=tcp" in sesman_content, "Should disable TCP listening"
+        assert "param=-localhost" in sesman_content, "Should only listen on localhost"
 
     @patch("configurator.modules.desktop.write_file")
     @patch("configurator.modules.desktop.backup_file")
@@ -195,6 +215,41 @@ class TestXRDPOptimizationUnit(unittest.TestCase):
         # Verify chmod executed
         chmod_calls = [c for c in mock_run.call_args_list if "chmod" in str(c)]
         assert len(chmod_calls) == 2  # One per user
+
+    @patch("configurator.modules.desktop.pwd")
+    @patch.object(DesktopModule, "run")
+    @patch("configurator.modules.desktop.os.path.isabs", return_value=True)
+    @patch("configurator.modules.desktop.os.path.isdir", return_value=True)
+    def test_user_session_script_content(self, mock_isdir, mock_isabs, mock_run, mock_pwd):
+        """Test specific content of the generated .xsession script."""
+        mock_user = Mock()
+        mock_user.pw_name = "testuser"
+        mock_user.pw_uid = 1000
+        mock_user.pw_dir = "/home/testuser"
+
+        mock_pwd.getpwall.return_value = [mock_user]
+        mock_pwd.getpwnam.return_value = mock_user
+
+        self.module._configure_user_session()
+
+        # Get session content
+        user_tee_call = [
+            c for c in mock_run.call_args_list if "testuser" in str(c) and "cat" in str(c)
+        ][0]
+        xsession_content = user_tee_call[1]["input"].decode()
+
+        # Check required disable flags
+        assert "export NO_AT_BRIDGE=1" in xsession_content
+        assert 'export GNOME_KEYRING_CONTROL=""' in xsession_content
+
+        # Check XFCE settings
+        assert "export XDG_CURRENT_DESKTOP=XFCE" in xsession_content
+        assert "export XFCE_PANEL_DISABLE_BACKGROUND=1" in xsession_content
+
+        # Check xset commands
+        assert "xset s off" in xsession_content
+        assert "xset -dpms" in xsession_content
+        assert "xset s noblank" in xsession_content
 
     @patch("configurator.modules.desktop.pwd")
     @patch.object(DesktopModule, "run")

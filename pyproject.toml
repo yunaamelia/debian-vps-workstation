@@ -44,10 +44,8 @@ dev = [
     "pytest>=7.4.0",
     "pytest-cov>=4.1.0",
     "pytest-mock>=3.11.0",
-    "black>=23.0.0",
-    "pylint>=3.0.0",
+    "ruff>=0.1.0",
     "mypy>=1.5.0",
-    "isort>=5.12.0",
     "types-PyYAML>=6.0.0",
     "types-requests>=2.31.0",
     "types-paramiko>=3.3.0",
@@ -66,25 +64,22 @@ Issues = "https://github.com/youruser/debian-vps-configurator/issues"
 where = ["."]
 include = ["configurator*"]
 
-[tool.black]
+[tool.ruff]
 line-length = 100
-target-version = ['py311']
-include = '\.pyi?$'
-exclude = '''
-/(
-    \.git
-  | \.mypy_cache
-  | \.pytest_cache
-  | __pycache__
-  | \.venv
-  | build
-  | dist
-)/
-'''
+target-version = "py311"
 
-[tool.isort]
-profile = "black"
-line_length = 100
+[tool.ruff.lint]
+select = ["E", "F", "B", "I"]
+ignore = ["E501", "E203", "F841", "E303", "B904", "B007", "B017"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["E402"]
+"configurator/modules/__init__.py" = ["E402", "F401"]
+"configurator/utils/file.py" = ["E402"]
+"configurator/utils/network.py" = ["E402"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["configurator"]
 
 [tool.mypy]
 python_version = "3.11"
@@ -93,16 +88,6 @@ warn_unused_ignores = true
 disallow_untyped_defs = false
 check_untyped_defs = true
 ignore_missing_imports = true
-
-[tool.pylint.messages_control]
-disable = [
-    "C0114",  # missing-module-docstring
-    "C0115",  # missing-class-docstring (we use __doc__)
-    "R0903",  # too-few-public-methods
-]
-
-[tool.pylint.format]
-max-line-length = 100
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

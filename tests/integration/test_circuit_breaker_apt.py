@@ -90,6 +90,7 @@ class TestCircuitBreakerAptIntegration:
 
         with patch.object(mock_module, "run") as mock_run:
             mock_run.return_value.success = True
+            mock_run.return_value.return_code = 0
 
             assert mock_module.install_packages(["package1"]) is True
             assert breaker.state.value == "closed"

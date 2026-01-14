@@ -306,7 +306,7 @@ class CertificateManager:
                 return True
             else:
                 self.logger.warning(
-                    f"DNS mismatch: {lookup_domain} → {domain_ip}, " f"server IPs: {server_ips}"
+                    f"DNS mismatch: {lookup_domain} → {domain_ip}, server IPs: {server_ips}"
                 )
                 return False
 
@@ -401,7 +401,11 @@ class CertificateManager:
             self.logger.info(f"Running: {' '.join(cmd)}")
 
             result = subprocess.run(
-                cmd, capture_output=True, text=True, check=True, timeout=300  # 5 minute timeout
+                cmd,
+                capture_output=True,
+                text=True,
+                check=True,
+                timeout=300,  # 5 minute timeout
             )
 
             self.logger.info("Certificate obtained successfully")

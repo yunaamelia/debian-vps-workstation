@@ -46,6 +46,7 @@ class TestPhase4Integration:
             "_install_icon_packs",
             "_configure_fonts",
             "_configure_panel_layout",
+            "_configure_xwrapper",
             "_install_meslo_nerd_font",
             "_configure_powerlevel10k",
             "_configure_terminal_emulator",
@@ -56,7 +57,8 @@ class TestPhase4Integration:
 
         with ExitStack() as stack:
             # Patch system interaction
-            stack.enter_context(patch.object(module, "run"))
+            mock_run = stack.enter_context(patch.object(module, "run"))
+            mock_run.return_value.return_code = 0
             stack.enter_context(patch.object(module, "validate", return_value=True))
 
             # Patch all methods

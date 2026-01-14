@@ -60,9 +60,9 @@ class TestXRDPPerformance:
 
         # Should be roughly linear: ~0.1s per user max
         expected_max = user_count * 0.2  # 200ms per user is generous
-        assert (
-            duration < expected_max
-        ), f"User session setup for {user_count} users took {duration:.2f}s"
+        assert duration < expected_max, (
+            f"User session setup for {user_count} users took {duration:.2f}s"
+        )
 
     def test_dry_run_mode_has_minimal_overhead(self):
         """Test that dry-run mode doesn't add significant overhead."""
@@ -158,7 +158,9 @@ class TestXRDPPerformance:
                         with patch.object(module, "_start_services"):
                             with patch("configurator.modules.desktop.write_file"):
                                 with patch("configurator.modules.desktop.backup_file"):
-                                    with patch.object(module, "run"):
+                                    with patch.object(module, "run") as mock_run:
+                                        # Fix: Ensure run returns success to avoid retry loops in install_packages
+                                        mock_run.return_value.return_code = 0
                                         start = time.time()
                                         module.configure()
                                         duration = time.time() - start

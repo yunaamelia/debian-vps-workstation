@@ -109,7 +109,7 @@ class TestExaConfiguration:
 
     def test_generate_exa_aliases_creates_valid_bash(self, module):
         """Test that generated exa aliases have valid bash syntax."""
-        module._configure_exa_advanced()
+        module._configure_eza_advanced()
         exa_aliases = module._generate_exa_aliases()
 
         # Should be valid bash
@@ -130,11 +130,11 @@ class TestExaConfiguration:
 
     def test_exa_aliases_have_fallbacks(self, module):
         """Test that exa aliases fall back to standard ls."""
-        module._configure_exa_advanced()
+        module._configure_eza_advanced()
         exa_aliases = module._generate_exa_aliases()
 
         # Should check if exa exists
-        assert "command -v exa" in exa_aliases
+        assert "command -v eza" in exa_aliases
 
         # Should have else clause with standard ls
         assert "else" in exa_aliases
@@ -142,7 +142,7 @@ class TestExaConfiguration:
 
     def test_exa_aliases_include_git_integration(self, module):
         """Test that git integration is included when configured."""
-        module._configure_exa_advanced()
+        module._configure_eza_advanced()
         exa_aliases = module._generate_exa_aliases()
 
         # Should include --git flag
@@ -150,7 +150,7 @@ class TestExaConfiguration:
 
     def test_exa_aliases_include_icons(self, module):
         """Test that icons are included when configured."""
-        module._configure_exa_advanced()
+        module._configure_eza_advanced()
         exa_aliases = module._generate_exa_aliases()
 
         # Should include --icons flag
@@ -158,7 +158,7 @@ class TestExaConfiguration:
 
     def test_exa_aliases_group_directories_first(self, module):
         """Test that group-directories-first is included."""
-        module._configure_exa_advanced()
+        module._configure_eza_advanced()
         exa_aliases = module._generate_exa_aliases()
 
         # Should include flag

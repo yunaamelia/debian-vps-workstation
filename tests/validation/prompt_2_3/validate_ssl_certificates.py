@@ -13,15 +13,15 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 
 def print_header(title: str):
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  {title}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
 
 def print_section(title: str):
-    print(f"\n{'─'*60}")
+    print(f"\n{'─' * 60}")
     print(f"  {title}")
-    print(f"{'─'*60}\n")
+    print(f"{'─' * 60}\n")
 
 
 def check_1_1_file_structure():

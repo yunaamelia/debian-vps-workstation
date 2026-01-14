@@ -17,9 +17,9 @@ sys.path.insert(0, "/home/racoon/AgentMemorh/debian-vps-workstation")
 
 
 def section_header(title: str):
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"  {title}")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
 
 
 def check_pass(msg: str):

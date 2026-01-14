@@ -43,9 +43,9 @@ class TestZshrcSyntaxValidation:
                     ["zsh", "-n", temp_path], capture_output=True, text=True, timeout=5
                 )
 
-                assert (
-                    result.returncode == 0
-                ), f"Zsh syntax error in generated .zshrc:\n{result.stderr}"
+                assert result.returncode == 0, (
+                    f"Zsh syntax error in generated .zshrc:\n{result.stderr}"
+                )
             except FileNotFoundError:
                 pytest.skip("zsh not installed in test environment")
 
@@ -127,9 +127,9 @@ class TestZshrcSyntaxValidation:
             full_plugins_str = " ".join(plugin_lines).replace("plugins=(", "").replace(")", "")
             tokens = full_plugins_str.split()
             if tokens:
-                assert (
-                    "zsh-syntax-highlighting" == tokens[-1]
-                ), f"zsh-syntax-highlighting must be last plugin. Found: {tokens[-1]}"
+                assert "zsh-syntax-highlighting" == tokens[-1], (
+                    f"zsh-syntax-highlighting must be last plugin. Found: {tokens[-1]}"
+                )
 
     def test_aliases_are_safe(self, module):
         """Test that generated aliases don't contain dangerous commands."""
@@ -161,9 +161,9 @@ class TestZshrcSyntaxValidation:
                 # Find the full alias line
                 for line in zshrc_content.split("\n"):
                     if alias_name in line:
-                        assert (
-                            fallback_pattern in line or "2>/dev/null" in line
-                        ), f"Alias should have fallback: {line}"
+                        assert fallback_pattern in line or "2>/dev/null" in line, (
+                            f"Alias should have fallback: {line}"
+                        )
 
     def test_environment_variables_safe(self, module):
         """Test that environment variables are set to safe values."""

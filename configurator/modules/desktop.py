@@ -109,7 +109,7 @@ class DesktopModule(ConfigurationModule):
         free_gb = get_disk_free_gb("/")
         if free_gb < 5:
             self.logger.warning(
-                f"Low disk space: {free_gb:.1f} GB free. " "Desktop installation may fail."
+                f"Low disk space: {free_gb:.1f} GB free. Desktop installation may fail."
             )
 
         self.logger.info(f"✓ Disk space: {free_gb:.1f} GB free")
@@ -181,7 +181,7 @@ class DesktopModule(ConfigurationModule):
             self.logger.info("✓ Remote Desktop with complete productivity environment configured")
             return True
 
-        except Exception as e:
+        except Exception:
             self.logger.error(f"Desktop configuration failed at step: {traceback.format_exc()}")
             raise
 
@@ -492,7 +492,7 @@ DefaultWindowManager=startwm.sh
 ReconnectScript=reconnectwm.sh
 
 [Security]
-AllowRootLogin=true
+AllowRootLogin=false
 MaxLoginRetry=4
 TerminalServerUsers=tsusers
 TerminalServerAdmins=tsadmins
@@ -528,6 +528,7 @@ param=.xorgxrdp.%s.log
 [Xvnc]
 param=Xvnc
 param=-bs
+param=-ac
 param=-nolisten
 param=tcp
 param=-localhost
@@ -607,8 +608,7 @@ needs_root_rights=yes
             if self.dry_run_manager:
                 self.dry_run_manager.record_command("configure .xsession for all users")
             self.logger.info(
-                f"[DRY RUN] Would create .xsession files for users with "
-                f"UID >= {self.MIN_USER_UID}"
+                f"[DRY RUN] Would create .xsession files for users with UID >= {self.MIN_USER_UID}"
             )
             return
 
@@ -639,6 +639,13 @@ needs_root_rights=yes
                 # Validate home directory
                 if not os.path.isabs(user_home):
                     self.logger.warning(f"Skipping user {user}: invalid home path")
+                    continue
+
+                # Fix: Check for path traversal in home directory
+                if ".." in user_home.split(os.sep):
+                    self.logger.warning(
+                        f"Skipping user {user}: home directory contains path traversal"
+                    )
                     continue
 
                 if not os.path.isdir(user_home):
@@ -960,7 +967,7 @@ ResultActive=yes
                         description="Remove colord Polkit rule",
                     )
 
-            except Exception as e:
+            except Exception:
                 self.logger.info("Unable to install colord rule (non-critical).")
 
         # Install packagekit rule
@@ -991,7 +998,7 @@ ResultActive=yes
                         description="Remove packagekit Polkit rule",
                     )
 
-            except Exception as e:
+            except Exception:
                 self.logger.info("Unable to install packagekit rule (non-critical).")
 
         # Restart polkit service to apply rules
@@ -2943,7 +2950,7 @@ if command -v zoxide &> /dev/null; then
         if exclude_dirs:
             config += f"""
     # Exclude directories from zoxide
-    export _ZO_EXCLUDE_DIRS="{':'.join(exclude_dirs)}"
+    export _ZO_EXCLUDE_DIRS="{":".join(exclude_dirs)}"
 """
 
         config += """fi

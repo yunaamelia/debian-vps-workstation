@@ -277,9 +277,9 @@ class ParallelModuleExecutor:
 
         for batch_index, batch in enumerate(batches, 1):
             self.logger.info(
-                f"\n{'='*60}\n"
+                f"\n{'=' * 60}\n"
                 f"Batch {batch_index}/{total_batches}: {len(batch)} module(s)\n"
-                f"{'='*60}"
+                f"{'=' * 60}"
             )
 
             if len(batch) == 1:
@@ -457,9 +457,7 @@ class ParallelModuleExecutor:
             with self.results_lock:
                 self.end_times[module_name] = end_time
 
-            self.logger.info(
-                f"[{thread_name}] ✅ {module_name} complete " f"(took {duration:.1f}s)"
-            )
+            self.logger.info(f"[{thread_name}] ✅ {module_name} complete (took {duration:.1f}s)")
             return True
 
         except Exception as e:

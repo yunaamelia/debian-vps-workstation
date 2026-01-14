@@ -150,7 +150,6 @@ class FileIntegrityMonitor:
             output_data = {"baseline": baseline_data}
 
             if self._hmac_key:
-
                 # Sign the canonical content of baseline
                 canonical_json = json.dumps(baseline_data, sort_keys=True)
                 signature = self._calculate_signature(canonical_json.encode())

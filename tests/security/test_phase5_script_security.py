@@ -60,9 +60,9 @@ class TestCustomScriptSecurity:
 
             # Verify security patterns
             # 1. Variables should be quoted
-            assert (
-                '"$FILE"' in script_content or '"$1"' in script_content
-            ), "Variables not quoted in preview script"
+            assert '"$FILE"' in script_content or '"$1"' in script_content, (
+                "Variables not quoted in preview script"
+            )
 
             # 2. Should not use eval
             assert "eval" not in script_content, "Dangerous eval found in preview script"

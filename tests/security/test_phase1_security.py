@@ -140,9 +140,9 @@ class TestXRDPSecurity:
 
                     # Invalid usernames should be skipped
                     if username not in ["test_user", "test-user", "test123", "_test"]:
-                        assert (
-                            mock_run.call_count == 0
-                        ), f"Invalid username {username} was not rejected"
+                        assert mock_run.call_count == 0, (
+                            f"Invalid username {username} was not rejected"
+                        )
 
     def test_file_paths_validated(self):
         """Test that file paths are validated before use."""

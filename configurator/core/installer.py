@@ -395,11 +395,11 @@ class Installer:
                     # Prompt user for confirmation before rollback
                     import click
 
-                    self.logger.warning(f"\n{'='*60}")
+                    self.logger.warning(f"\n{'=' * 60}")
                     self.logger.warning(
                         f"Installation failed. {action_count} rollback actions available."
                     )
-                    self.logger.warning(f"{'='*60}")
+                    self.logger.warning(f"{'=' * 60}")
 
                     # Show rollback summary
                     summary = self.rollback_manager.get_summary()

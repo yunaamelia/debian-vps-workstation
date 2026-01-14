@@ -197,9 +197,9 @@ class ProgressReporter:
             rdp_port: RDP port number
             public_ip: Server's public IP
         """
-        public_ip or "YOUR_SERVER_IP"
+        ip_display = public_ip or "YOUR_SERVER_IP"
 
-        next_steps = """
+        next_steps = f"""
 [bold cyan]🎉 Installation Complete! Here's what to do next:[/bold cyan]
 
 [bold]1. Connect via Remote Desktop:[/bold]

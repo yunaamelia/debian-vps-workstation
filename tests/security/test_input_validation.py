@@ -28,19 +28,9 @@ class TestPathTraversalPrevention:
         [
             "../../../etc/passwd",
             "..\\..\\..\\etc\\passwd",
-            pytest.param(
-                "/home/../../../etc/shadow",
-                marks=pytest.mark.xfail(
-                    reason="Security gap: absolute path traversal needs code fix"
-                ),
-            ),
+            "/home/../../../etc/shadow",
             "~/../../../etc/shadow",
-            pytest.param(
-                "/home/user/../../../../root/.ssh/id_rsa",
-                marks=pytest.mark.xfail(
-                    reason="Security gap: absolute path traversal needs code fix"
-                ),
-            ),
+            "/home/user/../../../../root/.ssh/id_rsa",
             "./../.../../etc/passwd",
         ],
     )

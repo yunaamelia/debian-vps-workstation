@@ -32,7 +32,7 @@ class TestPhase5Integration:
                 patch.object(module, "_configure_bat_advanced", track("_configure_bat_advanced"))
             )
             stack.enter_context(
-                patch.object(module, "_configure_exa_advanced", track("_configure_exa_advanced"))
+                patch.object(module, "_configure_eza_advanced", track("_configure_eza_advanced"))
             )
             stack.enter_context(
                 patch.object(
@@ -80,13 +80,14 @@ class TestPhase5Integration:
             stack.enter_context(patch.object(module, "_install_and_configure_zsh"))
             stack.enter_context(patch.object(module, "_configure_session"))
             stack.enter_context(patch.object(module, "_start_services"))
+            stack.enter_context(patch.object(module, "_configure_xwrapper"))
 
             # Run configure
             module.configure()
 
         # Verify Phase 5 methods called
         assert "_configure_bat_advanced" in called_methods
-        assert "_configure_exa_advanced" in called_methods
+        assert "_configure_eza_advanced" in called_methods
         assert "_configure_zoxide_advanced" in called_methods
         assert "_configure_fzf_advanced" in called_methods
         assert "_create_tool_integration_scripts" in called_methods
@@ -99,7 +100,7 @@ class TestPhase5Integration:
 
         # Configure all tools
         module._configure_bat_advanced()
-        module._configure_exa_advanced()
+        module._configure_eza_advanced()
         module._configure_zoxide_advanced()
         module._configure_fzf_advanced()
 
@@ -107,7 +108,7 @@ class TestPhase5Integration:
         zshrc_block = module._generate_advanced_tools_zshrc_block()
 
         # Verify all tool configs present
-        assert "exa" in zshrc_block.lower()
+        assert "eza" in zshrc_block.lower()
         assert "zoxide" in zshrc_block.lower()
         assert "fzf" in zshrc_block.lower()
         assert "PATH=" in zshrc_block  # PATH for scripts

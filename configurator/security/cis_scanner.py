@@ -177,9 +177,14 @@ class CISBenchmarkScanner:
         In the modular implementation, this will import from cis_checks modules.
         """
         # Placeholder for modular registration
-        from configurator.security.cis_checks import access_control, initial_setup
+        from configurator.security.cis_checks import (
+            access_control,
+            initial_setup,
+            maintenance,
+            network,
+            services,
+        )
         from configurator.security.cis_checks import logging as audit_logging
-        from configurator.security.cis_checks import maintenance, network, services
 
         # We assume these modules will have a function or list exposed,
         # e.g., get_checks()

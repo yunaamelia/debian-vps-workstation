@@ -38,14 +38,14 @@ class TestGitRepositorySecurity:
         source = inspect.getsource(module._install_nordic_theme)
 
         # Should contain hardcoded GitHub URL
-        assert (
-            "https://github.com/EliverLara/Nordic.git" in source
-        ), "Git URL should be hardcoded in method"
+        assert "https://github.com/EliverLara/Nordic.git" in source, (
+            "Git URL should be hardcoded in method"
+        )
 
         # Should NOT read URL from config
-        assert (
-            "self.config.get" not in source or "repo" not in source.lower()
-        ), "Git URL should not be configurable (supply chain risk)"
+        assert "self.config.get" not in source or "repo" not in source.lower(), (
+            "Git URL should not be configurable (supply chain risk)"
+        )
 
     @pytest.mark.parametrize(
         "malicious_url",
@@ -71,14 +71,14 @@ class TestGitRepositorySecurity:
 
                 for call_str in git_clone_calls:
                     # Should NOT contain malicious URL
-                    assert (
-                        malicious_url not in call_str
-                    ), f"Malicious URL used in git clone: {call_str}"
+                    assert malicious_url not in call_str, (
+                        f"Malicious URL used in git clone: {call_str}"
+                    )
 
                     # Should use HTTPS GitHub
-                    assert (
-                        "https://github.com/" in call_str
-                    ), f"Git clone doesn't use HTTPS GitHub: {call_str}"
+                    assert "https://github.com/" in call_str, (
+                        f"Git clone doesn't use HTTPS GitHub: {call_str}"
+                    )
 
             except Exception:
                 # If implementation raises exception, that's acceptable
@@ -96,9 +96,9 @@ class TestGitRepositorySecurity:
             assert len(git_clone_calls) > 0, "No git clone executed"
 
             for call_str in git_clone_calls:
-                assert (
-                    "--depth=1" in call_str or "--depth 1" in call_str
-                ), f"Git clone should use shallow clone: {call_str}"
+                assert "--depth=1" in call_str or "--depth 1" in call_str, (
+                    f"Git clone should use shallow clone: {call_str}"
+                )
 
     def test_git_clone_destination_validated(self, module):
         """Test that git clone destination paths are validated."""
@@ -156,9 +156,9 @@ class TestInstallerScriptSecurity:
 
             for call_str in script_calls:
                 # Parameters should be hardcoded or validated
-                assert (
-                    "-d /usr/share/themes" in call_str
-                ), "Installer destination should be hardcoded"
+                assert "-d /usr/share/themes" in call_str, (
+                    "Installer destination should be hardcoded"
+                )
 
                 # Should NOT contain command injection attempts from user input
                 # Note: && for command chaining is acceptable when paths are hardcoded
@@ -278,9 +278,9 @@ class TestDependencyVerification:
             # Verify trusted organizations
             trusted_orgs = ["EliverLara", "dracula", "vinceliuice"]
 
-            assert any(
-                org in source for org in trusted_orgs
-            ), "Git repository not from trusted organization"
+            assert any(org in source for org in trusted_orgs), (
+                "Git repository not from trusted organization"
+            )
 
     def test_no_downloads_from_untrusted_domains(self, module):
         """Test that no downloads occur from untrusted domains."""
@@ -302,6 +302,6 @@ class TestDependencyVerification:
 
                 for url in urls:
                     domain = url.split("/")[2]
-                    assert any(
-                        trusted in domain for trusted in trusted_domains
-                    ), f"Download from untrusted domain: {url}"
+                    assert any(trusted in domain for trusted in trusted_domains), (
+                        f"Download from untrusted domain: {url}"
+                    )

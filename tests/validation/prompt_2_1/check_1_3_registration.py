@@ -98,7 +98,7 @@ def validate_check_registration():
     remediable = len([c for c in checks if c.remediation_function is not None])
     print("\nRemediation:")
     print(f"  Auto-remediable checks: {remediable}")
-    print(f"  Remediation coverage: {remediable/len(checks)*100:.1f}%")
+    print(f"  Remediation coverage: {remediable / len(checks) * 100:.1f}%")
 
     if remediable < 50:
         print("⚠️  Few remediation functions (expected >= 50)")

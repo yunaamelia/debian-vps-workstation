@@ -569,7 +569,7 @@ class SSHKeyManager:
 
         # Add new key with metadata comment
         expires_str = key.expires_at.isoformat() if key.expires_at else "never"
-        key_line = f"{key.public_key} " f"# MANAGED KEY_ID={key.key_id} EXPIRES={expires_str}"
+        key_line = f"{key.public_key} # MANAGED KEY_ID={key.key_id} EXPIRES={expires_str}"
 
         existing_lines.append(key_line)
 

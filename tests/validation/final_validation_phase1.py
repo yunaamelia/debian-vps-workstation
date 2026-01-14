@@ -479,7 +479,7 @@ def test_lazy_loading():
         import_time = lazy.get_import_time()
 
         if import_time >= 0:
-            print(f"  ✅ Import time tracked: {import_time*1000:.2f}ms")
+            print(f"  ✅ Import time tracked: {import_time * 1000:.2f}ms")
             results["passed"] += 1
             results["tests"].append(("Import Time Tracking", "PASS"))
         else:

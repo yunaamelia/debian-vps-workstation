@@ -83,9 +83,9 @@ class DebugSession:
 
     def print_status(self):
         """Print formatted status table"""
-        print(f"\n{Colors.BOLD}{Colors.CYAN}{'='*100}{Colors.RESET}")
+        print(f"\n{Colors.BOLD}{Colors.CYAN}{'=' * 100}{Colors.RESET}")
         print(f"{Colors.BOLD}{Colors.WHITE}Debug Session Status{Colors.RESET}")
-        print(f"{Colors.CYAN}{'='*100}{Colors.RESET}\n")
+        print(f"{Colors.CYAN}{'=' * 100}{Colors.RESET}\n")
 
         if not self.runs:
             print(f"{Colors.YELLOW}No runs yet{Colors.RESET}\n")
@@ -95,7 +95,7 @@ class DebugSession:
         print(
             f"{Colors.BOLD}| {'Run #':<6} | {'Stop Reason (Log Line)':<50} | {'Action Taken':<30} | {'Time Saved':<12} |{Colors.RESET}"
         )
-        print(f"{Colors.CYAN}|{'='*8}|{'='*52}|{'='*32}|{'='*14}|{Colors.RESET}")
+        print(f"{Colors.CYAN}|{'=' * 8}|{'=' * 52}|{'=' * 32}|{'=' * 14}|{Colors.RESET}")
 
         # Rows
         for run in self.runs:
@@ -113,7 +113,7 @@ class DebugSession:
                 f"| {run['run']:<6} | {stop_reason:<50} | {action:<30} | {run['time_saved']:<12} |"
             )
 
-        print(f"{Colors.CYAN}{'='*100}{Colors.RESET}\n")
+        print(f"{Colors.CYAN}{'=' * 100}{Colors.RESET}\n")
 
         elapsed = (datetime.now() - self.start_time).total_seconds()
         print(
@@ -377,11 +377,11 @@ class RemoteCommandMonitor:
                             self.failure_line = full_error
                             self.failure_detected.set()
 
-                            print(f"\n{Colors.BOLD}{Colors.RED}{'!'*80}{Colors.RESET}")
+                            print(f"\n{Colors.BOLD}{Colors.RED}{'!' * 80}{Colors.RESET}")
                             print(
                                 f"{Colors.BOLD}{Colors.RED}FAILURE DETECTED - INTERRUPTING PROCESS{Colors.RESET}"
                             )
-                            print(f"{Colors.BOLD}{Colors.RED}{'!'*80}{Colors.RESET}\n")
+                            print(f"{Colors.BOLD}{Colors.RED}{'!' * 80}{Colors.RESET}\n")
 
                             print(f"{Colors.YELLOW}Complete Error:{Colors.RESET}")
                             for err_line in traceback_lines:
@@ -416,11 +416,11 @@ class RemoteCommandMonitor:
                     self.failure_line = line
                     self.failure_detected.set()
 
-                    print(f"\n{Colors.BOLD}{Colors.RED}{'!'*80}{Colors.RESET}")
+                    print(f"\n{Colors.BOLD}{Colors.RED}{'!' * 80}{Colors.RESET}")
                     print(
                         f"{Colors.BOLD}{Colors.RED}FAILURE DETECTED - INTERRUPTING PROCESS{Colors.RESET}"
                     )
-                    print(f"{Colors.BOLD}{Colors.RED}{'!'*80}{Colors.RESET}\n")
+                    print(f"{Colors.BOLD}{Colors.RED}{'!' * 80}{Colors.RESET}\n")
 
                     print(f"{Colors.YELLOW}Last {context_size} lines of context:{Colors.RESET}")
                     for ctx_line in failure_context:
@@ -436,11 +436,11 @@ class RemoteCommandMonitor:
             exit_code = self.process.wait(timeout=5)
 
             if exit_code == 0:
-                print(f"\n{Colors.BOLD}{Colors.GREEN}{'='*80}{Colors.RESET}")
+                print(f"\n{Colors.BOLD}{Colors.GREEN}{'=' * 80}{Colors.RESET}")
                 print(
                     f"{Colors.BOLD}{Colors.GREEN}SUCCESS - Installation completed without errors!{Colors.RESET}"
                 )
-                print(f"{Colors.BOLD}{Colors.GREEN}{'='*80}{Colors.RESET}\n")
+                print(f"{Colors.BOLD}{Colors.GREEN}{'=' * 80}{Colors.RESET}\n")
 
             return exit_code, None
 
@@ -484,11 +484,11 @@ class RemoteCommandMonitor:
 
 def main():
     """Main orchestration loop"""
-    print(f"\n{Colors.BOLD}{Colors.MAGENTA}{'='*100}{Colors.RESET}")
+    print(f"\n{Colors.BOLD}{Colors.MAGENTA}{'=' * 100}{Colors.RESET}")
     print(
         f"{Colors.BOLD}{Colors.MAGENTA}VPS Configurator - Fail-Fast Real-Time Orchestrator{Colors.RESET}"
     )
-    print(f"{Colors.BOLD}{Colors.MAGENTA}{'='*100}{Colors.RESET}\n")
+    print(f"{Colors.BOLD}{Colors.MAGENTA}{'=' * 100}{Colors.RESET}\n")
 
     session = DebugSession()
     monitor = RemoteCommandMonitor(REMOTE_HOST, REMOTE_USER, REMOTE_PASSWORD)
@@ -504,9 +504,9 @@ def main():
     while iteration < max_iterations:
         iteration += 1
 
-        print(f"\n{Colors.BOLD}{Colors.CYAN}{'='*100}{Colors.RESET}")
+        print(f"\n{Colors.BOLD}{Colors.CYAN}{'=' * 100}{Colors.RESET}")
         print(f"{Colors.BOLD}{Colors.WHITE}Iteration #{iteration}{Colors.RESET}")
-        print(f"{Colors.CYAN}{'='*100}{Colors.RESET}\n")
+        print(f"{Colors.CYAN}{'=' * 100}{Colors.RESET}\n")
 
         # Step 1: Sync workspace
         if not monitor.sync_workspace():
@@ -525,11 +525,11 @@ def main():
         # Step 4: Analyze result
         if exit_code == 0 and failure_line is None:
             # SUCCESS!
-            print(f"\n{Colors.BOLD}{Colors.GREEN}{'='*100}{Colors.RESET}")
+            print(f"\n{Colors.BOLD}{Colors.GREEN}{'=' * 100}{Colors.RESET}")
             print(
                 f"{Colors.BOLD}{Colors.GREEN}✓✓✓ INSTALLATION COMPLETED SUCCESSFULLY ✓✓✓{Colors.RESET}"
             )
-            print(f"{Colors.BOLD}{Colors.GREEN}{'='*100}{Colors.RESET}\n")
+            print(f"{Colors.BOLD}{Colors.GREEN}{'=' * 100}{Colors.RESET}\n")
 
             session.print_status()
             return 0
@@ -546,9 +546,9 @@ def main():
 
             session.print_status()
 
-            print(f"\n{Colors.BOLD}{Colors.YELLOW}{'='*100}{Colors.RESET}")
+            print(f"\n{Colors.BOLD}{Colors.YELLOW}{'=' * 100}{Colors.RESET}")
             print(f"{Colors.BOLD}{Colors.YELLOW}ACTION REQUIRED{Colors.RESET}")
-            print(f"{Colors.YELLOW}{'='*100}{Colors.RESET}\n")
+            print(f"{Colors.YELLOW}{'=' * 100}{Colors.RESET}\n")
 
             print(f"{Colors.WHITE}Failure detected: {Colors.RED}{failure_line}{Colors.RESET}")
             print(f"\n{Colors.WHITE}Please fix the issue in your local workspace:{Colors.RESET}")

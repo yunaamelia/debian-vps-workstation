@@ -33,14 +33,14 @@ class TestOhMyZshScriptSecurity:
         source = inspect.getsource(module._install_oh_my_zsh)
 
         # Should contain hardcoded GitHub URL
-        assert (
-            "raw.githubusercontent.com/ohmyzsh/ohmyzsh" in source
-        ), "Oh My Zsh URL should be hardcoded"
+        assert "raw.githubusercontent.com/ohmyzsh/ohmyzsh" in source, (
+            "Oh My Zsh URL should be hardcoded"
+        )
 
         # Should NOT read URL from config
-        assert (
-            "self.config.get" not in source or "install_url" not in source.lower()
-        ), "Oh My Zsh URL should not be configurable (supply chain risk)"
+        assert "self.config.get" not in source or "install_url" not in source.lower(), (
+            "Oh My Zsh URL should not be configurable (supply chain risk)"
+        )
 
     def test_ohmyzsh_script_uses_https(self, module):
         """Test that Oh My Zsh script is downloaded via HTTPS."""
@@ -57,9 +57,9 @@ class TestOhMyZshScriptSecurity:
                 # Must use HTTPS
                 assert "https://" in call_str, f"Oh My Zsh download must use HTTPS: {call_str}"
                 # Must NOT use HTTP
-                assert (
-                    "http://" not in call_str or "https://" in call_str
-                ), f"Insecure HTTP detected: {call_str}"
+                assert "http://" not in call_str or "https://" in call_str, (
+                    f"Insecure HTTP detected: {call_str}"
+                )
 
     def test_ohmyzsh_script_runs_in_unattended_mode(self, module):
         """Test that Oh My Zsh installer runs in unattended mode (no prompts)."""
@@ -98,9 +98,9 @@ class TestOhMyZshScriptSecurity:
 
         for call_str in install_calls:
             # Must include --unattended flag
-            assert (
-                "--unattended" in call_str
-            ), f"Oh My Zsh installer must run in unattended mode: {call_str}"
+            assert "--unattended" in call_str, (
+                f"Oh My Zsh installer must run in unattended mode: {call_str}"
+            )
 
     def test_ohmyzsh_runs_as_user_not_root(self, module):
         """Test that Oh My Zsh installer runs as user, not root."""
@@ -171,9 +171,9 @@ class TestOhMyZshScriptSecurity:
             ]
 
             for pattern in dangerous_patterns:
-                assert (
-                    pattern not in script_content
-                ), f"Dangerous pattern found in Oh My Zsh script: {pattern}"
+                assert pattern not in script_content, (
+                    f"Dangerous pattern found in Oh My Zsh script: {pattern}"
+                )
 
             # 2. Script is reasonably sized (not suspiciously large)
             assert len(script_content) < 50000, "Oh My Zsh script suspiciously large"
@@ -295,9 +295,9 @@ class TestGitRepositorySecurity:
         git_clones = [str(c) for c in mock_run.call_args_list if "git clone" in str(c)]
 
         for clone_cmd in git_clones:
-            assert (
-                "--depth=1" in clone_cmd or "--depth 1" in clone_cmd
-            ), f"Git clone should use shallow clone: {clone_cmd}"
+            assert "--depth=1" in clone_cmd or "--depth 1" in clone_cmd, (
+                f"Git clone should use shallow clone: {clone_cmd}"
+            )
 
     def test_git_clone_destinations_validated(self, module):
         """Test that Git clone destinations are validated (no path traversal)."""
@@ -318,9 +318,9 @@ class TestGitRepositorySecurity:
 
         for clone_cmd in git_clones:
             # Should clone to user home or .oh-my-zsh directory
-            assert (
-                "/home/" in clone_cmd or ".oh-my-zsh" in clone_cmd
-            ), f"Git clone destination should be in user home: {clone_cmd}"
+            assert "/home/" in clone_cmd or ".oh-my-zsh" in clone_cmd, (
+                f"Git clone destination should be in user home: {clone_cmd}"
+            )
 
             # Should NOT contain path traversal
             assert "../" not in clone_cmd, f"Path traversal detected in git clone: {clone_cmd}"
@@ -375,9 +375,9 @@ class TestUsernameValidation:
 
                                 # Verify shlex.quote used (quoted username)
                                 if malicious_username in command:
-                                    assert (
-                                        "'" in command or "\\" in command
-                                    ), f"Username not properly quoted: {command}"
+                                    assert "'" in command or "\\" in command, (
+                                        f"Username not properly quoted: {command}"
+                                    )
                         else:
                             # No commands = username rejected (acceptable)
                             pass

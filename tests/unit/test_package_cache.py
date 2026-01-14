@@ -76,7 +76,9 @@ class TestPackageCacheManager(unittest.TestCase):
         """Test LRU eviction."""
         # Create a manager with very small size limit
         small_manager = PackageCacheManager(
-            cache_dir=self.cache_dir, max_size_gb=0.000001, logger=unittest.mock.MagicMock()  # 1KB
+            cache_dir=self.cache_dir,
+            max_size_gb=0.000001,
+            logger=unittest.mock.MagicMock(),  # 1KB
         )
 
         # Create 2 package files, each larger than 1KB

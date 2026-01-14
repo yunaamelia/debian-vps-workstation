@@ -87,9 +87,9 @@ class TestThemeInstallation:
 
         # Verify cleanup (rm -rf /tmp/nordic-theme)
         rm_calls = [str(c) for c in mock_run.call_args_list if "rm -rf" in str(c)]
-        assert any(
-            "/tmp/nordic" in call.lower() for call in rm_calls
-        ), "Temporary directory not cleaned up"
+        assert any("/tmp/nordic" in call.lower() for call in rm_calls), (
+            "Temporary directory not cleaned up"
+        )
 
     @patch.object(DesktopModule, "install_packages")
     def test_install_arc_theme_uses_apt(self, mock_install_pkg, module):

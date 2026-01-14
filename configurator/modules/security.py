@@ -39,7 +39,7 @@ class SecurityModule(ConfigurationModule):
         result = self.run("iptables-save", check=False)
         if result.stdout.strip() and "-A" in result.stdout:
             self.logger.info(
-                "Existing iptables rules detected. " "They will be replaced by UFW configuration."
+                "Existing iptables rules detected. They will be replaced by UFW configuration."
             )
 
         return True

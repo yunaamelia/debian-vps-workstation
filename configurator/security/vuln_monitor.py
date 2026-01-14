@@ -38,7 +38,7 @@ class VulnerabilityMonitor:
         """Start the monitoring thread"""
         if not HAS_SCHEDULE:
             raise RuntimeError(
-                "schedule library is required for monitoring. " "Install with: pip install schedule"
+                "schedule library is required for monitoring. Install with: pip install schedule"
             )
 
         if self.is_running:

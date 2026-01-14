@@ -213,7 +213,6 @@ class TestPhase3ErrorHandling:
 
         with patch.object(module, "run") as mock_run:
             with patch.object(module, "install_packages"):
-
                 # Simulate Git clone failure for Nordic
                 def run_side_effect(cmd, **kwargs):
                     if "git clone" in cmd and "Nordic" in cmd:
@@ -226,9 +225,9 @@ class TestPhase3ErrorHandling:
                 module._install_themes()
 
                 # Verify logger recorded the error (could be error or warning)
-                assert (
-                    module.logger.error.called or module.logger.warning.called
-                ), "Logger should record theme installation failure"
+                assert module.logger.error.called or module.logger.warning.called, (
+                    "Logger should record theme installation failure"
+                )
 
     def test_font_configuration_handles_missing_packages(self):
         """Test that font configuration handles missing packages gracefully."""
@@ -249,6 +248,6 @@ class TestPhase3ErrorHandling:
                     # Should handle gracefully
                     try:
                         module._configure_fonts()
-                    except Exception as e:
+                    except Exception:
                         # Should log error but not crash entire installation
                         assert module.logger.error.called or module.logger.warning.called

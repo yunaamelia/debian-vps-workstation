@@ -415,7 +415,7 @@ class PackageCacheManager:
             self._save_stats()
 
             self.logger.info(
-                f"✅ Cached: {package_name} {version} " f"({file_size / 1024 / 1024:.1f}MB)"
+                f"✅ Cached: {package_name} {version} ({file_size / 1024 / 1024:.1f}MB)"
             )
 
             return True

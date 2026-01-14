@@ -43,7 +43,6 @@ def verify_fix():
         patch("configurator.modules.desktop.write_file", side_effect=mock_write_file),
         patch("configurator.modules.desktop.backup_file"),
     ):
-
         # Run the optimization method
         # We need to bypass the dry_run check or ensure it's False
         module.dry_run = False

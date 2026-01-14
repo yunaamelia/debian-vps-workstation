@@ -111,9 +111,9 @@ class TestCommandInjectionDefense:
                         assert "\n" not in command, "Newline injection not prevented"
 
                         # Verify shlex.quote was used (quoted username)
-                        assert (
-                            "'" in command or "\\" in command
-                        ), f"Username not properly quoted in: {command}"
+                        assert "'" in command or "\\" in command, (
+                            f"Username not properly quoted in: {command}"
+                        )
                 else:
                     # No commands executed = username was rejected (acceptable)
                     pass

@@ -14,6 +14,7 @@ import pytest
 
 @pytest.mark.system
 @pytest.mark.skipif(not os.path.exists("/usr/sbin/xrdp"), reason="XRDP not installed")
+@pytest.mark.skipif(os.geteuid() != 0, reason="Requires root privileges")
 class TestXRDPSystemLevel:
     """End-to-end system tests for XRDP."""
 

@@ -100,6 +100,9 @@ class TestPackageCacheIntegration(unittest.TestCase):
         # 3. Mock run_command to verify and simulate side effects
         with unittest.mock.patch.object(module, "run") as mock_run:
             mock_run.return_value.success = True
+            mock_run.return_value.return_code = 0
+            mock_run.return_value.stdout = ""
+            mock_run.return_value.stderr = ""
 
             # Scenario A: Capture new package
             # Simulate apt-get install creating a file in apt_dir
@@ -110,7 +113,11 @@ class TestPackageCacheIntegration(unittest.TestCase):
                     # Logic in apt_cache looks for *.deb
                     with open(self.apt_dir / "newpkg_1.0_amd64.deb", "wb") as f:
                         f.write(b"downloaded content")
-                return unittest.mock.Mock(success=True)
+                m = unittest.mock.Mock(success=True)
+                m.return_code = 0
+                m.stdout = ""
+                m.stderr = ""
+                return m
 
             mock_run.side_effect = side_effect
 

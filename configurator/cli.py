@@ -706,7 +706,7 @@ def cache_stats():
         console.print("\n[bold]Performance[/bold]")
         console.print(f"Total Downloads: {stats['total_downloads']}")
         console.print(f"Cache Hits: {stats['total_cache_hits']}")
-        console.print(f"Hit Rate: [green]{stats['cache_hit_rate']*100:.1f}%[/green]")
+        console.print(f"Hit Rate: [green]{stats['cache_hit_rate'] * 100:.1f}%[/green]")
         console.print(f"Bandwidth Saved: [green]{stats['total_mb_saved']:.2f} MB[/green]")
         console.print()
 
@@ -826,7 +826,7 @@ def status_circuit_breakers():
         if m["state"] == "half_open":
             state_style = "yellow"
 
-        rate = f"{m['failure_rate']*100:.1f}%"
+        rate = f"{m['failure_rate'] * 100:.1f}%"
 
         table.add_row(
             name,
@@ -1992,7 +1992,9 @@ def mfa_status(user: Optional[str], output_json: bool):
                         else (
                             "⏳"
                             if cfg and cfg.status.value == "pending"
-                            else "🔒" if cfg and cfg.is_locked() else "❌"
+                            else "🔒"
+                            if cfg and cfg.is_locked()
+                            else "❌"
                         )
                     )
                     console.print(f"  {status_icon} {u}")
@@ -2217,7 +2219,6 @@ def rbac_check_permission(
     manager = _build_rbac_manager(roles_file, assignments_file, True, ctx.obj.get("logger"))
     has_access = manager.check_permission(user, permission_string)
     if has_access:
-
         console.print(f"[green]✅ Permission granted for {user}[/green]")
     else:
         console.print(f"[red]❌ Permission denied for {user}[/red]")

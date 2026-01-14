@@ -434,7 +434,9 @@ class TempAccessManager:
         """Disable user account."""
         try:
             subprocess.run(
-                ["usermod", "-L", username], check=True, capture_output=True  # Lock account
+                ["usermod", "-L", username],
+                check=True,
+                capture_output=True,  # Lock account
             )
 
             self.logger.info(f"Account disabled for {username}")

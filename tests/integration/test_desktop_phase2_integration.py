@@ -57,7 +57,6 @@ class TestDesktopPhase2Integration:
                         "configurator.modules.desktop.write_file", side_effect=mock_write_file
                     ):
                         with patch("configurator.modules.desktop.backup_file"):
-
                             # Run specific methods
                             module._optimize_xfce_compositor()
 
@@ -110,7 +109,6 @@ class TestDesktopPhase2Integration:
             with patch("configurator.modules.desktop.os.makedirs"):
                 with patch("configurator.modules.desktop.write_file", side_effect=mock_write_file):
                     with patch("configurator.modules.desktop.backup_file"):
-
                         # Run specific method
                         module._configure_polkit_rules()
 
@@ -147,7 +145,8 @@ class TestDesktopPhase2Integration:
 
         with contextlib.ExitStack() as stack:
             # Mock system calls
-            stack.enter_context(patch.object(module, "run"))
+            mock_run = stack.enter_context(patch.object(module, "run"))
+            mock_run.return_value.return_code = 0
             stack.enter_context(patch.object(module, "validate", return_value=True))
 
             # Mock all installation milestones/methods
@@ -164,6 +163,7 @@ class TestDesktopPhase2Integration:
             stack.enter_context(patch.object(module, "_configure_fonts"))
             stack.enter_context(patch.object(module, "_configure_fontconfig_system"))
             stack.enter_context(patch.object(module, "_configure_panel_layout"))
+            stack.enter_context(patch.object(module, "_configure_xwrapper"))
             stack.enter_context(patch.object(module, "_install_and_configure_zsh"))
             stack.enter_context(patch.object(module, "_configure_advanced_terminal_tools"))
 
