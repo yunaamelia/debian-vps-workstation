@@ -191,7 +191,7 @@ class DockerModule(ConfigurationModule):
             "docker-compose-plugin",
         ]
 
-        self.install_packages(packages, update_cache=True)
+        self.install_packages_resilient(packages, update_cache=True)
 
     def _configure_daemon(self):
         """Configure Docker daemon."""

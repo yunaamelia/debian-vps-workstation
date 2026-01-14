@@ -11,6 +11,7 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
 from configurator.core.dryrun import DryRunManager
+from configurator.core.network import NetworkOperationWrapper
 from configurator.core.package_cache import PackageCacheManager
 from configurator.core.rollback import RollbackManager
 from configurator.exceptions import ModuleExecutionError
@@ -69,6 +70,9 @@ class ConfigurationModule(ABC):
             self.apt_cache_integration = AptCacheIntegration(
                 self.package_cache_manager, self.logger
             )
+
+        # Initialize network wrapper for resilient operations
+        self.network = NetworkOperationWrapper(config=config, logger=self.logger)
 
         # Dry run state
         self.dry_run = dry_run_manager.is_enabled if dry_run_manager else False
@@ -179,6 +183,47 @@ class ConfigurationModule(ABC):
             )
 
         return result
+
+    def install_packages_resilient(self, packages: List[str], update_cache: bool = True) -> bool:
+        """
+        Install packages with network resilience.
+
+        This is the preferred method for package installation as it includes:
+        - Circuit breaker protection
+        - Automatic retry with exponential backoff
+        - Proper timeout handling
+        - Rollback registration
+
+        Args:
+            packages: List of package names
+            update_cache: Update APT cache first
+
+        Returns:
+            True if successful
+        """
+        if not packages:
+            return True
+
+        if self.dry_run:
+            if self.dry_run_manager:
+                self.dry_run_manager.record_package_install(packages)
+            return True
+
+        # Use network wrapper for resilient installation
+        with self._APT_LOCK:
+            success = self.network.apt_install_with_retry(packages, update_cache)
+
+            if success:
+                # Register for rollback
+                for package in packages:
+                    self.rollback_manager.register_action(
+                        f"remove_package_{package}",
+                        lambda p=package: self.run(f"apt-get remove -y {p}", check=False),
+                    )
+
+                self.installed_packages.extend(packages)
+
+            return success
 
     @retry(max_retries=20, base_delay=5.0)
     def install_packages(

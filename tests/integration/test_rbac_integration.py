@@ -14,6 +14,6 @@ def test_default_roles_exist(role_name, tmp_path):
         roles_file=rbac_dir / "roles.yaml",
         assignments_file=rbac_dir / "assignments.json",
         audit_log=rbac_dir / "audit.log",
-        dry_run=True
+        dry_run=True,
     )
     assert manager.get_role(role_name) is not None

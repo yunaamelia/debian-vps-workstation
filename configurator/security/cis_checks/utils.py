@@ -4,7 +4,6 @@ Shared utilities for CIS checks to avoid code duplication.
 
 import shutil
 import subprocess
-from typing import Dict, Optional, Tuple
 
 from configurator.security.cis_scanner import CheckResult, Status
 
@@ -57,7 +56,9 @@ def check_sysctl_param(param: str, expected_value: str) -> CheckResult:
     try:
         # sysctl -n param
         # Check=False because we manually handle returncode
-        result = subprocess.run(["sysctl", "-n", param], capture_output=True, text=True, check=False)
+        result = subprocess.run(
+            ["sysctl", "-n", param], capture_output=True, text=True, check=False
+        )
         if result.returncode != 0:
             return CheckResult(check=None, status=Status.ERROR, message=f"Failed to read {param}")
 

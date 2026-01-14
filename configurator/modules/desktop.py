@@ -150,7 +150,7 @@ class DesktopModule(ConfigurationModule):
 
     def _install_xrdp(self) -> bool:
         """Install XRDP package."""
-        return self.install_packages(["xrdp"])
+        return self.install_packages_resilient(["xrdp"])
 
     def _optimize_xrdp_performance(self) -> bool:
         """Optimize XRDP for better remote desktop performance."""
@@ -167,7 +167,7 @@ class DesktopModule(ConfigurationModule):
                 "dbus-x11",  # D-Bus X11 support
             ]
 
-            if not self.install_packages(packages):
+            if not self.install_packages_resilient(packages):
                 self.logger.error("Failed to install XRDP packages")
                 return False
 
@@ -914,7 +914,7 @@ ResultActive=yes
         ]
 
         self.logger.info("Installing theme dependencies...")
-        if not self.install_packages(dependencies):
+        if not self.install_packages_resilient(dependencies):
             return False
 
         self.logger.info("✓ Theme dependencies installed")

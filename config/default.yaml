@@ -385,6 +385,39 @@ performance:
     enabled: true
     max_size_gb: 10.0
 
+  # Circuit Breaker Configuration
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 3 # Open after 3 failures
+    timeout: 60 # Retry after 60 seconds
+    success_threshold: 1 # Close after 1 success in half-open
+
+  # Network Retry Configuration
+  network_retry:
+    enabled: true
+    max_retries: 3
+    initial_delay: 1.0 # seconds
+    max_delay: 30.0 # seconds
+    exponential_base: 2.0
+    jitter: true # Add random jitter to prevent thundering herd
+
+  # Timeout Configuration
+  timeouts:
+    apt_update: 300 # 5 minutes
+    apt_install: 600 # 10 minutes
+    download: 600 # 10 minutes
+    git_clone: 300 # 5 minutes
+    http_request: 30 # 30 seconds
+
+  # Health Checks
+  health_checks:
+    enabled: true
+    check_on_startup: true
+    services:
+      - apt_repository
+      - github
+      - docker_hub
+
 # Vulnerability Scanning
 vulnerability_scanning:
   enabled: true
@@ -554,3 +587,105 @@ dry_run: false
 installation:
   # In non-interactive mode, automatically rollback on error
   auto_rollback_on_error: true
+
+# =============================================================================
+# OBSERVABILITY CONFIGURATION
+# =============================================================================
+
+observability:
+  # Metrics Collection
+  metrics:
+    enabled: true
+    collect_interval: 60  # seconds
+    export_format: prometheus  # prometheus, json
+    export_path: /var/lib/vps-configurator/metrics
+
+    # Prometheus push gateway (optional)
+    push_gateway:
+      enabled: false
+      url: "http://localhost:9091"
+      job_name: vps_configurator
+
+  # Structured Logging
+  logging:
+    enabled: true
+    format: json  # json, text
+    level: INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+    # Log files
+    files:
+      install: /var/log/vps-configurator/install.log
+      error: /var/log/vps-configurator/error.log
+      audit: /var/log/vps-configurator/audit.log
+
+    # Rotation
+    rotation:
+      enabled: true
+      max_bytes: 10485760  # 10MB
+      backup_count: 5
+
+  # Alerting
+  alerting:
+    enabled: true
+
+    # Alert channels
+    channels:
+      email:
+        enabled: false
+        smtp_host: smtp.gmail.com
+        smtp_port: 587
+        smtp_user: ""
+        smtp_password: ""
+        from_addr: "alerts@example.com"
+        to_addrs:
+          - "admin@example.com"
+        use_tls: true
+
+      slack:
+        enabled: false
+        webhook_url: ""
+
+      webhook:
+        enabled: false
+        url: ""
+        headers:
+          Content-Type: application/json
+
+      file:
+        enabled: true
+        path: /var/log/vps-configurator/alerts.log
+
+    # Threshold rules
+    thresholds:
+      circuit_breaker_opens:
+        enabled: true
+        value: 5
+        severity: warning
+        message: "Circuit breaker opened {value} times"
+
+      module_failures:
+        enabled: true
+        value: 3
+        severity: error
+        message: "Module failures exceeded threshold"
+
+      memory_usage:
+        enabled: true
+        value: 90  # percent
+        severity: warning
+        message: "Memory usage at {value}%"
+
+  # Dashboard
+  dashboard:
+    enabled: true
+    update_interval: 2.0  # seconds
+    show_resources: true
+    show_circuit_breakers: true
+
+  # Tracing (optional)
+  tracing:
+    enabled: false
+    # Jaeger configuration
+    jaeger:
+      host: localhost
+      port: 6831
