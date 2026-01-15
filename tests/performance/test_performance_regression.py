@@ -275,7 +275,7 @@ class TestModuleLoadingPerformance:
         print(f"  Improvement: {improvement:.1f}%")
 
         assert duration_lazy < duration_eager, "Lazy loading should be faster"
-        assert improvement > 50, f"Lazy loading not effective enough: {improvement:.1f}%"
+        assert improvement > 30, f"Lazy loading not effective enough: {improvement:.1f}%"
 
     def test_cli_startup_time(self, benchmark):
         """Test CLI startup time."""

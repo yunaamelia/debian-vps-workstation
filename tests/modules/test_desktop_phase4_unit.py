@@ -46,9 +46,13 @@ class TestOhMyZshInstallation:
         config = {"desktop": {"zsh": {"enabled": True, "oh_my_zsh": {"enabled": True}}}}
         return DesktopModule(config=config, logger=Mock(), rollback_manager=Mock())
 
+    @patch("configurator.modules.desktop.SecureDownloader")
+    @patch("configurator.modules.desktop.SupplyChainValidator")
     @patch("pwd.getpwall")
     @patch.object(DesktopModule, "run")
-    def test_install_oh_my_zsh_calls_script(self, mock_run, mock_getpwall, module):
+    def test_install_oh_my_zsh_calls_script(
+        self, mock_run, mock_getpwall, MockValidator, MockDownloader, module
+    ):
         """Test that OMZ install script is downloaded and run."""
         mock_user = Mock()
         mock_user.pw_name = "testuser"
@@ -59,20 +63,23 @@ class TestOhMyZshInstallation:
         mock_run.return_value.success = True
         module.dry_run = False
 
+        # Setup SecureDownloader mock
+        mock_downloader_instance = MockDownloader.return_value
+        mock_downloader_instance.download_script.return_value = True
+
         module._install_oh_my_zsh()
 
-        # Verify curl download
-        download_called = False
+        # Verify secure download called
+        mock_downloader_instance.download_script.assert_called_once()
+
+        # Verify installation script execution
         install_called = False
 
         for call_args in mock_run.call_args_list:
             cmd = call_args[0][0]
-            if "curl" in cmd and "install.sh" in cmd:
-                download_called = True
             if "sh /tmp/ohmyzsh_install.sh" in cmd:
                 install_called = True
 
-        assert download_called, "OMZ installer download not called"
         assert install_called, "OMZ installer execution not called"
 
 

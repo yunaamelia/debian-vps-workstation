@@ -21,6 +21,11 @@ class TestNetworkIntegration:
 
     def test_apt_update_real_repository(self):
         """Test APT update with real Debian repository."""
+        import os
+
+        if os.geteuid() != 0:
+            pytest.skip("APT update requires root privileges")
+
         wrapper = NetworkOperationWrapper({}, logging.getLogger())
 
         # Check internet first

@@ -23,8 +23,31 @@ class TestZshSupplyChain:
                 user = Mock(pw_name="test", pw_uid=1000, pw_dir="/home/test")
                 mock_pwd.getpwall.return_value = [user]
                 with patch("os.path.exists", return_value=False):
-                    module._install_oh_my_zsh()
+                    with patch("configurator.modules.desktop.SecureDownloader") as MockDownloader:
+                        with patch(
+                            "configurator.modules.desktop.SupplyChainValidator"
+                        ) as MockValidator:
+                            mock_validator_instance = MockValidator.return_value
+                            # Configure validator to return empty dicts so defaults are used
+                            mock_validator_instance.checksums = {}
 
-        # Should use HTTPS for OMZ download
-        install_calls = [str(c) for c in mock_run.call_args_list if "install.sh" in str(c)]
-        assert any("https://" in call for call in install_calls)
+                            mock_downloader = MockDownloader.return_value
+                            mock_downloader.download_script.return_value = True
+
+                            module._install_oh_my_zsh()
+
+                            # Verify secure download used
+                            assert mock_downloader.download_script.called
+
+                            # Verify URL is HTTPS
+                            call_args = mock_downloader.download_script.call_args
+                            url = call_args[0][0]
+                            assert "https://" in url
+
+                            # Verify execution
+                            install_calls = [
+                                str(c)
+                                for c in mock_run.call_args_list
+                                if "ohmyzsh_install.sh" in str(c)
+                            ]
+                            assert len(install_calls) > 0
