@@ -274,7 +274,7 @@ class TestCLIIntegration:
         result = runner.invoke(main, ["--version"])
 
         assert result.exit_code == 0
-        assert "1.0.0" in result.output
+        assert "2.0.0" in result.output
 
     def test_cli_profiles_command(self):
         """Test that profiles command works."""
