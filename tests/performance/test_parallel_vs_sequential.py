@@ -34,7 +34,9 @@ def create_contexts(count: int, work_time: float = 0.0):
 
             module.configure.side_effect = slow_configure
 
-        context = ExecutionContext(module_name=f"module_{i}", module_instance=module, dry_run=False)
+        context = ExecutionContext(
+            module_name=f"module_{i}", module_instance=module, config={}, dry_run=False
+        )
         contexts.append(context)
     return contexts
 

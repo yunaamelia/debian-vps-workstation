@@ -264,7 +264,7 @@ class TestStressScenarios:
             module.configure.side_effect = slow_configure
 
             context = ExecutionContext(
-                module_name=f"module_{i}", module_instance=module, dry_run=False
+                module_name=f"module_{i}", module_instance=module, config={}, dry_run=False
             )
             contexts.append(context)
 

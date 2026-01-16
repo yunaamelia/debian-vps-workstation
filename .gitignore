@@ -82,3 +82,5 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+site/
+security-report.json
