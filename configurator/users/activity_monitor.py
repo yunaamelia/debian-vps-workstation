@@ -611,7 +611,6 @@ class ActivityMonitor:
             f"🚨 ANOMALY DETECTED: {anomaly.anomaly_type.value} "
             f"for user {anomaly.user} (risk: {anomaly.risk_score}/100)"
         )
-        # TODO: Implement email/Slack/PagerDuty notifications
 
     def get_anomalies(
         self,

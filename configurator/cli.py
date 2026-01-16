@@ -44,7 +44,6 @@ ActivityType = LazyLoader("configurator.users.activity_monitor", "ActivityType")
 TeamManager = LazyLoader("configurator.users.team_manager", "TeamManager")
 MemberRole = LazyLoader("configurator.users.team_manager", "MemberRole")
 TempAccessManager = LazyLoader("configurator.users.temp_access", "TempAccessManager")
-AccessType = LazyLoader("configurator.users.temp_access", "AccessType")
 AccessStatus = LazyLoader("configurator.users.temp_access", "AccessStatus")
 
 console = Console()

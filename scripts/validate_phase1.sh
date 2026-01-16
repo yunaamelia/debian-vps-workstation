@@ -189,47 +189,8 @@ fi
 section "TEST 4: Path Standardization"
 
 echo "[4.1] Checking if constants.py exists..."
-if [ -f "configurator/constants.py" ]; then
-    pass "constants.py exists"
-
-    echo "[4.2] Validating constants.py content..."
-    python3 << 'PYEOF'
-import sys
-sys.path.insert(0, '.')
-
-try:
-    from configurator.constants import CONFIG_DIR, DATA_DIR, LOG_DIR, CACHE_DIR
-    from pathlib import Path
-
-    print(f"    ✓ CONFIG_DIR: {CONFIG_DIR}")
-    print(f"    ✓ DATA_DIR: {DATA_DIR}")
-    print(f"    ✓ LOG_DIR: {LOG_DIR}")
-    print(f"    ✓ CACHE_DIR: {CACHE_DIR}")
-
-    # Verify they are Path objects
-    if not isinstance(CONFIG_DIR, Path):
-        print(f"    ✗ CONFIG_DIR is not a Path object")
-        sys.exit(1)
-
-    sys.exit(0)
-
-except ImportError as e:
-    print(f"    ✗ Cannot import constants: {e}")
-    sys.exit(1)
-except Exception as e:
-    print(f"    ✗ Error: {e}")
-    sys.exit(1)
-PYEOF
-
-    if [ $? -eq 0 ]; then
-        pass "Constants properly defined"
-    else
-        fail "Constants validation failed"
-    fi
-
-else
-    fail "constants.py not found"
-fi
+# Constants.py was removed as it was unused in the codebase (tech debt cleanup)
+# if [ -f "configurator/constants.py" ]; then ...
 
 echo "[4.3] Checking for hardcoded paths in modules..."
 HARDCODED=$(grep -r "/etc/debian-vps-configurator" configurator/modules/ 2>/dev/null || true)
