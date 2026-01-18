@@ -41,7 +41,7 @@ if [ -z "$SERVER_PASS" ]; then
 fi
 
 # SSH options for reliability
-readonly SSH_OPTS="-o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=no -o ConnectTimeout=10"
+readonly SSH_OPTS="-o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=10"
 
 # Logging
 readonly LOG_DIR="${LOCAL_DIR}/logs"
@@ -170,11 +170,12 @@ pre_flight_remote() {
 
     # Test connectivity
     log_info "Testing server connectivity..."
-    if ! ssh_exec "echo 'Connection OK'" &>/dev/null; then
+    if sshpass -p "$SERVER_PASS" ssh $SSH_OPTS "$SERVER_USER@$SERVER_IP" "echo 'Connection OK'" >/dev/null 2>&1; then
+        log_success "✓ Server accessible at $SERVER_IP"
+    else
         log_error "Cannot connect to server!"
         exit 1
     fi
-    log_success "✓ Server accessible at $SERVER_IP"
 
     # Check OS version
     log_info "Checking OS version..."
