@@ -1,3 +1,6 @@
+import os
+import sys
+
 import paramiko
 
 
@@ -25,5 +28,8 @@ def fetch_log(hostname, password):
 
 if __name__ == "__main__":
     host = "139.59.124.59"
-    pwd = "gg123123@"
+    pwd = os.environ.get("REMOTE_PASSWORD", "")
+    if not pwd:
+        print("ERROR: REMOTE_PASSWORD environment variable not set")
+        sys.exit(1)
     fetch_log(host, pwd)

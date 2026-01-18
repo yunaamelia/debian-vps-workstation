@@ -1,3 +1,4 @@
+import os
 import sys
 
 import paramiko
@@ -39,7 +40,10 @@ def run_command(client, command, title=None):
 def main():
     host = "206.189.42.66"
     user = "root"
-    pwd = "gg123123@"
+    pwd = os.environ.get("REMOTE_PASSWORD", "")
+    if not pwd:
+        print("ERROR: REMOTE_PASSWORD environment variable not set")
+        sys.exit(1)
 
     client = create_ssh_client(host, user, pwd)
 

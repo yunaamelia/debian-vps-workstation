@@ -66,6 +66,9 @@ Issues = "https://github.com/yunaamelia/debian-vps-workstation/issues"
 where = ["."]
 include = ["configurator*"]
 
+[tool.setuptools.package-data]
+"configurator" = ["**/*.sql", "**/*.yaml", "**/*.yml"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py311"

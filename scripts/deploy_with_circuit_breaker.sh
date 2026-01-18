@@ -3,7 +3,11 @@ set -e
 
 HOST="209.97.162.195"
 USER="root"
-PASS="gg123123@"
+PASS="${REMOTE_PASSWORD:-}"
+if [ -z "$PASS" ]; then
+    echo "ERROR: REMOTE_PASSWORD environment variable not set"
+    exit 1
+fi
 REMOTE_DIR="/root/debian-vps-workstation"
 
 echo "Cleaning remote directory..."

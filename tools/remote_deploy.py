@@ -1,3 +1,4 @@
+import os
 import sys
 
 import paramiko
@@ -147,5 +148,8 @@ def deploy(hostname, password):
 
 if __name__ == "__main__":
     host = "206.189.42.66"
-    pwd = "gg123123@"
+    pwd = os.environ.get("REMOTE_PASSWORD", "")
+    if not pwd:
+        print("ERROR: REMOTE_PASSWORD environment variable not set")
+        sys.exit(1)
     deploy(host, pwd)

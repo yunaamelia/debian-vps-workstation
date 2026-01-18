@@ -104,7 +104,10 @@ def create_local_zip(filename):
 def main():
     host = "209.97.162.195"
     user = "root"
-    pwd = "gg123123@"
+    pwd = os.environ.get("REMOTE_PASSWORD", "")
+    if not pwd:
+        print("ERROR: REMOTE_PASSWORD environment variable not set")
+        sys.exit(1)
     zip_name = "deploy_package.zip"
     remote_path = f"/root/{zip_name}"
     repo_dir = "/root/debian-vps-workstation"

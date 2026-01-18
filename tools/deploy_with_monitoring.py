@@ -22,11 +22,18 @@ from pathlib import Path
 
 import paramiko
 
-# Configuration from prompt.md
-REMOTE_HOST = "209.97.162.195"
-REMOTE_USER = "root"
-REMOTE_PASSWORD = "gg123123@"
+# Configuration from environment variables
+REMOTE_HOST = os.environ.get("REMOTE_HOST", "")
+REMOTE_USER = os.environ.get("REMOTE_USER", "root")
+REMOTE_PASSWORD = os.environ.get("REMOTE_PASSWORD", "")
 REMOTE_REPO_DIR = "/root/debian-vps-workstation"
+
+if not REMOTE_HOST:
+    print("ERROR: REMOTE_HOST environment variable not set")
+    sys.exit(1)
+if not REMOTE_PASSWORD:
+    print("ERROR: REMOTE_PASSWORD environment variable not set")
+    sys.exit(1)
 INSTALL_CMD = "cd {repo_dir} && .venv/bin/python3 -m configurator --verbose install --profile advanced --no-parallel"
 
 

@@ -4,6 +4,7 @@ Real-Time Fail-Fast Orchestrator for VPS Configurator Installation
 Monitors installation in real-time and interrupts on first sign of trouble.
 """
 
+import os
 import re
 import subprocess
 import sys
@@ -29,7 +30,10 @@ class Colors:
 # Configuration
 REMOTE_HOST = "143.198.89.149"
 REMOTE_USER = "root"
-REMOTE_PASSWORD = "gg123123@"
+REMOTE_PASSWORD = os.environ.get("REMOTE_PASSWORD", "")
+if not REMOTE_PASSWORD:
+    print("ERROR: REMOTE_PASSWORD environment variable not set")
+    sys.exit(1)
 REMOTE_WORKSPACE = "/root/vps-configurator"
 LOCAL_WORKSPACE = "/home/racoon/AgentMemorh/debian-vps-workstation"
 

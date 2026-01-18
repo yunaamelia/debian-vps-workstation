@@ -13,7 +13,11 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 HOST="129.212.239.4"
 USER="root"
-PASS="gg123123@"
+PASS="${REMOTE_PASSWORD:-}"
+if [ -z "$PASS" ]; then
+    echo "ERROR: REMOTE_PASSWORD environment variable not set"
+    exit 1
+fi
 
 cd "$PROJECT_ROOT"
 
