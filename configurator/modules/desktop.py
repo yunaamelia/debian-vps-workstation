@@ -242,8 +242,18 @@ class DesktopModule(ConfigurationModule):
             return False
 
     def _generate_xrdp_ini(self) -> str:
-        """Generate optimized xrdp.ini configuration (Hardcoded)."""
-        return """[Globals]
+        """Generate optimized xrdp.ini content."""
+        # Get and validate configs
+        max_bpp = self.get_config("xrdp.max_bpp", 24)
+        if max_bpp not in [16, 24, 32]:
+            self.logger.warning(f"Invalid max_bpp {max_bpp}, falling back to 24")
+            max_bpp = 24
+
+        bitmap_cache = str(self.get_config("xrdp.bitmap_cache", True)).lower()
+        security_layer = self.get_config("xrdp.security_layer", "tls")
+        crypt_level = self.get_config("xrdp.crypt_level", "high")
+
+        return f"""[Globals]
 ; xrdp.ini file version number
 ini_version=1
 
@@ -263,7 +273,7 @@ fork=true
 ;   port=tcp://<any ipv4 format addr>:3389      192.168.1.1:3389
 ;   port=tcp6://.:3389                          ::1:3389
 ;   port=tcp6://:3389                           *:3389
-;   port=tcp6://{<any ipv6 format addr>}:3389   {FC00:0:0:0:0:0:0:1}:3389
+;   port=tcp6://{{<any ipv6 format addr>}}:3389   {{FC00:0:0:0:0:0:0:1}}:3389
 ;   port=vsock://<cid>:<port>
 port=3389
 
@@ -280,22 +290,18 @@ tcp_nodelay=true
 ; if the network connection disappear without close messages the connection will be closed
 tcp_keepalive=true
 
-; set tcp send/recv buffer
-; These parameters are largely historic. On systems with dynamic TCP
-; buffer sizes, setting them manually will either impact performance or
-; waste memory
-; Boost TCP buffers for low-latency/high-res (4MB)
-tcp_send_buffer_bytes=4194304
-tcp_recv_buffer_bytes=4194304
+; set tcp send/recv buffer (for experts)
+#tcp_send_buffer_bytes=32768
+#tcp_recv_buffer_bytes=32768
 
 ; security layer can be 'tls', 'rdp' or 'negotiate'
 ; for client compatible layer
-security_layer=tls
+security_layer={security_layer}
 
 ; minimum security level allowed for client for classic RDP encryption
 ; use tls_ciphers to configure TLS encryption
 ; can be 'none', 'low', 'medium', 'high', 'fips'
-crypt_level=high
+crypt_level={crypt_level}
 
 ; X.509 certificate and private key
 ; openssl req -x509 -newkey rsa:2048 -nodes -keyout key.pem -out cert.pem -days 365
@@ -328,12 +334,12 @@ autorun=
 
 allow_channels=true
 allow_multimon=true
-bitmap_cache=true
+bitmap_cache={bitmap_cache}
 bitmap_compression=true
 bulk_compression=true
 use_compression=true
 #hidelogwindow=true
-max_bpp=24
+max_bpp={max_bpp}
 new_cursors=true
 ; fastpath - can be 'input', 'output', 'both', 'none'
 use_fastpath=both
@@ -593,7 +599,7 @@ ReconnectScript=
 PolicyKitSupport=true
 
 [Security]
-AllowRootLogin=true
+AllowRootLogin=false
 MaxLoginRetry=4
 # KEEPING EMPTY to avoid lockout - Guide suggests 'tsusers' but group must exist
 TerminalServerUsers=

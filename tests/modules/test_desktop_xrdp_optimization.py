@@ -238,15 +238,17 @@ class TestXRDPOptimizationUnit(unittest.TestCase):
 
         # Verify chown executed
         chown_calls = [c for c in mock_shutil.chown.call_args_list]
-        assert len(chown_calls) == 2  # One per user
+        assert len(chown_calls) == 6  # 3 per user (dir, settings script, .xsession) * 2 users
 
+    @patch("configurator.modules.desktop.shutil")
+    @patch("configurator.modules.desktop.os.makedirs")
     @patch("configurator.utils.file.write_file")
     @patch("configurator.modules.desktop.pwd")
     @patch.object(DesktopModule, "run")
     @patch("configurator.modules.desktop.os.path.isabs", return_value=True)
     @patch("configurator.modules.desktop.os.path.isdir", return_value=True)
     def test_user_session_script_content(
-        self, mock_isdir, mock_isabs, mock_run, mock_pwd, mock_write
+        self, mock_isdir, mock_isabs, mock_run, mock_pwd, mock_write, mock_makedirs, mock_shutil
     ):
         """Test specific content of the generated .xsession script."""
         mock_user = Mock()
@@ -259,9 +261,12 @@ class TestXRDPOptimizationUnit(unittest.TestCase):
 
         self.module._configure_user_session()
 
-        # Get session content
-        user_write = mock_write.call_args_list[0]
-        xsession_content = user_write[0][1]
+        # Get calls that write to .xsession
+        xsession_calls = [
+            call for call in mock_write.call_args_list if call[0][0].endswith(".xsession")
+        ]
+        assert len(xsession_calls) > 0
+        xsession_content = xsession_calls[0][0][1]
 
         # Check required disable flags
         assert "export NO_AT_BRIDGE=1" in xsession_content
