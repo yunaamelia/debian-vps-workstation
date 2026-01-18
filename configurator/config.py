@@ -369,6 +369,11 @@ class ConfigManager:
         """
         enabled = []
 
+        # Check for explicit module override list (e.g. from CLI)
+        explicit_modules = self.get("modules.enabled")
+        if explicit_modules:
+            return explicit_modules
+
         # Always include mandatory modules
         enabled.extend(["system", "security"])
 

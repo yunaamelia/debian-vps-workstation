@@ -89,6 +89,9 @@ class PythonModule(ConfigurationModule):
 
     def verify(self) -> bool:
         """Verify Python installation."""
+        if self.dry_run_manager.is_enabled:
+            return True
+
         checks_passed = True
 
         # Check python3
@@ -244,5 +247,4 @@ ipython
 Enjoy coding! 🐍
 """
 
-        with open(f"{example_dir}/README.md", "w") as f:
-            f.write(readme_content)
+        self.write_file(f"{example_dir}/README.md", readme_content)

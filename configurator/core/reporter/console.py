@@ -12,18 +12,24 @@ class ConsoleReporter(ReporterInterface):
     def start_phase(self, name: str, total_steps: int = 0):
         print(f"\n[PHASE] {name} ({total_steps} steps)")
 
-    def update(self, message: str, success: bool = True):
+    def update(self, message: str, success: bool = True, module: Optional[str] = None):
+        prefix = f"[{module}] " if module else ""
         status = "OK" if success else "FAIL"
-        print(f"  - {message}... {status}")
+        print(f"  - {prefix}{message}... {status}")
 
     def update_progress(
-        self, percent: int, current: Optional[int] = None, total: Optional[int] = None
+        self,
+        percent: int,
+        current: Optional[int] = None,
+        total: Optional[int] = None,
+        module: Optional[str] = None,
     ):
         pass  # Simple console doesn't do progress bars to avoid log spam
 
-    def complete_phase(self, success: bool = True):
+    def complete_phase(self, success: bool = True, module: Optional[str] = None):
+        prefix = f"[{module}] " if module else ""
         status = "COMPLETED" if success else "FAILED"
-        print(f"[PHASE] {status}")
+        print(f"[PHASE] {prefix}{status}")
 
     def show_summary(self, results: Dict[str, bool]):
         print("\n=== SUMMARY ===")

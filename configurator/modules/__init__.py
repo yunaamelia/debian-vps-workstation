@@ -41,6 +41,9 @@ _MODULE_REGISTRY = {
     "CaddyModule": ("configurator.modules.caddy", "CaddyModule"),
     # Monitoring
     "NetdataModule": ("configurator.modules.netdata", "NetdataModule"),
+    # Security Extensions
+    "CISComplianceModule": ("configurator.modules.cis_compliance", "CISComplianceModule"),
+    "TrivyScannerModule": ("configurator.modules.trivy_scanner", "TrivyScannerModule"),
 }
 
 __all__ = list(_MODULE_REGISTRY.keys())

@@ -81,6 +81,9 @@ Phase 2 Advanced Security:
 
     def verify(self) -> bool:
         """Verify security configuration."""
+        if self.dry_run_manager.is_enabled:
+            return True
+
         checks_passed = True
 
         # Check UFW is active
@@ -164,13 +167,16 @@ Phase 2 Advanced Security:
         self.run("ufw --force enable", check=True)
 
         # Verify
-        result = self.run("ufw status", check=True)
-        if "Status: active" not in result.stdout:
-            raise ModuleExecutionError(
-                what="UFW failed to activate",
-                why="The firewall did not enable properly",
-                how="Check /var/log/ufw.log for details",
-            )
+        if not self.dry_run_manager.is_enabled:
+            result = self.run("ufw status", check=True)
+            if "Status: active" not in result.stdout:
+                raise ModuleExecutionError(
+                    what="UFW failed to activate",
+                    why="The firewall did not enable properly",
+                    how="Check /var/log/ufw.log for details",
+                )
+        else:
+            self.logger.info("Dry-run: skipping UFW status verification")
 
         self.rollback_manager.add_command(
             "ufw --force disable",
@@ -328,8 +334,15 @@ PasswordAuthentication yes
         # Check if we've already added our config
         if "Debian VPS Workstation SSH Hardening" not in current_config:
             # Append our config
-            with open(sshd_config_path, "a") as f:
-                f.write(hardening_block)
+            # Append our config
+            # Use append mode by reading first? write_file doesn't support append easily in its current signature.
+            # But wait, write_file supports **kwargs forwarded to utils.write_file?
+            # self.write_file(sshd_config_path, hardening_block, mode="a") ?
+            # utils/file.py write_file uses open(path, mode).
+            # Let's check utils/file.py signature.
+            # For now, let's just use a read-modify-write approach which is safer for dry-run.
+            new_config = current_config + hardening_block
+            self.write_file(sshd_config_path, new_config)
 
         # Test SSH config
         result = self.run("sshd -t", check=False)
@@ -345,7 +358,8 @@ PasswordAuthentication yes
             )
 
         # Safe SSH restart with connection preservation
-        restart_ssh = self.get_config("ssh.restart_service", True)
+        # Default to False to prevent connection drops during remote installation
+        restart_ssh = self.get_config("ssh.restart_service", False)
 
         if restart_ssh:
             if is_remote_session:
@@ -354,8 +368,9 @@ PasswordAuthentication yes
                 reload_result = self.run("systemctl reload sshd", check=False)
                 if not reload_result.success:
                     # Fallback to restart if reload fails
-                    self.logger.debug("  Reload failed, trying restart...")
-                    self.restart_service("sshd")
+                    self.logger.warning("  Reload failed! Skipping restart to preserve connection.")
+                    self.logger.warning("  Please restart SSH manually: systemctl restart sshd")
+                    # self.restart_service("sshd")  # RISKY: Do not restart in remote session
             else:
                 # Not remote, safe to restart normally
                 self.restart_service("sshd")
@@ -596,10 +611,13 @@ APT::Periodic::AutocleanInterval "7";
             cron_line = f"{cron_schedule} root {command} >> /var/log/{name}.log 2>&1\n"
             cron_file = f"/etc/cron.d/{name}"
 
-            with open(cron_file, "w") as f:
-                f.write(cron_line)
+            self.write_file(cron_file, cron_line)
 
-            os.chmod(cron_file, 0o644)
+            self.write_file(cron_file, cron_line)
+
+            if not self.dry_run_manager.is_enabled:
+                os.chmod(cron_file, 0o644)
+
             self.logger.debug(f"Created cron job: {cron_file}")
 
         except Exception as e:

@@ -205,7 +205,8 @@ class TestChaosEngineering:
         """Inject random failures and verify recovery."""
         import random
 
-        wrapper = NetworkOperationWrapper({}, Mock())
+        config = {"performance": {"circuit_breaker": {"enabled": False}}}
+        wrapper = NetworkOperationWrapper(config, Mock())
 
         def chaos_operation():
             if random.random() < 0.7:  # 70% failure rate

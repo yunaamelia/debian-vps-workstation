@@ -79,6 +79,7 @@ class TestXRDPOptimizationUnit(unittest.TestCase):
         assert "tcp_nodelay=true" in xrdp_content
         assert "bitmap_cache=true" in xrdp_content
         assert "max_bpp=24" in xrdp_content
+        assert "xserverbpp=24" in xrdp_content
         assert "security_layer=tls" in xrdp_content
         assert "bulk_compression=true" in xrdp_content
 
@@ -89,11 +90,14 @@ class TestXRDPOptimizationUnit(unittest.TestCase):
         sesman_content = sesman_ini_call[0][1]
 
         # Validate session settings
+        # Validate session settings
         assert "IdleTimeLimit=0" in sesman_content
         assert "DisconnectedTimeLimit=0" in sesman_content
-        assert "LogLevel=INFO" in sesman_content
+        assert "LogLevel=WARNING" in sesman_content
         assert "AllowRootLogin=false" in sesman_content
         assert "MaxSessions=10" in sesman_content
+        assert "TerminalServerUsers=\n" in sesman_content
+        assert "TerminalServerAdmins=\n" in sesman_content
 
     @patch("configurator.modules.desktop.time.sleep")
     @patch("configurator.modules.desktop.pwd")
@@ -145,6 +149,9 @@ class TestXRDPOptimizationUnit(unittest.TestCase):
         assert "param=-nolisten" in sesman_content, "Should use -nolisten"
         assert "param=tcp" in sesman_content, "Should disable TCP listening"
         assert "param=-localhost" in sesman_content, "Should only listen on localhost"
+        assert "param=+extension GLX" in sesman_content, "Should enable GLX"
+        assert "param=+extension RANDR" in sesman_content, "Should enable RANDR"
+        assert "param=+extension RENDER" in sesman_content, "Should enable RENDER"
 
     @patch("configurator.modules.desktop.time.sleep")
     @patch("configurator.utils.file.write_file")
@@ -224,9 +231,9 @@ class TestXRDPOptimizationUnit(unittest.TestCase):
         # Validate critical environment variables
         assert "export NO_AT_BRIDGE=1" in xsession_content
         assert "export XDG_SESSION_DESKTOP=xfce" in xsession_content
-        # assert "export XCURSOR_THEME=Adwaita" in xsession_content # Not in my implementation?
+        assert "export XCURSOR_THEME=Adwaita" in xsession_content
         assert "xset s off" in xsession_content
-        # assert "xsetroot -cursor_name left_ptr" in xsession_content # Not in my implementation?
+        assert "xsetroot -cursor_name left_ptr" in xsession_content
         assert "exec startxfce4" in xsession_content
 
         # Verify chown executed

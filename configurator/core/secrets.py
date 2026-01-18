@@ -95,10 +95,34 @@ class SecretsManager:
 
         # Derive key
         try:
+            # Load or generate salt
+            salt_path = self.DEFAULT_MASTER_KEY_PATH.parent / ".salt"
+            salt = None
+
+            if salt_path.exists():
+                try:
+                    with open(salt_path, "rb") as f:
+                        salt = f.read()
+                except OSError:
+                    pass
+
+            if not salt or len(salt) != 16:
+                salt = os.urandom(16)
+                try:
+                    # Save salt with restricted permissions
+                    with open(salt_path, "wb") as f:
+                        f.write(salt)
+                    os.chmod(salt_path, 0o600)
+                    logger.info(f"Generated new cryptographic salt at {salt_path}")
+                except OSError as e:
+                    logger.warning(
+                        f"Could not save salt: {e}. Keys will not be persistent across re-installs of salt file."
+                    )
+
             kdf = PBKDF2HMAC(
                 algorithm=hashes.SHA256(),
                 length=32,
-                salt=b"debian-vps-configurator-salt",  # Fixed salt for reproducibility across restarts
+                salt=salt,
                 iterations=100000,
             )
             key = base64.urlsafe_b64encode(kdf.derive(master_password.encode()))

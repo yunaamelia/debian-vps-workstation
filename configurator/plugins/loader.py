@@ -387,7 +387,7 @@ class PluginManager:
                         if target_path.exists():
                             shutil.rmtree(target_path)
 
-                    zip_ref.extractall(target_dir)
+                    self._safe_extract(zip_ref, target_dir)
             elif archive_path.suffix in [".tar.gz", ".tgz"]:
                 with tarfile.open(archive_path, "r:gz") as tar:
                     tar.extractall(target_dir)
@@ -397,3 +397,30 @@ class PluginManager:
         except Exception as e:
             self.logger.error(f"Failed to extract archive: {e}")
             return False
+
+    def _safe_extract(self, zip_ref: zipfile.ZipFile, target_dir: Path) -> None:
+        """
+        Extract zip file safely preventing Zip Slip vulnerability.
+
+        Args:
+            zip_ref: ZipFile object
+            target_dir: Destination directory
+
+        Raises:
+            PluginError: If malicious path is detected
+        """
+        target_path = Path(target_dir).resolve()
+
+        for member in zip_ref.namelist():
+            # Construct the full path
+            member_path = (target_path / member).resolve()
+
+            # Check if the member path is within the target directory
+            if not str(member_path).startswith(str(target_path)):
+                self.logger.critical(f"Blocked Zip Slip attempt: {member}")
+                raise PluginError(
+                    f"Malicious path in archive: {member}", plugin_name="unknown", cause=None
+                )
+
+        # If all checks pass, extract
+        zip_ref.extractall(target_dir)

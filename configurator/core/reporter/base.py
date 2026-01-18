@@ -16,19 +16,23 @@ class ReporterInterface(ABC):
         pass
 
     @abstractmethod
-    def update(self, message: str, success: bool = True):
+    def update(self, message: str, success: bool = True, module: Optional[str] = None):
         """Update current progress with message."""
         pass
 
     @abstractmethod
     def update_progress(
-        self, percent: int, current: Optional[int] = None, total: Optional[int] = None
+        self,
+        percent: int,
+        current: Optional[int] = None,
+        total: Optional[int] = None,
+        module: Optional[str] = None,
     ):
         """Update progress percentage."""
         pass
 
     @abstractmethod
-    def complete_phase(self, success: bool = True):
+    def complete_phase(self, success: bool = True, module: Optional[str] = None):
         """Mark current phase as complete."""
         pass
 

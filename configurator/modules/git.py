@@ -48,6 +48,9 @@ class GitModule(ConfigurationModule):
 
     def verify(self) -> bool:
         """Verify Git installation."""
+        if self.dry_run_manager.is_enabled:
+            return True
+
         checks_passed = True
 
         # Check git

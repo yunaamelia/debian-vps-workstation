@@ -128,6 +128,15 @@ def main(ctx: click.Context, verbose: bool, quiet: bool):
     is_flag=True,
     help="Enable verbose output",
 )
+@click.option(
+    "--modules",
+    help="Comma-separated list of modules to install (overrides profile)",
+)
+@click.option(
+    "--log-level",
+    type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"], case_sensitive=False),
+    help="Set logging level (overrides -v/-q)",
+)
 @click.pass_context
 def install(
     ctx: click.Context,
@@ -139,6 +148,8 @@ def install(
     no_parallel: bool,
     parallel_workers: int,
     verbose: bool,
+    modules: Optional[str],
+    log_level: Optional[str],
 ):
     """
     Install and configure the workstation.
@@ -151,8 +162,8 @@ def install(
       # Quick install with beginner profile
       vps-configurator install --profile beginner -y
 
-      # Install with custom config
-      vps-configurator install --config myconfig.yaml -y
+      # Install specific modules
+      vps-configurator install --profile beginner --modules "system,security" -y
     """
     # Update logger if verbose flag passed to subcommand
     if verbose:
@@ -162,8 +173,17 @@ def install(
 
     logger = ctx.obj["logger"]
 
-    # If no profile or config specified, suggest using wizard
-    if not profile and not config and not non_interactive:
+    if log_level:
+        import logging
+
+        level = getattr(logging, log_level.upper())
+        if hasattr(logger, "set_console_level"):
+            logger.set_console_level(level)
+        else:
+            logger.warning("Logger does not support dynamic level changes")
+
+    # If no profile or config specified AND no modules, suggest using wizard
+    if not profile and not config and not non_interactive and not modules:
         console.print(
             "\n[yellow]Tip: Use 'vps-configurator wizard' for interactive setup![/yellow]\n"
         )
@@ -197,6 +217,14 @@ def install(
 
         # Validate configuration
         config_manager.validate()
+
+        # Override modules if specified
+        if modules:
+            module_list = [m.strip() for m in modules.split(",")]
+            # We must ensure we have a valid list structure
+            # ConfigManager should handle list setting
+            config_manager.set("modules.enabled", module_list)
+            logger.info(f"Overriding enabled modules: {', '.join(module_list)}")
 
     except Exception as e:
         logger.error(str(e))

@@ -87,7 +87,7 @@ code=20
 ListenAddress=127.0.0.1
 ListenPort=3350
 EnableUserWindowManager=true
-UserWindowManager=startwm. sh
+UserWindowManager=startwm.sh
 DefaultWindowManager=startwm.sh
 
 [Security]

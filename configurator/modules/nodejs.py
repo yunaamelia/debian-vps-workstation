@@ -74,6 +74,9 @@ class NodeJSModule(ConfigurationModule):
 
     def verify(self) -> bool:
         """Verify Node.js installation."""
+        if self.dry_run_manager.is_enabled:
+            return True
+
         checks_passed = True
 
         # Source nvm in verification commands

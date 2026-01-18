@@ -8,6 +8,8 @@ author: "Debian VPS Configurator"
 enabled_modules:
   - system
   - security
+  - cis_compliance
+  - trivy_scanner
   - desktop
   - python
   - git
@@ -37,6 +39,11 @@ module_config:
       ssh_rate_limit: true
     fail2ban:
       enabled: true
+    security_advanced:
+      cis_scanner:
+        enabled: false # Use cis_compliance module instead
+      vulnerability_scanner:
+        enabled: false # Use trivy_scanner module instead
 
 system_config:
   hostname: "dev-workstation"

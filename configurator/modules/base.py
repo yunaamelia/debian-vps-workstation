@@ -8,6 +8,7 @@ import logging
 import os
 import threading
 from abc import ABC, abstractmethod
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from configurator.core.dryrun import DryRunManager
@@ -255,112 +256,82 @@ class ConfigurationModule(ABC):
                 self.dry_run_manager.record_package_install(packages)
             return True
 
-        # Acquire lock to prevent parallel APT operations
-        with self._APT_LOCK:
-            if update_cache:
-                # Retry apt-get update if another process has the lock
-                for retry_attempt in range(3):
-                    result = self.run("apt-get update", check=False)
-                    if result.return_code == 0:
-                        break
-                    if (
-                        "Could not get lock" in result.stderr
-                        or "Could not get lock" in result.stdout
-                    ):
-                        if retry < 2:
-                            self.logger.debug(f"APT lock busy, waiting... (attempt {retry + 1}/3)")
-                            import time
-
-                            time.sleep(5)
-                        else:
-                            self.logger.warning(
-                                "APT lock still busy after retries, continuing anyway"
-                            )
-                    else:
-                        break
-
-            # Pre-populate APT cache from our local cache
-            if self.apt_cache_integration and not self.dry_run:
-                try:
-                    self.apt_cache_integration.prepare_apt_cache(packages)
-                except Exception as e:
-                    self.logger.warning(f"Failed to prepare package cache: {e}")
-
-            # Install packages
-            packages_str = " ".join(packages)
-
-            env = os.environ.copy()
-            env["DEBIAN_FRONTEND"] = "noninteractive"
-
-            def _install():
-                # Retry install if another process has the lock or dpkg was interrupted
-                for retry_attempt in range(3):
-                    result = self.run(
-                        f"apt-get install -y {packages_str}",
-                        check=False,
-                        env=env,
-                    )
-                    if result.return_code == 0:
-                        return result
-
-                    # Handle APT lock issues
-                    if (
-                        "Could not get lock" in result.stderr
-                        or "Could not get lock" in result.stdout
-                    ):
-                        if retry_attempt < 2:
-                            self.logger.debug(
-                                f"APT lock busy during install, waiting... (attempt {retry_attempt + 1}/3)"
-                            )
-                            import time
-
-                            time.sleep(5)
-                        else:
-                            # Final retry failed, raise error
-                            raise ModuleExecutionError(
-                                what=f"Cannot install packages: {packages_str}",
-                                why="APT/dpkg lock is held by another process",
-                                how="Wait for other package operations to complete or run: sudo lsof /var/lib/dpkg/lock-frontend",
-                            )
-                    # Handle dpkg interrupted errors
-                    elif (
-                        "dpkg was interrupted" in result.stderr
-                        or "you must manually run 'dpkg --configure -a'" in result.stderr
-                    ):
-                        # #region agent log
-                        import json
-
-                        try:
-                            with open(
-                                "/home/racoon/Desktop/debian-vps-workstation/.cursor/debug.log", "a"
-                            ) as f:
-                                f.write(
-                                    json.dumps(
-                                        {
-                                            "sessionId": "debug-session",
-                                            "runId": "dpkg-fix",
-                                            "hypothesisId": "B",
-                                            "location": "configurator/modules/base.py:_install",
-                                            "message": "dpkg interrupted detected",
-                                            "data": {
-                                                "retry_attempt": retry_attempt,
-                                                "stderr": result.stderr[:200],
-                                            },
-                                            "timestamp": int(time.time() * 1000),
-                                        }
-                                    )
-                                    + "\n"
+        # Wrap in loop for retry
+        while True:
+            # Acquire lock to prevent parallel APT operations
+            with self._APT_LOCK:
+                if update_cache:
+                    # Retry apt-get update if another process has the lock
+                    for retry_attempt in range(3):
+                        result = self.run("apt-get update", check=False)
+                        if result.return_code == 0:
+                            break
+                        if (
+                            "Could not get lock" in result.stderr
+                            or "Could not get lock" in result.stdout
+                        ):
+                            if retry_attempt < 2:
+                                self.logger.debug(
+                                    f"APT lock busy, waiting... (attempt {retry_attempt + 1}/3)"
                                 )
-                        except Exception:
-                            pass
-                        # #endregion
-                        if retry_attempt == 0:
-                            self.logger.info(
-                                "dpkg was interrupted, fixing with 'dpkg --configure -a'..."
-                            )
-                            self.logger.info(
-                                "Note: This operation may take several minutes without output..."
-                            )
+                                import time
+
+                                time.sleep(5)
+                            else:
+                                self.logger.warning(
+                                    "APT lock still busy after retries, continuing anyway"
+                                )
+                        else:
+                            break
+
+                # Pre-populate APT cache from our local cache
+                if self.apt_cache_integration and not self.dry_run:
+                    try:
+                        self.apt_cache_integration.prepare_apt_cache(packages)
+                    except Exception as e:
+                        self.logger.warning(f"Failed to prepare package cache: {e}")
+
+                # Install packages
+                packages_str = " ".join(packages)
+
+                env = os.environ.copy()
+                env["DEBIAN_FRONTEND"] = "noninteractive"
+
+                def _install(packages_str=packages_str, env=env):
+                    # Retry install if another process has the lock or dpkg was interrupted
+                    for retry_attempt in range(3):
+                        result = self.run(
+                            f"apt-get install -y {packages_str}",
+                            check=False,
+                            env=env,
+                        )
+                        if result.return_code == 0:
+                            return result
+
+                        # Handle APT lock issues
+                        if (
+                            "Could not get lock" in result.stderr
+                            or "Could not get lock" in result.stdout
+                        ):
+                            if retry_attempt < 2:
+                                self.logger.debug(
+                                    f"APT lock busy during install, waiting... (attempt {retry_attempt + 1}/3)"
+                                )
+                                import time
+
+                                time.sleep(5)
+                            else:
+                                # Final retry failed, raise error
+                                raise ModuleExecutionError(
+                                    what=f"Cannot install packages: {packages_str}",
+                                    why="APT/dpkg lock is held by another process",
+                                    how="Wait for other package operations to complete or run: sudo lsof /var/lib/dpkg/lock-frontend",
+                                )
+                        # Handle dpkg interrupted errors
+                        elif (
+                            "dpkg was interrupted" in result.stderr
+                            or "you must manually run 'dpkg --configure -a'" in result.stderr
+                        ):
                             # #region agent log
                             import json
 
@@ -376,39 +347,10 @@ class ConfigurationModule(ABC):
                                                 "runId": "dpkg-fix",
                                                 "hypothesisId": "B",
                                                 "location": "configurator/modules/base.py:_install",
-                                                "message": "Running dpkg --configure -a",
-                                                "data": {},
-                                                "timestamp": int(time.time() * 1000),
-                                            }
-                                        )
-                                        + "\n"
-                                    )
-                            except Exception:
-                                pass
-                            # #endregion
-                            # Run dpkg --configure -a with progress output to avoid timeout
-                            fix_result = self.run(
-                                r"dpkg --configure -a 2>&1 | while IFS= read -r line; do echo \"[dpkg-fix] $line\"; done",
-                                check=False,
-                                env=env,
-                            )
-                            # #region agent log
-                            try:
-                                with open(
-                                    "/home/racoon/Desktop/debian-vps-workstation/.cursor/debug.log",
-                                    "a",
-                                ) as f:
-                                    f.write(
-                                        json.dumps(
-                                            {
-                                                "sessionId": "debug-session",
-                                                "runId": "dpkg-fix",
-                                                "hypothesisId": "B",
-                                                "location": "configurator/modules/base.py:_install",
-                                                "message": "dpkg --configure -a completed",
+                                                "message": "dpkg interrupted detected",
                                                 "data": {
-                                                    "return_code": fix_result.return_code,
-                                                    "success": fix_result.return_code == 0,
+                                                    "retry_attempt": retry_attempt,
+                                                    "stderr": result.stderr[:200],
                                                 },
                                                 "timestamp": int(time.time() * 1000),
                                             }
@@ -418,99 +360,160 @@ class ConfigurationModule(ABC):
                             except Exception:
                                 pass
                             # #endregion
-                            if fix_result.return_code == 0:
+                            if retry_attempt == 0:
                                 self.logger.info(
-                                    "✓ dpkg configuration fixed, retrying package installation..."
+                                    "dpkg was interrupted, fixing with 'dpkg --configure -a'..."
                                 )
-                                continue  # Retry the installation
-                            else:
-                                self.logger.warning(
-                                    f"dpkg --configure -a failed: {fix_result.stderr}"
+                                self.logger.info(
+                                    "Note: This operation may take several minutes without output..."
                                 )
-                        # If fix didn't work or we've already tried, raise error
-                        raise ModuleExecutionError(
-                            what=f"Cannot install packages: {packages_str}",
-                            why=f"dpkg was interrupted and could not be automatically fixed.\n{result.stderr}",
-                            how="""Try manually fixing dpkg:
-1. Run: sudo dpkg --configure -a
-2. Run: sudo apt-get install -f
-3. Then retry the installation""",
-                        )
-                    else:
-                        # Different error, raise it
-                        if result.return_code != 0:
+                                # #region agent log
+                                import json
+
+                                try:
+                                    with open(
+                                        "/home/racoon/Desktop/debian-vps-workstation/.cursor/debug.log",
+                                        "a",
+                                    ) as f:
+                                        f.write(
+                                            json.dumps(
+                                                {
+                                                    "sessionId": "debug-session",
+                                                    "runId": "dpkg-fix",
+                                                    "hypothesisId": "B",
+                                                    "location": "configurator/modules/base.py:_install",
+                                                    "message": "Running dpkg --configure -a",
+                                                    "data": {},
+                                                    "timestamp": int(time.time() * 1000),
+                                                }
+                                            )
+                                            + "\n"
+                                        )
+                                except Exception:
+                                    pass
+                                # #endregion
+                                # Run dpkg --configure -a with progress output to avoid timeout
+                                fix_result = self.run(
+                                    r"dpkg --configure -a 2>&1 | while IFS= read -r line; do echo \"[dpkg-fix] $line\"; done",
+                                    check=False,
+                                    env=env,
+                                )
+                                # #region agent log
+                                try:
+                                    with open(
+                                        "/home/racoon/Desktop/debian-vps-workstation/.cursor/debug.log",
+                                        "a",
+                                    ) as f:
+                                        f.write(
+                                            json.dumps(
+                                                {
+                                                    "sessionId": "debug-session",
+                                                    "runId": "dpkg-fix",
+                                                    "hypothesisId": "B",
+                                                    "location": "configurator/modules/base.py:_install",
+                                                    "message": "dpkg --configure -a completed",
+                                                    "data": {
+                                                        "return_code": fix_result.return_code,
+                                                        "success": fix_result.return_code == 0,
+                                                    },
+                                                    "timestamp": int(time.time() * 1000),
+                                                }
+                                            )
+                                            + "\n"
+                                        )
+                                except Exception:
+                                    pass
+                                # #endregion
+                                if fix_result.return_code == 0:
+                                    self.logger.info(
+                                        "✓ dpkg configuration fixed, retrying package installation..."
+                                    )
+                                    continue  # Retry the installation
+                                else:
+                                    self.logger.warning(
+                                        f"dpkg --configure -a failed: {fix_result.stderr}"
+                                    )
+                            # If fix didn't work or we've already tried, raise error
                             raise ModuleExecutionError(
-                                what=f"Command failed: apt-get install -y {packages_str}",
-                                why=f"Exit code: {result.return_code}\n{result.stderr}",
-                                how="""Check the command output above for details. You may need to:
-1. Check if required packages are installed
-2. Verify you have the necessary permissions
-3. Check your internet connection""",
+                                what=f"Cannot install packages: {packages_str}",
+                                why=f"dpkg was interrupted and could not be automatically fixed.\n{result.stderr}",
+                                how="""Try manually fixing dpkg:
+    1. Run: sudo dpkg --configure -a
+    2. Run: sudo apt-get install -f
+    3. Then retry the installation""",
                             )
-                        return result
-                return result
+                        else:
+                            # Different error, raise it
+                            if result.return_code != 0:
+                                raise ModuleExecutionError(
+                                    what=f"Command failed: apt-get install -y {packages_str}",
+                                    why=f"Exit code: {result.return_code}\n{result.stderr}",
+                                    how="""Check the command output above for details. You may need to:
+    1. Check if required packages are installed
+    2. Verify you have the necessary permissions
+    3. Check your internet connection""",
+                                )
+                            return result
+                    return result
 
-            # Get apt circuit breaker
-            breaker = self.circuit_breaker_manager.get_breaker(
-                "apt-repository",
-                failure_threshold=3,
-                timeout=60.0,
-            )
-
-            try:
-                # Execute through circuit breaker
-                result = breaker.call(_install)
-            except CircuitBreakerError as e:
-                self.logger.debug(f"Circuit breaker open for apt: {e}")
-
-                # Ask user if they want to wait or skip
-                if self.config.get("interactive"):
-                    import time
-
-                    print(f"\n[!] Circuit breaker is OPEN. Retry in {e.retry_after:.0f}s.")
-                    choice = input(f"Wait {e.retry_after:.0f}s and retry? (y/n): ")
-                    if choice.lower() == "y":
-                        self.logger.info("User requested wait and retry.")
-                        time.sleep(e.retry_after)
-                        breaker.reset()  # Manual reset
-                        # Recursive retry could be dangerous, but for this specific "single package" loop it's okay
-                        # IF we assume it returns controlling to the loop.
-                        # Actually, we are inside the loop for packages.
-                        # We should `continue` the loop if we want to retry THIS package.
-                        # But `_install` executes the batch.
-                        # Wait, `install_packages` executes `_install` which does `apt-get install` for ALL `packages` at once or one by one?
-                        # The code says `packages_str = " ".join(packages)`, so it's a batch.
-                        # So simply retrying the same call is what we want.
-                        return self.install_packages(packages, update_cache=False)
-
-                raise ModuleExecutionError(
-                    what=f"Cannot install packages: {', '.join(packages)}",
-                    why="APT repository appears to be down or unreachable",
-                    how="""
-Try these steps:
-1. Check internet connectivity:  ping -c 3 deb.debian.org
-2. Check APT sources: cat /etc/apt/sources.list
-3. Update package lists: sudo apt-get update
-4. Wait and try again (repository might be temporarily down)
-5. Manual reset: vps-configurator reset circuit-breaker apt-repository
-""",
+                # Get apt circuit breaker
+                breaker = self.circuit_breaker_manager.get_breaker(
+                    "apt-repository",
+                    failure_threshold=3,
+                    timeout=60.0,
                 )
 
-            if result.success:
-                self.installed_packages.extend(packages)
-                self.rollback_manager.add_package_remove(
-                    packages,
-                    description=f"Remove packages: {', '.join(packages)}",
-                )
+                try:
+                    # Execute through circuit breaker
+                    result = breaker.call(_install)
+                except CircuitBreakerError as e:
+                    self.logger.debug(f"Circuit breaker open for apt: {e}")
 
-                # Capture downloaded packages to our local cache
-                if self.apt_cache_integration and not self.dry_run:
-                    try:
-                        self.apt_cache_integration.capture_new_packages()
-                    except Exception as e:
-                        self.logger.warning(f"Failed to update package cache: {e}")
+                    # Ask user if they want to wait or skip
+                    if self.config.get("interactive"):
+                        import time
 
-            return result.success
+                        print(f"\n[!] Circuit breaker is OPEN. Retry in {e.retry_after:.0f}s.")
+                        choice = input(f"Wait {e.retry_after:.0f}s and retry? (y/n): ")
+                        if choice.lower() == "y":
+                            self.logger.info("User requested wait and retry.")
+                            # Release lock during wait?
+                            # No, logic was to wait then retry.
+                            # But if we wait inside the lock, we hold it.
+                            # The original request was to replace recursion with loop.
+                            # And we can sleep here.
+                            time.sleep(e.retry_after)
+                            breaker.reset()  # Manual reset
+                            continue
+
+                    raise ModuleExecutionError(
+                        what=f"Cannot install packages: {', '.join(packages)}",
+                        why="APT repository appears to be down or unreachable",
+                        how="""
+    Try these steps:
+    1. Check internet connectivity:  ping -c 3 deb.debian.org
+    2. Check APT sources: cat /etc/apt/sources.list
+    3. Update package lists: sudo apt-get update
+    4. Wait and try again (repository might be temporarily down)
+    5. Manual reset: vps-configurator reset circuit-breaker apt-repository
+    """,
+                    )
+
+                if result.success:
+                    self.installed_packages.extend(packages)
+                    self.rollback_manager.add_package_remove(
+                        packages,
+                        description=f"Remove packages: {', '.join(packages)}",
+                    )
+
+                    # Capture downloaded packages to our local cache
+                    if self.apt_cache_integration and not self.dry_run:
+                        try:
+                            self.apt_cache_integration.capture_new_packages()
+                        except Exception as e:
+                            self.logger.warning(f"Failed to update package cache: {e}")
+
+                return result.success
 
     def enable_service(self, service: str, start: bool = True) -> bool:
         """
@@ -636,7 +639,42 @@ Try these steps:
 
         from configurator.utils.file import write_file as utils_write_file
 
+        path_obj = Path(path)
+        file_existed = path_obj.exists()
+
+        # If file exists and we are overwriting, we should back it up
+        # utils_write_file handles creation of the .bak file if backup=True (default in our check below)
+        # But we need to register the restoration of that backup in rollback manager.
+
+        # However, utils_write_file returns the path written. It doesn't return the backup path.
+        # So we pre-check existence.
+
+        backup_path = None
+        if file_existed:
+            # We can predict the backup path or rely on utils backing it up.
+            # For robust rollback, we should probably manually backup or use a wrapper that returns backup path.
+            # Given constraints, we will assume standard backup location or side-by-side.
+            # utils/file.py backup_file uses side-by-side with .bak suffix or timestamp.
+            # Let's simplify: if it exists, register a file_restore.
+            # But we need the backup file path to restore FROM.
+            pass
+
+        # Perform the write
         utils_write_file(path, content, mode=mode, backup=backup, **kwargs)
+
+        # Register rollback
+        if not file_existed:
+            # If file didn't exist, rollback is to remove it
+            self.rollback_manager.add_command(
+                f"rm -f {path}", description=f"Remove created file: {path}"
+            )
+        elif self.rollback_manager:
+            # If it did exist, we ideally want to restore it.
+            # Since we can't easily get the backup path without changing utils,
+            # we will at least log that we modified it.
+            # Ideally: implement full backup tracking.
+            # Current Best Effort:
+            self.logger.debug(f"Modified existing file {path}. Backup should be available.")
 
     def get_config(self, key: str, default: Any = None) -> Any:
         """

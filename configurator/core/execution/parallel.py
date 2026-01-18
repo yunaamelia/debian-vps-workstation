@@ -87,15 +87,31 @@ class ParallelExecutor(ExecutorInterface):
         started_at = datetime.now()
         thread_name = threading.current_thread().name
 
+        # Get module-specific logger from LogManager
+        from configurator.logger import get_log_manager
+
+        log_manager = get_log_manager()
+        # Use a localized logger
+        module_logger = log_manager.get_logger(context.module_name)
+
+        # We replace self.logger with module_logger for this execution context
+        # But wait, self.logger is the executor's logger.
+        # We should use module_logger for logging inside this method for this module.
+        logger = module_logger
+
         try:
-            self.logger.debug(f"[{thread_name}] Starting execution of {context.module_name}")
+            logger.debug(f"[{thread_name}] Starting execution of {context.module_name}")
+
+            # Inject logger into module
+            if hasattr(module, "logger"):
+                module.logger = logger
 
             # Notify start
             if callback:
                 callback(context.module_name, "started", {})
 
             if context.dry_run:
-                self.logger.info(f"[{thread_name}] DRY RUN mode enabled for {context.module_name}")
+                logger.info(f"[{thread_name}] DRY RUN mode enabled for {context.module_name}")
 
             # Validate
             if callback:
@@ -105,7 +121,7 @@ class ParallelExecutor(ExecutorInterface):
                 if not module.validate():
                     raise Exception(f"Validation failed for {context.module_name}")
             else:
-                self.logger.debug(
+                logger.debug(
                     f"[{thread_name}] Module {context.module_name} has no validate method, skipping"
                 )
 
@@ -121,7 +137,7 @@ class ParallelExecutor(ExecutorInterface):
                 if not module.configure():
                     raise Exception(f"Configuration failed for {context.module_name}")
             else:
-                self.logger.debug(
+                logger.debug(
                     f"[{thread_name}] Module {context.module_name} has no configure method, skipping"
                 )
 
@@ -131,7 +147,7 @@ class ParallelExecutor(ExecutorInterface):
 
             if hasattr(module, "verify"):
                 if not module.verify():
-                    self.logger.warning(
+                    logger.warning(
                         f"[{thread_name}] Verification warnings for {context.module_name}"
                     )
 
@@ -142,7 +158,7 @@ class ParallelExecutor(ExecutorInterface):
             if callback:
                 callback(context.module_name, "completed", {"duration": duration})
 
-            self.logger.debug(f"[{thread_name}] Finished {context.module_name} in {duration:.2f}s")
+            logger.debug(f"[{thread_name}] Finished {context.module_name} in {duration:.2f}s")
 
             return ExecutionResult(
                 module_name=context.module_name,
@@ -156,7 +172,7 @@ class ParallelExecutor(ExecutorInterface):
             completed_at = datetime.now()
             duration = (completed_at - started_at).total_seconds()
 
-            self.logger.error(f"[{thread_name}] Failed {context.module_name}: {e}")
+            logger.error(f"[{thread_name}] Failed {context.module_name}: {e}")
 
             if callback:
                 callback(context.module_name, "failed", {"error": str(e)})

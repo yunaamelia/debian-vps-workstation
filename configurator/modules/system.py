@@ -136,6 +136,10 @@ class SystemModule(ConfigurationModule):
 
     def verify(self) -> bool:
         """Verify system configuration."""
+        if self.dry_run_manager.is_enabled:
+            self.logger.info("Dry-run: skipping system verification")
+            return True
+
         checks_passed = True
 
         # Check hostname

@@ -5,13 +5,17 @@ Manages the execution order of modules and handles errors.
 """
 
 import logging
-from typing import Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from configurator.config import ConfigManager
 from configurator.core.container import Container
 from configurator.core.dependency import DependencyGraph
 from configurator.core.dryrun import DryRunManager
 from configurator.core.execution.base import ExecutionContext
+
+if TYPE_CHECKING:
+    pass
+
 
 # Sprint 2 Components
 from configurator.core.execution.hybrid import HybridExecutor
@@ -55,6 +59,14 @@ class Installer:
         # Use provided reporter or default to Rich/Console
         self.reporter = reporter or DEFAULT_REPORTER()
         self.container = container or Container()
+
+        # Initialize parallel logging
+        from configurator.logger import get_log_manager
+
+        self.log_manager = get_log_manager(
+            console_level=logging.DEBUG if config.get("verbose", False) else logging.INFO,
+            enable_per_module_logs=config.get("logging.per_module_logs", True),
+        )
 
         # Initialize core services
         self.rollback_manager = RollbackManager(self.logger)
@@ -140,9 +152,12 @@ class Installer:
 
     def _register_modules(self):
         """Register all available modules."""
-        # Dynamic import to avoid circular dependencies
-        # (Same as before, list all modules)
+        # Helper for lazy loading to verify class existence and typing without runtime impact
+        # We perform runtime imports here to strictly control loading order and avoid circularity
+        # but the static typing is handled above.
+
         from configurator.modules.caddy import CaddyModule
+        from configurator.modules.cis_compliance import CISComplianceModule
         from configurator.modules.cursor import CursorModule
         from configurator.modules.databases import DatabasesModule
         from configurator.modules.desktop import DesktopModule
@@ -160,6 +175,7 @@ class Installer:
         from configurator.modules.rust import RustModule
         from configurator.modules.security import SecurityModule
         from configurator.modules.system import SystemModule
+        from configurator.modules.trivy_scanner import TrivyScannerModule
         from configurator.modules.utilities import UtilitiesModule
         from configurator.modules.vscode import VSCodeModule
         from configurator.modules.wireguard import WireGuardModule
@@ -167,6 +183,8 @@ class Installer:
         module_classes = {
             "system": SystemModule,
             "security": SecurityModule,
+            "cis_compliance": CISComplianceModule,
+            "trivy_scanner": TrivyScannerModule,
             "rbac": RBACModule,
             "desktop": DesktopModule,
             "python": PythonModule,
@@ -263,26 +281,26 @@ class Installer:
                 )  # Default event
 
                 if stage == "started":
-                    self.reporter.start_phase(f"Installing {module_name}")
+                    self.reporter.start_phase(module_name)
 
                 elif stage == "validating":
                     self.hooks_manager.execute(HookEvent.BEFORE_MODULE_VALIDATE, context)
-                    self.reporter.update(f"Validating {module_name}...")
+                    self.reporter.update("Validating...", module=module_name)
 
                 elif stage == "configuring":
                     self.hooks_manager.execute(HookEvent.BEFORE_MODULE_CONFIGURE, context)
-                    self.reporter.update(f"Configuring {module_name}...")
+                    self.reporter.update("Configuring...", module=module_name)
 
                 elif stage == "verifying":
-                    self.reporter.update(f"Verifying {module_name}...")
+                    self.reporter.update("Verifying...", module=module_name)
 
                 elif stage == "completed":
                     self.hooks_manager.execute(HookEvent.AFTER_MODULE_CONFIGURE, context)
-                    self.reporter.complete_phase(True)
+                    self.reporter.complete_phase(True, module=module_name)
 
                 elif stage == "failed":
                     self.hooks_manager.execute(HookEvent.ON_MODULE_ERROR, context)
-                    self.reporter.complete_phase(False)
+                    self.reporter.complete_phase(False, module=module_name)
 
             total_batches = len(batches)
             self.logger.info(f"Starting execution of {total_batches} batches")
