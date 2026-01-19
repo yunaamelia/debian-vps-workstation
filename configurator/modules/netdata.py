@@ -35,6 +35,8 @@ class NetdataModule(ConfigurationModule):
 
     def configure(self) -> bool:
         """Install and configure Netdata."""
+        # Pre-emptive cleanup of known corruption issues
+        self._cleanup_corrupted_state()
 
         # 1. Install Netdata (only if not present)
         if not self.command_exists("netdata"):
@@ -144,3 +146,17 @@ class NetdataModule(ConfigurationModule):
         port = self.get_config("port", 19999)
         self.logger.info(f"✓ Netdata started on port {port}")
         self.logger.info(f"  Access at: http://localhost:{port}")
+
+    def _cleanup_corrupted_state(self):
+        """Clean up potential corrupted state from previous installations."""
+        # Check for orphaned statoverride entries
+        try:
+            result = self.run("grep -q 'netdata' /var/lib/dpkg/statoverride", check=False)
+            if result.success:
+                # Check if user exists
+                user_check = self.run("id -u netdata", check=False)
+                if not user_check.success:
+                    self.logger.warning("Found orphaned netdata statoverride. Cleaning up...")
+                    self.run("sed -i '/netdata/d' /var/lib/dpkg/statoverride", check=True)
+        except Exception as e:
+            self.logger.warning(f"Failed to cleanup netdata state: {e}")

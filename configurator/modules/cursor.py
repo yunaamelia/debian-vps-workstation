@@ -97,18 +97,8 @@ class CursorModule(ConfigurationModule):
             )
 
             self.logger.info("Installing Cursor package...")
-            # Use apt-get install to handle dependencies automatically
-            env = os.environ.copy()
-            env["DEBIAN_FRONTEND"] = "noninteractive"
-
-            # Acquire global APT lock to prevent parallel execution failures
-            with self._APT_LOCK:
-                self.run(
-                    f"apt-get install -y {temp_deb}",
-                    check=True,
-                    env=env,
-                    description="Install Cursor .deb",
-                )
+            # Use install_packages for resilience (handles APT locks and retries)
+            self.install_packages([temp_deb], update_cache=False)
 
         except Exception as e:
             raise ModuleExecutionError(

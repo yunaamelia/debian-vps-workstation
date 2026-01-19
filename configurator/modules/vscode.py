@@ -126,12 +126,12 @@ class VSCodeModule(ConfigurationModule):
         self.logger.info(f"Installing {len(extensions)} extensions...")
 
         for ext in extensions:
-            result = self.run(
-                f"code --install-extension {ext} --force --user-data-dir /root/.config/Code --no-sandbox",
-                check=False,
-            )
-
-            if result.success:
+            try:
+                self.run(
+                    f"code --install-extension {ext} --force --user-data-dir /root/.config/Code --no-sandbox",
+                    check=True,
+                    timeout=300,
+                )
                 self.logger.info(f"  ✓ {ext}")
-            else:
-                self.logger.warning(f"  ⚠ Failed to install {ext}")
+            except Exception as e:
+                self.logger.warning(f"  ⚠ Failed to install {ext}: {e}")

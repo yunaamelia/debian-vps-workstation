@@ -68,40 +68,21 @@ class TrivyScannerModule(ConfigurationModule):
             # Checks based on Manual recommendations (using remote_setup script approach usually better)
             # but we can try basic apt install if repo setup
 
-            cmds = [
+            # Split setup and install
+            setup_cmds = [
                 "wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor -o /usr/share/keyrings/trivy.gpg",
                 "echo 'deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main' | tee /etc/apt/sources.list.d/trivy.list",
-                "apt-get update",
-                "apt-get install -y trivy",
             ]
 
-            for cmd in cmds:
-                # We must be careful about dry-run here.
-                # Since validate doesn't know about dry-run, we might technically issue commands?
-                # Wait, Installer.install() calls validate() BEFORE execution loop.
-                # If dry-run is on, we shouldn't really install.
-                # But we don't have dry_run flag in validate signature.
-                # We'll just run it. If dry-run is used, Installer usually skips execution but validate is called?
-                # No, Installer.validate() calls module.validate().
-                # We should probably handle this gracefully or assume validate is "read only" usually.
-                # But here we are installing a dependency.
+            # Execute setup commands with global lock (checking return codes)
+            with self._APT_LOCK:
+                for cmd in setup_cmds:
+                    self.run(cmd, check=True, description=f"Trivy setup: {cmd.split()[0]}")
 
-                # NOTE: Ideally dependencies are installed by 'system' module or dependencies list.
-                # But this is a specialized tool.
+            # Install using robust install_packages (handles retries and dpkg repair)
+            self.install_packages(["trivy"], update_cache=True)
 
-                # I will verify if I can detect dry run from config?
-                # Config might have 'dry_run' if passed?
-                # self.config is a dict.
-                pass
-
-            # For now, let's assume we can try to install.
-            # But wait, run_command doesn't auto-mock unless conditioned.
-            # I will skip installation in validate() to be safe and fail if not present,
-            # trusting that 'system' or 'setup' script handles it?
-            # Or I implement install in `configure` where I might interpret dry_run?
-            # Actually standard practice: _install_trivy in configure() is better.
-
-            return False
+            return True
 
         except Exception as e:
             self.logger.error(f"Failed to install Trivy: {e}")

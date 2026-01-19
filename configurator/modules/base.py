@@ -262,7 +262,7 @@ class ConfigurationModule(ABC):
             with self._APT_LOCK:
                 if update_cache:
                     # Retry apt-get update if another process has the lock
-                    for retry_attempt in range(3):
+                    for retry_attempt in range(12):
                         result = self.run("apt-get update", check=False)
                         if result.return_code == 0:
                             break
@@ -299,7 +299,7 @@ class ConfigurationModule(ABC):
 
                 def _install(packages_str=packages_str, env=env):
                     # Retry install if another process has the lock or dpkg was interrupted
-                    for retry_attempt in range(3):
+                    for retry_attempt in range(12):
                         result = self.run(
                             f"apt-get install -y {packages_str}",
                             check=False,
@@ -327,10 +327,13 @@ class ConfigurationModule(ABC):
                                     why="APT/dpkg lock is held by another process",
                                     how="Wait for other package operations to complete or run: sudo lsof /var/lib/dpkg/lock-frontend",
                                 )
-                        # Handle dpkg interrupted errors
+                        # Handle dpkg interrupted errors OR generic dpkg errors (code 2 -> exit 100)
                         elif (
                             "dpkg was interrupted" in result.stderr
                             or "you must manually run 'dpkg --configure -a'" in result.stderr
+                            or "returned an error code (2)" in result.stderr
+                            or result.return_code
+                            != 0  # Aggressive repair for any failure on first attempt
                         ):
                             # #region agent log
                             import json
@@ -345,12 +348,13 @@ class ConfigurationModule(ABC):
                                             {
                                                 "sessionId": "debug-session",
                                                 "runId": "dpkg-fix",
-                                                "hypothesisId": "B",
+                                                "hypothesisId": "C",
                                                 "location": "configurator/modules/base.py:_install",
-                                                "message": "dpkg interrupted detected",
+                                                "message": "Generic install failure detected, attempting repair",
                                                 "data": {
                                                     "retry_attempt": retry_attempt,
                                                     "stderr": result.stderr[:200],
+                                                    "return_code": result.return_code,
                                                 },
                                                 "timestamp": int(time.time() * 1000),
                                             }
@@ -360,9 +364,11 @@ class ConfigurationModule(ABC):
                             except Exception:
                                 pass
                             # #endregion
+
+                            # Only try repair on the first failure to avoid infinite loops if package is truly broken
                             if retry_attempt == 0:
                                 self.logger.info(
-                                    "dpkg was interrupted, fixing with 'dpkg --configure -a'..."
+                                    "Installation failed, attempting to fix with 'dpkg --configure -a' and 'apt-get install -f'..."
                                 )
                                 self.logger.info(
                                     "Note: This operation may take several minutes without output..."
@@ -392,9 +398,9 @@ class ConfigurationModule(ABC):
                                 except Exception:
                                     pass
                                 # #endregion
-                                # Run dpkg --configure -a with progress output to avoid timeout
+                                # Run dpkg --configure -a AND apt-get install -f with progress output
                                 fix_result = self.run(
-                                    r"dpkg --configure -a 2>&1 | while IFS= read -r line; do echo \"[dpkg-fix] $line\"; done",
+                                    r"(dpkg --configure -a && apt-get install -f -y) 2>&1 | while IFS= read -r line; do echo \"[dpkg-fix] $line\"; done",
                                     check=False,
                                     env=env,
                                 )
