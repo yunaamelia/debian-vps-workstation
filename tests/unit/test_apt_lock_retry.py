@@ -53,4 +53,4 @@ def test_install_packages_gives_up_on_fatal_error():
         with pytest.raises(ModuleExecutionError) as exc:
             module.install_packages(["unknown-pkg"], update_cache=False)
 
-        assert "Exit code: 1" in str(exc.value)
+        assert "Package not found" in str(exc.value)
