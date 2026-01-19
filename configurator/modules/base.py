@@ -262,7 +262,8 @@ class ConfigurationModule(ABC):
             with self._APT_LOCK:
                 if update_cache:
                     # Retry apt-get update if another process has the lock
-                    for retry_attempt in range(12):
+                    max_retries = 60
+                    for retry_attempt in range(max_retries):
                         result = self.run("apt-get update", check=False)
                         if result.return_code == 0:
                             break
@@ -270,17 +271,12 @@ class ConfigurationModule(ABC):
                             "Could not get lock" in result.stderr
                             or "Could not get lock" in result.stdout
                         ):
-                            if retry_attempt < 2:
-                                self.logger.debug(
-                                    f"APT lock busy, waiting... (attempt {retry_attempt + 1}/3)"
-                                )
-                                import time
+                            self.logger.debug(
+                                f"APT lock busy, waiting... (attempt {retry_attempt + 1}/{max_retries})"
+                            )
+                            import time
 
-                                time.sleep(5)
-                            else:
-                                self.logger.warning(
-                                    "APT lock still busy after retries, continuing anyway"
-                                )
+                            time.sleep(5)
                         else:
                             break
 
@@ -299,7 +295,8 @@ class ConfigurationModule(ABC):
 
                 def _install(packages_str=packages_str, env=env):
                     # Retry install if another process has the lock or dpkg was interrupted
-                    for retry_attempt in range(12):
+                    max_retries = 60
+                    for retry_attempt in range(max_retries):
                         result = self.run(
                             f"apt-get install -y {packages_str}",
                             check=False,
@@ -313,20 +310,13 @@ class ConfigurationModule(ABC):
                             "Could not get lock" in result.stderr
                             or "Could not get lock" in result.stdout
                         ):
-                            if retry_attempt < 2:
-                                self.logger.debug(
-                                    f"APT lock busy during install, waiting... (attempt {retry_attempt + 1}/3)"
-                                )
-                                import time
+                            self.logger.debug(
+                                f"APT lock busy during install, waiting... (attempt {retry_attempt + 1}/{max_retries})"
+                            )
+                            import time
 
-                                time.sleep(5)
-                            else:
-                                # Final retry failed, raise error
-                                raise ModuleExecutionError(
-                                    what=f"Cannot install packages: {packages_str}",
-                                    why="APT/dpkg lock is held by another process",
-                                    how="Wait for other package operations to complete or run: sudo lsof /var/lib/dpkg/lock-frontend",
-                                )
+                            time.sleep(5)
+                            continue  # Continue to next retry, do not raise until loop exhaustion
                         # Handle dpkg interrupted errors OR generic dpkg errors (code 2 -> exit 100)
                         elif (
                             "dpkg was interrupted" in result.stderr
