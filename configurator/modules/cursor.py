@@ -97,8 +97,48 @@ class CursorModule(ConfigurationModule):
             )
 
             self.logger.info("Installing Cursor package...")
-            # Use install_packages for resilience (handles APT locks and retries)
-            self.install_packages([temp_deb], update_cache=False)
+            # Use dpkg directly for .deb files to allow downgrades
+            result = self.run(
+                f"dpkg --force-confnew --force-confdef --force-overwrite -i {temp_deb}",
+                check=False,
+                description="Install Cursor .deb",
+            )
+
+            if result.return_code != 0:
+                self.logger.warning("dpkg install had errors, fixing dependencies...")
+
+            # Fix any broken dependencies after dpkg install
+            # Retry with exponential backoff for lock contention
+            max_retries = 5
+            for attempt in range(max_retries):
+                fix_result = self.run(
+                    "apt-get install -f -y --allow-downgrades",
+                    check=False,
+                    description="Fix Cursor dependencies",
+                )
+
+                if fix_result.return_code == 0:
+                    self.logger.info("✓ Dependencies fixed successfully")
+                    break
+                elif "Could not get lock" in fix_result.stderr or "is held by" in fix_result.stderr:
+                    if attempt < max_retries - 1:
+                        wait_time = 2**attempt  # Exponential backoff: 1, 2, 4, 8, 16s
+                        self.logger.info(f"APT lock detected, waiting {wait_time}s before retry...")
+                        import time
+
+                        time.sleep(wait_time)
+                    else:
+                        raise ModuleExecutionError(
+                            what="Failed to fix Cursor dependencies",
+                            why="APT lock timeout - another process is using package manager",
+                            how="Wait for other installations to complete, then retry manually: sudo apt-get install -f",
+                        )
+                else:
+                    raise ModuleExecutionError(
+                        what="Failed to fix Cursor dependencies",
+                        why=fix_result.stderr,
+                        how="Check the error above and fix manually",
+                    )
 
         except Exception as e:
             raise ModuleExecutionError(
