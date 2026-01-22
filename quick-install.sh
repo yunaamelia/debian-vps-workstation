@@ -46,6 +46,7 @@ readonly EXIT_VERIFY=6
 readonly EXIT_INTERRUPT=130
 
 ROOT_MODE=false
+DRY_RUN=false
 ERROR_CONTEXT=""
 ERROR_CODE=$EXIT_GENERAL
 
@@ -61,6 +62,9 @@ readonly NC='\033[0m'
 # ==========================================================================
 
 init_logging() {
+    if [ "$DRY_RUN" = true ]; then
+        return 0
+    fi
     mkdir -p "$LOG_DIR"
     rotate_logs
     touch "$INSTALL_LOG"
@@ -82,6 +86,10 @@ rotate_logs() {
 
 log_line() {
     local message=$1
+    if [ "$DRY_RUN" = true ]; then
+        echo -e "$message"
+        return 0
+    fi
     if [ -n "${INSTALL_LOG:-}" ] && [ -d "${LOG_DIR:-}" ]; then
         echo -e "$message" | tee -a "$INSTALL_LOG" || true
     else
@@ -156,6 +164,10 @@ command_exists() {
 }
 
 run_as_root() {
+    if [ "$DRY_RUN" = true ]; then
+        log_info "DRY RUN: $*"
+        return 0
+    fi
     if [ "$ROOT_MODE" = true ]; then
         "$@"
     else
@@ -169,6 +181,10 @@ run_as_root() {
 
 create_checkpoint() {
     local checkpoint_name=$1
+    if [ "$DRY_RUN" = true ]; then
+        print_info "DRY RUN: would create checkpoint $checkpoint_name"
+        return 0
+    fi
     mkdir -p "$CHECKPOINT_DIR"
     echo "$(date '+%Y-%m-%d %H:%M:%S')" > "$CHECKPOINT_DIR/$checkpoint_name"
     print_success "Checkpoint created: $checkpoint_name"
@@ -188,6 +204,10 @@ list_checkpoints() {
 
 clear_checkpoints() {
     if [ -d "$CHECKPOINT_DIR" ]; then
+        if [ "$DRY_RUN" = true ]; then
+            print_info "DRY RUN: would remove checkpoints"
+            return 0
+        fi
         rm -rf "$CHECKPOINT_DIR"
         print_info "All checkpoints cleared"
     fi
@@ -195,6 +215,10 @@ clear_checkpoints() {
 
 backup_state() {
     local backup_name=$1
+    if [ "$DRY_RUN" = true ]; then
+        print_info "DRY RUN: would backup state ($backup_name)"
+        return 0
+    fi
     mkdir -p "$BACKUP_DIR"
 
     if [ -d "venv" ]; then
@@ -207,6 +231,11 @@ backup_state() {
 
 restore_state() {
     local backup_name=$1
+
+    if [ "$DRY_RUN" = true ]; then
+        print_info "DRY RUN: would restore backup ($backup_name)"
+        return 0
+    fi
 
     print_warning "Restoring from backup: $backup_name"
 
@@ -276,28 +305,31 @@ restore_from_checkpoint() {
         last_checkpoint=$(ls -t "$CHECKPOINT_DIR" | head -n1)
         print_info "Last successful checkpoint: $last_checkpoint"
 
-        if check_checkpoint "python_deps_installed"; then
-            print_info "Resuming from verification..."
+        if check_checkpoint "deployment_executed"; then
+            print_info "Resuming from post-installation verification..."
             verify_installation
-            show_next_steps
+        elif check_checkpoint "python_deps_installed"; then
+            print_info "Resuming from deployment execution..."
+            execute_configurator_install
+            verify_installation
         elif check_checkpoint "venv_created"; then
             print_info "Resuming from Python dependencies installation..."
             install_python_deps
+            execute_configurator_install
             verify_installation
-            show_next_steps
         elif check_checkpoint "system_deps_installed"; then
             print_info "Resuming from virtual environment setup..."
             setup_venv
             install_python_deps
+            execute_configurator_install
             verify_installation
-            show_next_steps
         else
             print_info "No valid checkpoint found. Starting from system dependencies..."
             install_system_deps
             setup_venv
             install_python_deps
+            execute_configurator_install
             verify_installation
-            show_next_steps
         fi
     else
         print_error "No checkpoints found. Please start fresh."
@@ -307,6 +339,10 @@ restore_from_checkpoint() {
 
 cleanup_all() {
     print_info "Cleaning up installation artifacts..."
+    if [ "$DRY_RUN" = true ]; then
+        print_info "DRY RUN: would remove $CHECKPOINT_DIR $BACKUP_DIR venv"
+        return 0
+    fi
     rm -rf "$CHECKPOINT_DIR" "$BACKUP_DIR" venv 2>/dev/null || true
     print_success "Cleanup complete"
 }
@@ -527,7 +563,11 @@ setup_venv() {
     fi
 
     print_info "Creating virtual environment..."
-    python3 -m venv venv
+    if [ "$DRY_RUN" = true ]; then
+        print_info "DRY RUN: would create virtual environment"
+    else
+        python3 -m venv venv
+    fi
 
     print_success "Virtual environment created"
     create_checkpoint "venv_created"
@@ -545,29 +585,90 @@ install_python_deps() {
     if [ "$ROOT_MODE" = true ]; then
         print_info "Installing system-wide (root mode)..."
         print_info "Installing setuptools and wheel..."
-        python3 -m pip install setuptools wheel --break-system-packages --ignore-installed 2>/dev/null || true
+        if [ "$DRY_RUN" = true ]; then
+            print_info "DRY RUN: python3 -m pip install setuptools wheel --break-system-packages --ignore-installed"
+        else
+            python3 -m pip install setuptools wheel --break-system-packages --ignore-installed 2>/dev/null || true
+        fi
 
         print_info "Installing project dependencies..."
-        python3 -m pip install -r requirements.txt --break-system-packages --ignore-installed
+        if [ "$DRY_RUN" = true ]; then
+            print_info "DRY RUN: python3 -m pip install -r requirements.txt --break-system-packages --ignore-installed"
+        else
+            python3 -m pip install -r requirements.txt --break-system-packages --ignore-installed
+        fi
 
         print_info "Installing project in development mode..."
-        python3 -m pip install -e . --break-system-packages --ignore-installed
+        if [ "$DRY_RUN" = true ]; then
+            print_info "DRY RUN: python3 -m pip install -e . --break-system-packages --ignore-installed"
+        else
+            python3 -m pip install -e . --break-system-packages --ignore-installed
+        fi
     else
         print_info "Activating virtual environment..."
-        source venv/bin/activate
+        if [ "$DRY_RUN" = true ]; then
+            print_info "DRY RUN: would activate virtual environment"
+        else
+            source venv/bin/activate
+        fi
 
         print_info "Upgrading pip..."
-        python -m pip install --upgrade pip setuptools wheel
+        if [ "$DRY_RUN" = true ]; then
+            print_info "DRY RUN: python -m pip install --upgrade pip setuptools wheel"
+        else
+            python -m pip install --upgrade pip setuptools wheel
+        fi
 
         print_info "Installing project dependencies..."
-        python -m pip install -r requirements.txt
+        if [ "$DRY_RUN" = true ]; then
+            print_info "DRY RUN: python -m pip install -r requirements.txt"
+        else
+            python -m pip install -r requirements.txt
+        fi
 
         print_info "Installing project in development mode..."
-        python -m pip install -e .
+        if [ "$DRY_RUN" = true ]; then
+            print_info "DRY RUN: python -m pip install -e ."
+        else
+            python -m pip install -e .
+        fi
     fi
 
     print_success "Python dependencies installed"
     create_checkpoint "python_deps_installed"
+}
+
+# ==========================================================================
+# DEPLOYMENT EXECUTION
+# ==========================================================================
+
+execute_configurator_install() {
+    if check_checkpoint "deployment_executed"; then
+        print_info "Deployment already executed (checkpoint found)"
+        return 0
+    fi
+
+    log_section "DEPLOY: Running vps-configurator install"
+
+    if [ "$DRY_RUN" = true ]; then
+        print_info "DRY RUN: would run vps-configurator install --profile advanced"
+        create_checkpoint "deployment_executed"
+        return 0
+    fi
+
+    if [ "$ROOT_MODE" != true ]; then
+        if [ -f "venv/bin/activate" ]; then
+            source venv/bin/activate
+        else
+            fail "Virtual environment not found for deployment" "$EXIT_VENV"
+        fi
+    fi
+
+    print_info "Executing: vps-configurator install --profile advanced"
+    vps-configurator install --profile advanced
+
+    create_checkpoint "deployment_executed"
+    print_success "Deployment execution completed"
 }
 
 # ==========================================================================
@@ -581,6 +682,11 @@ verify_installation() {
     fi
 
     print_header "Verifying Installation"
+
+    if [ "$DRY_RUN" = true ]; then
+        print_info "DRY RUN: skipping verification checks"
+        return 0
+    fi
 
     if [ "$ROOT_MODE" != true ]; then
         if [ -f "venv/bin/activate" ]; then
@@ -632,64 +738,11 @@ verify_installation() {
 }
 
 # ==========================================================================
-# COMPLETION AND NEXT STEPS
-# ==========================================================================
-
-show_next_steps() {
-    print_header "Installation Complete! 🎉"
-
-    print_success "All prerequisites have been installed successfully!"
-    echo "" | tee -a "$INSTALL_LOG"
-
-    print_info "Checkpoint Summary:"
-    list_checkpoints
-    echo "" | tee -a "$INSTALL_LOG"
-
-    print_info "Next Steps:"
-    echo "" | tee -a "$INSTALL_LOG"
-
-    if [ "$ROOT_MODE" = true ]; then
-        echo "1. Run the advanced installation directly:" | tee -a "$INSTALL_LOG"
-        print_msg "$YELLOW" "   vps-configurator install --profile advanced -v"
-    else
-        echo "1. Activate the virtual environment:" | tee -a "$INSTALL_LOG"
-        print_msg "$YELLOW" "   source venv/bin/activate"
-        echo "" | tee -a "$INSTALL_LOG"
-        echo "2. Run the advanced installation:" | tee -a "$INSTALL_LOG"
-        print_msg "$YELLOW" "   vps-configurator install --profile advanced -v"
-    fi
-
-    echo "" | tee -a "$INSTALL_LOG"
-    echo "Or explore available commands:" | tee -a "$INSTALL_LOG"
-    print_msg "$YELLOW" "   vps-configurator --help"
-    echo "" | tee -a "$INSTALL_LOG"
-
-    print_info "What the advanced profile includes:"
-    echo "   ✓ System security hardening (UFW, Fail2ban, SSH)" | tee -a "$INSTALL_LOG"
-    echo "   ✓ Development tools (Python, Node, Go, Rust, Java, PHP)" | tee -a "$INSTALL_LOG"
-    echo "   ✓ IDEs and editors (VS Code, Cursor, Neovim)" | tee -a "$INSTALL_LOG"
-    echo "   ✓ Desktop environment (XRDP + XFCE)" | tee -a "$INSTALL_LOG"
-    echo "   ✓ Container platform (Docker + Docker Compose)" | tee -a "$INSTALL_LOG"
-    echo "" | tee -a "$INSTALL_LOG"
-
-    print_info "Estimated installation time: 15-30 minutes"
-    echo "" | tee -a "$INSTALL_LOG"
-
-    print_info "Documentation:"
-    echo "   📘 Quick Start: docs/00-project-overview/quick-start-guide.md" | tee -a "$INSTALL_LOG"
-    echo "   📘 Full Docs: docs/00-project-overview/master-index.md" | tee -a "$INSTALL_LOG"
-    echo "" | tee -a "$INSTALL_LOG"
-
-    print_info "Cleanup:"
-    echo "   To remove checkpoints and backups:" | tee -a "$INSTALL_LOG"
-    print_msg "$YELLOW" "   rm -rf $CHECKPOINT_DIR $BACKUP_DIR"
-}
-
-# ==========================================================================
 # MAIN EXECUTION
 # ==========================================================================
 
 main() {
+    parse_args "$@"
     init_logging
 
     cat << "EOF"
@@ -705,7 +758,12 @@ main() {
 ╚═══════════════════════════════════════════════════════════╝
 EOF
 
-    log_info "Logging to: $INSTALL_LOG"
+    if [ "$DRY_RUN" = true ]; then
+        log_info "Dry-run enabled: no system changes will be made"
+        log_info "Logging to console only"
+    else
+        log_info "Logging to: $INSTALL_LOG"
+    fi
 
     if [ -d "$CHECKPOINT_DIR" ] && [ "$(ls -A "$CHECKPOINT_DIR" 2>/dev/null)" ]; then
         print_warning "Previous installation checkpoints detected!"
@@ -726,11 +784,29 @@ EOF
     install_system_deps
     setup_venv
     install_python_deps
+    execute_configurator_install
     verify_installation
-    show_next_steps
 
     print_info "Installation completed successfully!"
     print_warning "You can now safely remove checkpoints with: rm -rf $CHECKPOINT_DIR $BACKUP_DIR"
+}
+
+parse_args() {
+    while [ "$#" -gt 0 ]; do
+        case "$1" in
+            --dry-run|-n)
+                DRY_RUN=true
+                shift
+                ;;
+            --help|-h)
+                echo "Usage: $SCRIPT_NAME [--dry-run]"
+                exit 0
+                ;;
+            *)
+                shift
+                ;;
+        esac
+    done
 }
 
 trap 'error_handler $LINENO' ERR
