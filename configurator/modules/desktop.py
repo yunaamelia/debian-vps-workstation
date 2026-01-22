@@ -241,13 +241,33 @@ class DesktopModule(ConfigurationModule):
             self.logger.error(f"XRDP optimization failed: {e}", exc_info=True)
             return False
 
+    def _read_deploy_config(self, filename: str) -> str | None:
+        """Read config from deploy_configs directory if it exists."""
+        try:
+            # Locate deploy_configs relative to package root
+            # configurator/modules/desktop.py -> .../configurator/modules -> .../configurator -> .../root
+            base_dir = Path(__file__).resolve().parent.parent.parent
+            config_file = base_dir / "deploy_configs" / filename
+
+            if config_file.exists():
+                self.logger.info(f"Using custom configuration from: {config_file}")
+                return config_file.read_text()
+        except Exception as e:
+            self.logger.debug(f"Custom config {filename} not found or unreadable: {e}")
+        return None
+
     def _generate_xrdp_ini(self) -> str:
         """Generate optimized xrdp.ini content."""
+        # Check for custom config file first
+        custom_content = self._read_deploy_config("xrdp.ini")
+        if custom_content:
+            return self._apply_xrdp_overrides(custom_content)
+
         # Get and validate configs
-        max_bpp = self.get_config("xrdp.max_bpp", 24)
+        max_bpp = self.get_config("xrdp.max_bpp", 32)
         if max_bpp not in [16, 24, 32]:
-            self.logger.warning(f"Invalid max_bpp {max_bpp}, falling back to 24")
-            max_bpp = 24
+            self.logger.warning(f"Invalid max_bpp {max_bpp}, falling back to 32")
+            max_bpp = 32
 
         bitmap_cache = str(self.get_config("xrdp.bitmap_cache", True)).lower()
         security_layer = self.get_config("xrdp.security_layer", "tls")
@@ -290,7 +310,10 @@ tcp_nodelay=true
 ; if the network connection disappear without close messages the connection will be closed
 tcp_keepalive=true
 
-; set tcp send/recv buffer (for experts)
+; set tcp send/recv buffer
+; These parameters are largely historic. On systems with dynamic TCP
+; buffer sizes, setting them manually will either impact performance or
+; waste memory
 #tcp_send_buffer_bytes=32768
 #tcp_recv_buffer_bytes=32768
 
@@ -314,7 +337,7 @@ key_file=
 ; can be comma separated list of 'SSLv3', 'TLSv1', 'TLSv1.1', 'TLSv1.2', 'TLSv1.3'
 ssl_protocols=TLSv1.2, TLSv1.3
 ; set TLS cipher suites
-#tls_ciphers=HIGH
+tls_ciphers=HIGH
 
 ; concats the domain name to the user if set for authentication with the separator
 ; for example when the server is multi homed with SSSd
@@ -337,7 +360,6 @@ allow_multimon=true
 bitmap_cache={bitmap_cache}
 bitmap_compression=true
 bulk_compression=true
-use_compression=true
 #hidelogwindow=true
 max_bpp={max_bpp}
 new_cursors=true
@@ -586,67 +608,266 @@ password=ask
 #channel.xrdpvr=true
 """
 
+    def _apply_xrdp_overrides(self, content: str) -> str:
+        """Apply XRDP config overrides to a custom xrdp.ini payload."""
+        max_bpp = self.get_config("xrdp.max_bpp", 32)
+        if max_bpp not in [16, 24, 32]:
+            self.logger.warning(f"Invalid max_bpp {max_bpp}, falling back to 32")
+            max_bpp = 32
+
+        bitmap_cache = str(self.get_config("xrdp.bitmap_cache", True)).lower()
+        security_layer = self.get_config("xrdp.security_layer", "tls")
+        crypt_level = self.get_config("xrdp.crypt_level", "high")
+
+        replacements = {
+            "max_bpp": f"max_bpp={max_bpp}",
+            "bitmap_cache": f"bitmap_cache={bitmap_cache}",
+            "security_layer": f"security_layer={security_layer}",
+            "crypt_level": f"crypt_level={crypt_level}",
+        }
+
+        lines = content.splitlines()
+        found = {key: False for key in replacements}
+        updated_lines = []
+
+        for line in lines:
+            stripped = line.strip()
+            updated = line
+            for key, replacement in replacements.items():
+                if stripped.startswith(f"{key}="):
+                    updated = replacement
+                    found[key] = True
+                    break
+            updated_lines.append(updated)
+
+        for key, replacement in replacements.items():
+            if not found[key]:
+                updated_lines.append(replacement)
+
+        return "\n".join(updated_lines) + "\n"
+
     def _generate_sesman_ini(self) -> str:
-        """Generate optimized sesman.ini configuration (Hardcoded)."""
+        """Generate optimized sesman.ini configuration."""
+        # Check for custom config file first
+        custom_content = self._read_deploy_config("sesman.ini")
+        if custom_content:
+            return custom_content
+
+        # Fallback to hardcoded configuration
         return """[Globals]
-ListenAddress=127.0.0.1
-ListenPort=3350
+; listening port
+#ListenPort=sesman.socket
 EnableUserWindowManager=true
-# Use startwm.sh to ensure .xsession is respected
+; Give in relative path to user's home directory
 UserWindowManager=startwm.sh
+; Give in full path or relative path to /etc/xrdp
 DefaultWindowManager=startwm.sh
-ReconnectScript=
-PolicyKitSupport=true
+; Give in full path or relative path to /etc/xrdp
+ReconnectScript=reconnectwm.sh
 
 [Security]
-AllowRootLogin=false
-MaxLoginRetry=4
-# KEEPING EMPTY to avoid lockout - Guide suggests 'tsusers' but group must exist
-TerminalServerUsers=
-TerminalServerAdmins=
-RestrictOutboundClipboard=none
-RestrictInboundClipboard=none
+AllowRootLogin=true
+MaxLoginRetry=3
+TerminalServerUsers=tsusers
+TerminalServerAdmins=tsadmins
+; When AlwaysGroupCheck=false access will be permitted
+; if the group TerminalServerUsers is not defined.
 AlwaysGroupCheck=false
+; When RestrictOutboundClipboard=all clipboard from the
+; server is not pushed to the client.
+; In addition, you can control text/file/image transfer restrictions
+; respectively. It also accepts comma separated list such as text,file,image.
+; To keep compatibility, some aliases are also available:
+;   true: an alias of all
+;   false: an alias of none
+;   yes: an alias of all
+RestrictOutboundClipboard=none
+; When RestrictInboundClipboard=all clipboard from the
+; client is not pushed to the server.
+; In addition, you can control text/file/image transfer restrictions
+; respectively. It also accepts comma separated list such as text,file,image.
+; To keep compatibility, some aliases are also available:
+;   true: an alias of all
+;   false: an alias of none
+;   yes: an alias of all
+RestrictInboundClipboard=none
+; Set to 'no' to prevent users from logging in with alternate shells
+#AllowAlternateShell=true
+; On Linux systems, the Xorg X11 server is normally invoked using
+; no_new_privs to avoid problems if the executable is suid. This may,
+; however, interfere with the use of security modules such as AppArmor.
+; Leave this unset unless you need to disable it.
+#XorgNoNewPrivileges=true
+; Specify the group which is to have read access to the directory where
+; local sockets for the session are created. This is normally the GID
+; which the xrdp process runs as.
+; Default is 'root'
+#SessionSockdirGroup=root
+
 
 [Sessions]
+;; X11DisplayOffset - x11 display number offset
+; Type: integer
+; Default: 10
 X11DisplayOffset=10
-MaxSessions=10
-KillDisconnected=false
+
+;; MaxSessions - maximum number of connections to an xrdp server
+; Type: integer
+; Default: 0
+MaxSessions=50
+
+;; MaxDisplayNumer - maximum number considered for an X display
+; Type: integer
+; Default: 63
+;
+; IANA only allocates TCP ports up to 6063 for X servers. If you are not
+; allowing TCP connections to your X servers you may safely increase this
+; number.
+#MaxDisplayNumber=63
+
+;; KillDisconnected - kill disconnected sessions
+; Type: boolean
+; Default: false
+; if 1, true, or yes, every session will be killed within DisconnectedTimeLimit
+; seconds after the user disconnects
+KillDisconnected=true
+
+;; DisconnectedTimeLimit (seconds) - wait before kill disconnected sessions
+; Type: integer
+; Default: 0
+; if KillDisconnected is set to false, this value is ignored
+DisconnectedTimeLimit=600
+
+;; IdleTimeLimit (seconds) - wait before disconnect idle sessions
+; Type: integer
+; Default: 0
+; Set to 0 to disable idle disconnection.
 IdleTimeLimit=0
-DisconnectedTimeLimit=0
+
+;; Policy - session allocation policy
+;
+;  Type: enum [ "Default" | "Separate" | Combination from {UBDI} ]
+;  "Default"    Currently same as "UB"
+;  "Separate"   All sessions are separate. Sessions can never be rejoined,
+;               and will need to be cleaned up manually, or automatically
+;               by setting other sesman options.
+;
+;   Combination options:-
+;      U        Sessions are separated per user
+;      B        Sessions are separated by bits-per-pixel
+;      D        Sessions are separated by initial display size
+;      I        Sessions are separated by IP address
+;
+;   The options U and B are always active, and cannot be de-selected.
 Policy=Default
 
 [Logging]
+; Note: Log levels can be any of: core, error, warning, info, debug, or trace
 LogFile=xrdp-sesman.log
-LogLevel=WARNING
+LogLevel=INFO
 EnableSyslog=true
-SyslogLevel=WARNING
+#SyslogLevel=INFO
+#EnableConsole=false
+#ConsoleLevel=INFO
+#EnableProcessId=false
 
-[SessionVariables]
-PULSE_SCRIPT=/etc/xrdp/pulse/default.pa
+[LoggingPerLogger]
+; Note: per logger configuration is only used if xrdp is built with
+; --enable-devel-logging
+#sesman.c=INFO
+#main()=INFO
+
+;
+; Session definitions - startup command-line parameters for each session type
+;
+
+[Xorg]
+; Specify the path of non-suid Xorg executable. It might differ depending
+; on your distribution and version. Find out the appropriate path for your
+; environment. The typical path is known as follows:
+;
+; Fedora 26 or later    :  param=/usr/libexec/Xorg
+; Debian 9 or later     :  param=/usr/lib/xorg/Xorg
+; Ubuntu 16.04 or later :  param=/usr/lib/xorg/Xorg
+; Arch Linux            :  param=/usr/lib/Xorg
+; CentOS 7              :  param=/usr/bin/Xorg or param=Xorg
+; CentOS 8              :  param=/usr/libexec/Xorg
+; FreeBSD (from 2022Q4) :  param=/usr/local/libexec/Xorg
+;
+param=/usr/lib/xorg/Xorg
+; Leave the rest parameters as-is unless you understand what will happen.
+param=-config
+param=xrdp/xorg.conf
+param=-noreset
+param=-nolisten
+param=tcp
+param=-logfile
+param=.xorgxrdp.%s.log
 
 [Xvnc]
-# Performance parameters from guide
 param=Xvnc
 param=-bs
-param=-ac
 param=-nolisten
 param=tcp
 param=-localhost
 param=-dpi
 param=96
-param=-DefineDefaultFontPath=catalogue:/etc/X11/fontpath.d
-param=+extension GLX
-param=+extension RANDR
-param=+extension RENDER
+
+[Chansrv]
+; drive redirection
+; See sesman.ini(5) for the format of this parameter
+#FuseMountName=/run/user/%u/thinclient_drives
+#FuseMountName=/media/thinclient_drives/%U/thinclient_drives
+FuseMountName=thinclient_drives
+; this value allows only the user to access their own mapped drives.
+; Make this more permissive (e.g. 022) if required.
+FileUmask=077
+; Can be used to disable FUSE functionality - see sesman.ini(5)
+#EnableFuseMount=false
+; Uncomment this line only if you are using GNOME 3 versions 3.29.92
+; and up, and you wish to cut-paste files between Nautilus and Windows. Do
+; not use this setting for GNOME 4, or other file managers
+#UseNautilus3FlistFormat=true
+; sound redirection
+; workaround for Microsoft mstsc.exe to suppress noise.
+; SoundNumSilentFramesAAC | SoundNumSilentFramesMP3 silent frames are sent before SNDC_CLOSE is sent.
+; during SoundMsecDoNotSend mS after SNDC_CLOSE is sent, sound data is not send.
+; depending on the environment, it might be necessary to increase values.
+; Defaults: SoundNumSilentFramesAAC=4, SoundNumSilentFramesMP3=2, SoundMsecDoNotSend=1000
+; If set to 0, this workaround is not applied.
+#SoundNumSilentFramesAAC=4
+#SoundNumSilentFramesMP3=2
+#SoundMsecDoNotSend=1000
+
+[ChansrvLogging]
+; Note: one log file is created per display and the LogFile config value
+; is ignored. The channel server log file names follow the naming convention:
+; xrdp-chansrv.${DISPLAY}.log
+;
+; Note: Log levels can be any of: core, error, warning, info, debug, or trace
+LogLevel=INFO
+EnableSyslog=true
+#SyslogLevel=INFO
+#EnableConsole=false
+#ConsoleLevel=INFO
+#EnableProcessId=false
+
+[ChansrvLoggingPerLogger]
+; Note: per logger configuration is only used if xrdp is built with
+; --enable-devel-logging
+#chansrv.c=INFO
+#main()=INFO
+
+[SessionVariables]
+PULSE_SCRIPT=/etc/xrdp/pulse/default.pa
 """
 
     def _configure_user_session(self) -> bool:
         """Configure user session scripts for XRDP and deploy XFCE optimization script."""
 
         try:
-            # Get all regular users (UID >= 1000, < 60000)
-            users = [u for u in pwd.getpwall() if 1000 <= u.pw_uid < 60000]
+            # Get regular users (UID >= 1000) AND root (UID 0)
+            users = [u for u in pwd.getpwall() if (1000 <= u.pw_uid < 60000) or u.pw_uid == 0]
 
             if not users:
                 self.logger.info("No regular users found to configure")
@@ -860,8 +1081,8 @@ echo "Configuration complete. Please restart your session for changes to take fu
                 self.logger.error(f"Invalid compositor mode: {compositor_mode}")
                 return False
 
-            # Get all regular users
-            users = [u for u in pwd.getpwall() if 1000 <= u.pw_uid < 60000]
+            # Get all regular users AND root
+            users = [u for u in pwd.getpwall() if (1000 <= u.pw_uid < 60000) or u.pw_uid == 0]
 
             if not users:
                 self.logger.info("No regular users found for compositor configuration")
@@ -1245,8 +1466,11 @@ ResultActive=yes
 
             # Clone repository
             self.logger.debug("Cloning Nordic theme repository...")
-            clone_cmd = f"git clone --depth=1 https://github.com/EliverLara/Nordic.git {theme_dir}"
-            result = self.run(clone_cmd, check=False)
+            clone_cmd = (
+                "GIT_TERMINAL_PROMPT=0 git clone --depth=1 "
+                f"https://github.com/EliverLara/Nordic.git {theme_dir}"
+            )
+            result = self.run(clone_cmd, check=False, timeout=300)
 
             if not result.success:
                 self.logger.error(f"Failed to clone Nordic theme: {result.stderr}")
@@ -1324,8 +1548,11 @@ ResultActive=yes
             theme_dir = "/tmp/whitesur-theme"
 
             # Clone repository
-            clone_cmd = f"git clone --depth=1 https://github.com/vinceliuice/WhiteSur-gtk-theme.git {theme_dir}"
-            result = self.run(clone_cmd, check=False)
+            clone_cmd = (
+                "GIT_TERMINAL_PROMPT=0 git clone --depth=1 "
+                f"https://github.com/vinceliuice/WhiteSur-gtk-theme.git {theme_dir}"
+            )
+            result = self.run(clone_cmd, check=False, timeout=300)
 
             if not result.success:
                 return False
@@ -1333,7 +1560,7 @@ ResultActive=yes
             # Run installation script
             # Note: in dry run, this won't actually install
             install_cmd = f"cd {theme_dir} && ./install.sh -d /usr/share/themes"
-            result = self.run(install_cmd, check=False)
+            result = self.run(install_cmd, check=False, timeout=600)
 
             # Clean up
             self.run(f"rm -rf {theme_dir}", check=False)
@@ -1361,8 +1588,11 @@ ResultActive=yes
             install_dir = "/usr/share/themes/Dracula"
 
             # Clone repository
-            clone_cmd = f"git clone --depth=1 https://github.com/dracula/gtk.git {theme_dir}"
-            result = self.run(clone_cmd, check=False)
+            clone_cmd = (
+                "GIT_TERMINAL_PROMPT=0 git clone --depth=1 "
+                f"https://github.com/dracula/gtk.git {theme_dir}"
+            )
+            result = self.run(clone_cmd, check=False, timeout=300)
 
             if not result.success:
                 return False
@@ -1465,15 +1695,18 @@ ResultActive=yes
             theme_dir = "/tmp/tela-icons"
 
             # Clone repository
-            clone_cmd = f"git clone --depth=1 https://github.com/vinceliuice/Tela-icon-theme.git {theme_dir}"
-            result = self.run(clone_cmd, check=False)
+            clone_cmd = (
+                "GIT_TERMINAL_PROMPT=0 git clone --depth=1 "
+                f"https://github.com/vinceliuice/Tela-icon-theme.git {theme_dir}"
+            )
+            result = self.run(clone_cmd, check=False, timeout=300)
 
             if not result.success:
                 return False
 
             # Run installation
             install_cmd = f"cd {theme_dir} && ./install.sh -d /usr/share/icons"
-            result = self.run(install_cmd, check=False)
+            result = self.run(install_cmd, check=False, timeout=600)
 
             # Clean up
             self.run(f"rm -rf {theme_dir}", check=False)
@@ -1841,7 +2074,7 @@ ResultActive=yes
                     env_vars = {"RUNZSH": "no", "CHSH": "no", "KEEP_ZSHRC": "yes"}
                     env_string = " ".join([f"{k}={v}" for k, v in env_vars.items()])
                     install_cmd = f"su - {username} -c '{env_string} sh {installer_path}'"
-                    result = self.run(install_cmd, check=False)
+                    result = self.run(install_cmd, check=False, timeout=300)
 
                     if result.success or self.dry_run:
                         self.logger.debug(f"✓ Oh My Zsh installed for {username}")
@@ -1910,17 +2143,21 @@ ResultActive=yes
                         # Use secure git clone with commit verification
                         # Note: Need to run as user
                         if pinned_commit:
-                            clone_cmd = f"su - {user.pw_name} -c 'git clone --depth=1 {p10k_repo} {p10k_dir} && cd {p10k_dir} && git fetch --depth=1 origin {pinned_commit} && git checkout {pinned_commit}'"
+                            clone_cmd = (
+                                f"su - {user.pw_name} -c 'GIT_TERMINAL_PROMPT=0 git clone --depth=1 {p10k_repo} {p10k_dir} "
+                                f"&& cd {p10k_dir} && git fetch --depth=1 origin {pinned_commit} "
+                                f"&& git checkout {pinned_commit}'"
+                            )
                         else:
-                            clone_cmd = f"su - {user.pw_name} -c 'git clone --depth=1 {p10k_repo} {p10k_dir}'"
+                            clone_cmd = f"su - {user.pw_name} -c 'GIT_TERMINAL_PROMPT=0 git clone --depth=1 {p10k_repo} {p10k_dir}'"
 
-                        result = self.run(clone_cmd, check=False)
+                        result = self.run(clone_cmd, check=False, timeout=300)
 
                         if result.success:
                             # Verify commit if pinned
                             if pinned_commit:
                                 verify_cmd = f"cd {p10k_dir} && git rev-parse HEAD"
-                                verify_result = self.run(verify_cmd, check=False)
+                                verify_result = self.run(verify_cmd, check=False, timeout=10)
                                 actual_commit = verify_result.stdout.strip()
 
                                 if actual_commit != pinned_commit:
@@ -1987,10 +2224,8 @@ ResultActive=yes
                     installed_count += 1
                     continue
 
-                clone_cmd = (
-                    f"su - {user.pw_name} -c 'git clone --depth=1 {plugin_repo} {plugin_dir}'"
-                )
-                self.run(clone_cmd, check=False)
+                clone_cmd = f"su - {user.pw_name} -c 'GIT_TERMINAL_PROMPT=0 git clone --depth=1 {plugin_repo} {plugin_dir}'"
+                self.run(clone_cmd, check=False, timeout=300)
                 installed_count += 1
 
             return installed_count > 0
@@ -2016,10 +2251,8 @@ ResultActive=yes
                     installed_count += 1
                     continue
 
-                clone_cmd = (
-                    f"su - {user.pw_name} -c 'git clone --depth=1 {plugin_repo} {plugin_dir}'"
-                )
-                self.run(clone_cmd, check=False)
+                clone_cmd = f"su - {user.pw_name} -c 'GIT_TERMINAL_PROMPT=0 git clone --depth=1 {plugin_repo} {plugin_dir}'"
+                self.run(clone_cmd, check=False, timeout=300)
                 installed_count += 1
 
             return installed_count > 0
@@ -2053,15 +2286,18 @@ ResultActive=yes
 
                 font_url = f"{font_base_url}/{font_file.replace(' ', '%20')}"
                 if not self.dry_run:
-                    cmd = f"curl -fsSL '{font_url}' -o '{font_path}'"
-                    if self.run(cmd, check=False).success:
+                    cmd = (
+                        "curl -fsSL --connect-timeout 20 --max-time 120 "
+                        f"'{font_url}' -o '{font_path}'"
+                    )
+                    if self.run(cmd, check=False, timeout=150).success:
                         downloaded += 1
                 else:
                     self.logger.info(f"MOCKED RUN: Download {font_file}")
                     downloaded += 1
 
             if not self.dry_run:
-                self.run("fc-cache -f -v", check=False)
+                self.run("fc-cache -f -v", check=False, timeout=300)
 
             return True
         except Exception as e:
@@ -2426,20 +2662,24 @@ fi
             if not check.success:
                 self.logger.info("eza not found in default repos, adding official repo...")
                 # Add gierens.de repo for eza
-                self.run("mkdir -p /etc/apt/keyrings", check=False)
+                self.run("mkdir -p /etc/apt/keyrings", check=False, timeout=10)
                 self.run(
-                    "wget -qO- https://raw.githubusercontent.com/eza-community/eza/main/deb.asc | gpg --dearmor -o /etc/apt/keyrings/gierens.gpg",
+                    "wget -qO- --timeout=20 --tries=2 https://raw.githubusercontent.com/eza-community/eza/main/deb.asc "
+                    "| gpg --dearmor -o /etc/apt/keyrings/gierens.gpg",
                     check=False,
+                    timeout=120,
                 )
                 self.run(
                     'echo "deb [signed-by=/etc/apt/keyrings/gierens.gpg] http://deb.gierens.de stable main" | tee /etc/apt/sources.list.d/gierens.list',
                     check=False,
+                    timeout=10,
                 )
                 self.run(
                     "chmod 644 /etc/apt/keyrings/gierens.gpg /etc/apt/sources.list.d/gierens.list",
                     check=False,
+                    timeout=10,
                 )
-                self.run("apt-get update", check=False)
+                self.run("apt-get update", check=False, timeout=300)
 
             packages = ["eza"]
 
@@ -2540,9 +2780,9 @@ alias l='eza -lah {opts} {"--git" if git else ""}'
 
                 # Download latest release
                 download_url = f"https://github.com/ajeetdsouza/zoxide/releases/latest/download/zoxide-{zoxide_arch}.tar.gz"
-                download_cmd = f"curl -fsSL {download_url} | tar xz -C /tmp"
+                download_cmd = f"curl -fsSL --connect-timeout 20 --max-time 120 {download_url} | tar xz -C /tmp"
 
-                result = self.run(download_cmd, check=False)
+                result = self.run(download_cmd, check=False, timeout=180)
                 if not result.success:
                     self.logger.error("Failed to download zoxide")
                     return False

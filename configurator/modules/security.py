@@ -264,7 +264,7 @@ bantime = {ban_time}
         # Safety: If we're in a remote session as root with password, don't disable it
         if is_remote_session and current_user == "root":
             if disable_root_password:
-                self.logger.warning(
+                self.logger.info(
                     "  Skipping root password disable - would lock out current session"
                 )
                 disable_root_password = False
@@ -518,7 +518,10 @@ APT::Periodic::AutocleanInterval "7";
                 return
 
             # Run initial scan
-            if self.get_config("security_advanced.vulnerability_scanner.scan_on_install", True):
+            advanced_cfg = self.config.get("security_advanced", {})
+            vuln_cfg = advanced_cfg.get("vulnerability_scanner", {})
+            scan_on_install = vuln_cfg.get("scan_on_install", False)
+            if scan_on_install:
                 self.logger.info("Running initial vulnerability scan...")
                 scanner.run_scan()
 

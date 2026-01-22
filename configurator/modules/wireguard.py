@@ -96,11 +96,11 @@ class WireGuardModule(ConfigurationModule):
         wg_dir.mkdir(mode=0o700, exist_ok=True)
 
         # Generate server private key
-        result = self.run("wg genkey", check=True)
+        result = self.run("wg genkey", check=True, timeout=10)
         server_private = result.stdout.strip()
 
         # Generate server public key
-        result = self.run(f"echo '{server_private}' | wg pubkey", check=True)
+        result = self.run(f"echo '{server_private}' | wg pubkey", check=True, timeout=10)
         server_public = result.stdout.strip()
 
         # Save keys
@@ -126,6 +126,7 @@ class WireGuardModule(ConfigurationModule):
         result = self.run(
             "ip route | grep default | awk '{print $5}' | head -1",
             check=True,
+            timeout=10,
         )
         interface = result.stdout.strip() or "eth0"
 
@@ -161,7 +162,7 @@ PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING 
         self.logger.info("Enabling IP forwarding...")
 
         # Enable immediately
-        self.run("sysctl -w net.ipv4.ip_forward=1", check=True)
+        self.run("sysctl -w net.ipv4.ip_forward=1", check=True, timeout=10)
 
         # Make persistent
         sysctl_conf = "/etc/sysctl.d/99-wireguard.conf"
@@ -175,7 +176,7 @@ PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING 
 
         self.logger.info(f"Opening UDP port {port}...")
 
-        self.run(f"ufw allow {port}/udp comment 'WireGuard VPN'", check=False)
+        self.run(f"ufw allow {port}/udp comment 'WireGuard VPN'", check=False, timeout=15)
 
         self.logger.info("✓ Firewall configured")
 
@@ -184,7 +185,11 @@ PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING 
         self.logger.info("Starting WireGuard...")
 
         # Check if WireGuard kernel module is available
-        result = self.run("modprobe wireguard 2>&1 || lsmod | grep -q wireguard", check=False)
+        result = self.run(
+            "modprobe wireguard 2>&1 || lsmod | grep -q wireguard",
+            check=False,
+            timeout=20,
+        )
         kernel_module_available = result.success
 
         if not kernel_module_available:
@@ -210,9 +215,19 @@ PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING 
 
         # Try to start the service
         try:
-            self.enable_service("wg-quick@wg0")
-            self.logger.info("✓ WireGuard started")
-            self.state["service_started"] = True
+            self.enable_service("wg-quick@wg0", start=False)
+            start_result = self.run(
+                "systemctl start wg-quick@wg0",
+                check=False,
+                timeout=30,
+            )
+            if start_result.success:
+                self.started_services.append("wg-quick@wg0")
+                self.rollback_manager.add_service_stop("wg-quick@wg0")
+                self.logger.info("✓ WireGuard started")
+                self.state["service_started"] = True
+            else:
+                raise RuntimeError(start_result.stderr or "systemctl start failed")
         except Exception as e:
             self.logger.warning(f"⚠️  Could not start WireGuard service: {e}")
             self.logger.warning("   WireGuard is installed but the service failed to start")

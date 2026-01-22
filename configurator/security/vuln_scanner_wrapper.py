@@ -8,6 +8,7 @@ a simpler interface for the security module.
 
 import json
 import logging
+import os
 import subprocess
 from dataclasses import dataclass
 from datetime import datetime
@@ -103,11 +104,21 @@ class VulnScannerWrapper:
             install_script = """
 wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | gpg --dearmor | tee /usr/share/keyrings/trivy.gpg > /dev/null
 echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | tee -a /etc/apt/sources.list.d/trivy.list
-apt-get update
-apt-get install -y trivy
+apt-get -o Dpkg::Lock::Timeout=300 update
+apt-get -o Dpkg::Lock::Timeout=300 install -y trivy
 """
 
-            result = subprocess.run(install_script, shell=True, capture_output=True, text=True)
+            env = os.environ.copy()
+            env["DEBIAN_FRONTEND"] = "noninteractive"
+
+            result = subprocess.run(
+                install_script,
+                shell=True,
+                capture_output=True,
+                text=True,
+                timeout=600,
+                env=env,
+            )
 
             if result.returncode != 0:
                 self.logger.error(f"Trivy installation failed: {result.stderr}")
@@ -131,8 +142,22 @@ apt-get install -y trivy
 
         try:
             # Install via apt
+            env = os.environ.copy()
+            env["DEBIAN_FRONTEND"] = "noninteractive"
+
             result = subprocess.run(
-                ["apt-get", "install", "-y", "lynis"], capture_output=True, text=True
+                [
+                    "apt-get",
+                    "-o",
+                    "Dpkg::Lock::Timeout=300",
+                    "install",
+                    "-y",
+                    "lynis",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=600,
+                env=env,
             )
 
             if result.returncode != 0:

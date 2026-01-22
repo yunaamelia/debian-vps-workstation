@@ -137,8 +137,9 @@ class DockerModule(ConfigurationModule):
 
         # Download Docker's GPG key first
         self.run(
-            f"curl -fsSL {key_url} -o /etc/apt/keyrings/docker.asc",
+            f"curl -fsSL --connect-timeout 20 --max-time 120 {key_url} -o /etc/apt/keyrings/docker.asc",
             check=True,
+            timeout=150,
         )
 
         # Make key readable
@@ -166,13 +167,14 @@ class DockerModule(ConfigurationModule):
             )
 
         # Get architecture
-        result = self.run("dpkg --print-architecture", check=True)
+        result = self.run("dpkg --print-architecture", check=True, timeout=10)
         arch = result.stdout.strip()
 
         # Get version codename
         result = self.run(
             "grep VERSION_CODENAME /etc/os-release | cut -d= -f2",
             check=True,
+            timeout=10,
         )
         codename = result.stdout.strip() or "trixie"
 
@@ -261,10 +263,13 @@ class DockerModule(ConfigurationModule):
         """Run Docker hello-world to verify installation."""
         self.logger.info("Verifying Docker installation...")
 
-        result = self.run("docker run --rm hello-world", check=False)
+        try:
+            result = self.run("docker run --rm hello-world", check=False, timeout=180)
 
-        if "Hello from Docker!" in result.stdout:
-            self.logger.info("✓ Docker is working correctly")
-        else:
-            self.logger.warning("Docker verification may have issues")
-            self.logger.debug(result.output)
+            if "Hello from Docker!" in result.stdout:
+                self.logger.info("✓ Docker is working correctly")
+            else:
+                self.logger.warning("Docker verification may have issues")
+                self.logger.debug(result.output)
+        except Exception as e:
+            self.logger.warning(f"Docker verification timed out or failed: {e}")

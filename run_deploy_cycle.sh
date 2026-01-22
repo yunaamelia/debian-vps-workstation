@@ -21,14 +21,23 @@ IFS=$'\n\t'        # Safer field splitting
 # ============================================================================
 
 # Server credentials (TODO: Move to environment variables in production)
-readonly SERVER_IP="170.64.232.208"
+readonly SERVER_IP="170.64.138.110"
 readonly SERVER_USER="root"
 readonly SERVER_PASS="gg123123@"
 readonly REMOTE_DIR="/opt/debian-vps-configurator"
 readonly LOCAL_DIR="$(pwd)"
 
 # SSH options for reliability
-readonly SSH_OPTS=(-o ServerAliveInterval=60 -o ServerAliveCountMax=3 -o StrictHostKeyChecking=no -o ConnectTimeout=10 -o PubkeyAuthentication=no -o UserKnownHostsFile=/dev/null)
+readonly SSH_OPTS=(
+    -o ServerAliveInterval=60
+    -o ServerAliveCountMax=3
+    -o StrictHostKeyChecking=no
+    -o ConnectTimeout=10
+    -o PubkeyAuthentication=no
+    -o UserKnownHostsFile=/dev/null
+    -o GlobalKnownHostsFile=/dev/null
+    -o LogLevel=ERROR
+)
 
 # Logging
 readonly LOG_DIR="${LOCAL_DIR}/logs"
@@ -69,10 +78,33 @@ log_section() {
     echo "═══════════════════════════════════════════════════════════════" | tee -a "$DEPLOY_LOG"
 }
 
-# Execute SSH command with proper error handling
+# Execute SSH command with retry on transient failures
 ssh_exec() {
     local cmd="$1"
-    sshpass -p "$SERVER_PASS" ssh "${SSH_OPTS[@]}" "$SERVER_USER@$SERVER_IP" "$cmd"
+    local max_retries=10
+    local attempt=1
+    local output
+
+    while true; do
+        set +e
+        output=$(sshpass -p "$SERVER_PASS" ssh "${SSH_OPTS[@]}" "$SERVER_USER@$SERVER_IP" "$cmd" 2>&1)
+        local exit_code=$?
+        set -e
+
+        if [ $exit_code -eq 0 ]; then
+            echo "$output"
+            return 0
+        fi
+
+        if [ $attempt -ge $max_retries ]; then
+            echo "$output" >&2
+            return $exit_code
+        fi
+
+        log_info "SSH connection refused (attempt $attempt/$max_retries). Sleeping 30s before retry..."
+        sleep 30
+        attempt=$((attempt + 1))
+    done
 }
 
 # Check if command exists
@@ -114,7 +146,7 @@ pre_flight_local() {
 
     local git_status=$(git status --short)
     if [ -n "$git_status" ]; then
-        log_warning "Uncommitted changes detected:"
+        log_info "Uncommitted changes detected:"
         echo "$git_status"
     else
         log_success "✓ Git status clean"
@@ -166,10 +198,10 @@ pre_flight_remote() {
     # Check OS version
     log_info "Checking OS version..."
     local os_version=$(ssh_exec "cat /etc/os-release | grep VERSION_ID | cut -d'=' -f2 | tr -d '\"'")
-    if [ "$os_version" != "12" ]; then
-        log_warning "Expected Debian 12, found: $os_version"
+    if [ "$os_version" = "12" ] || [ "$os_version" = "13" ]; then
+        log_success "✓ Debian $os_version detected"
     else
-        log_success "✓ Debian 12 detected"
+        log_warning "Expected Debian 12 or 13, found: $os_version"
     fi
 
     # Check Python version
@@ -368,7 +400,11 @@ verify_deployment() {
         log_success "✓ Installation logs created"
 
         # Check for error in logs
-        local error_count=$(ssh_exec "grep -c ERROR /var/log/debian-vps-configurator/install.log 2>/dev/null || echo 0")
+        local error_count
+        error_count=$(ssh_exec "grep -c ERROR /var/log/debian-vps-configurator/install.log 2>/dev/null || true" | tail -n 1 | tr -d '[:space:]')
+        if ! [[ "$error_count" =~ ^[0-9]+$ ]]; then
+            error_count=0
+        fi
         if [ "$error_count" -eq 0 ]; then
             log_success "✓ No errors in installation logs"
         else

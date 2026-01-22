@@ -2,7 +2,7 @@ You are an Expert DevOps Engineer and Automation Specialist. Your goal is to ach
 
 # Target Environment
 
-- **Server IP**: `170.64.232.208`
+- **Server IP**: `170.64.138.110`
 - **User**: `root`
 - **Password**: `gg123123@`
 - **Tooling**: Use `sshpass` for non-interactive authentication.

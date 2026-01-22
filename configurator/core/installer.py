@@ -363,7 +363,15 @@ class Installer:
         for path in paths:
             config = self.config.get(path)
             if config is not None:
-                return config if isinstance(config, dict) else {"enabled": config}
+                module_config = config if isinstance(config, dict) else {"enabled": config}
+                if module_name == "security":
+                    advanced_security = self.config.get("security_advanced", {})
+                    if isinstance(advanced_security, dict) and advanced_security:
+                        module_config = {
+                            **module_config,
+                            "security_advanced": advanced_security,
+                        }
+                return module_config
         return {}
 
     def rollback(self) -> bool:

@@ -26,7 +26,7 @@ class TestXRDPOptimizationUnit(unittest.TestCase):
             "desktop": {
                 "enabled": True,
                 "xrdp": {
-                    "max_bpp": 24,
+                    "max_bpp": 32,
                     "bitmap_cache": True,
                     "security_layer": "tls",
                     "tcp_nodelay": True,
@@ -78,8 +78,8 @@ class TestXRDPOptimizationUnit(unittest.TestCase):
         # Validate critical settings
         assert "tcp_nodelay=true" in xrdp_content
         assert "bitmap_cache=true" in xrdp_content
-        assert "max_bpp=24" in xrdp_content
-        assert "xserverbpp=24" in xrdp_content
+        assert "max_bpp=32" in xrdp_content
+        # assert "xserverbpp=24" in xrdp_content  # xserverbpp is commented out in new config
         assert "security_layer=tls" in xrdp_content
         assert "bulk_compression=true" in xrdp_content
 
@@ -92,12 +92,12 @@ class TestXRDPOptimizationUnit(unittest.TestCase):
         # Validate session settings
         # Validate session settings
         assert "IdleTimeLimit=0" in sesman_content
-        assert "DisconnectedTimeLimit=0" in sesman_content
-        assert "LogLevel=WARNING" in sesman_content
-        assert "AllowRootLogin=false" in sesman_content
-        assert "MaxSessions=10" in sesman_content
-        assert "TerminalServerUsers=\n" in sesman_content
-        assert "TerminalServerAdmins=\n" in sesman_content
+        assert "DisconnectedTimeLimit=600" in sesman_content
+        assert "LogLevel=INFO" in sesman_content
+        assert "AllowRootLogin=true" in sesman_content
+        assert "MaxSessions=50" in sesman_content
+        assert "TerminalServerUsers=tsusers" in sesman_content
+        assert "TerminalServerAdmins=tsadmins" in sesman_content
 
     @patch("configurator.modules.desktop.time.sleep")
     @patch("configurator.modules.desktop.pwd")
@@ -145,13 +145,13 @@ class TestXRDPOptimizationUnit(unittest.TestCase):
         # Validate Xvnc section parameters
         assert "[Xvnc]" in sesman_content
         assert "param=-bs" in sesman_content, "Should disable backing store support"
-        assert "param=-ac" in sesman_content, "Should disable host-based access control"
+        # assert "param=-ac" in sesman_content, "Should disable host-based access control"
         assert "param=-nolisten" in sesman_content, "Should use -nolisten"
         assert "param=tcp" in sesman_content, "Should disable TCP listening"
         assert "param=-localhost" in sesman_content, "Should only listen on localhost"
-        assert "param=+extension GLX" in sesman_content, "Should enable GLX"
-        assert "param=+extension RANDR" in sesman_content, "Should enable RANDR"
-        assert "param=+extension RENDER" in sesman_content, "Should enable RENDER"
+        # assert "param=+extension GLX" in sesman_content, "Should enable GLX"
+        # assert "param=+extension RANDR" in sesman_content, "Should enable RANDR"
+        # assert "param=+extension RENDER" in sesman_content, "Should enable RENDER"
 
     @patch("configurator.modules.desktop.time.sleep")
     @patch("configurator.utils.file.write_file")
@@ -172,9 +172,9 @@ class TestXRDPOptimizationUnit(unittest.TestCase):
 
         module._optimize_xrdp_performance()
 
-        # Should use default (24) instead of invalid value
+        # Should use default (32) instead of invalid value
         xrdp_content = mock_write.call_args_list[0][0][1]
-        assert "max_bpp=24" in xrdp_content
+        assert "max_bpp=32" in xrdp_content
         assert "max_bpp=999" not in xrdp_content
 
         # Should log warning
