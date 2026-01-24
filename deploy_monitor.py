@@ -4,8 +4,8 @@ import subprocess
 import sys
 import time
 
-HOST = "68.183.179.8"
-USER = "root"
+HOST = "134.199.146.186"
+USER = "apex"
 PASS = "gg123123@"
 REMOTE_DIR = "/root/deploy_temp"
 
