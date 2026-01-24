@@ -126,8 +126,11 @@ class TestFzfConfiguration:
         """Test fzf keybindings configuration."""
         module._configure_fzf_keybindings()
 
-        assert hasattr(module, "fzf_config")
-        assert "export FZF_DEFAULT_OPTS" in module.fzf_config
+        assert hasattr(module, "fzf_config_zsh")
+        assert hasattr(module, "fzf_config_bash")
+        assert "export FZF_DEFAULT_OPTS" in module.fzf_config_zsh
+        assert "key-bindings.zsh" in module.fzf_config_zsh
+        assert "key-bindings.bash" in module.fzf_config_bash
 
 
 class TestIntegrationScriptCreation:
