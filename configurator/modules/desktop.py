@@ -2823,15 +2823,19 @@ alias l='eza -lah {opts} {"--git" if git else ""}'
         Returns:
             bool: True if successful
         """
-        # Integration commands stored for later addition to shell configs
-        self.zoxide_init = """
+        # Zsh configuration
+        self.zoxide_init_zsh = """
 # zoxide initialization (smart cd)
-eval "$(zoxide init zsh)"  # For zsh
-# eval "$(zoxide init bash)"  # For bash
-
-# Aliases
-alias cd='z'  # Use zoxide instead of cd
-alias cdi='zi'  # Interactive zoxide
+eval "$(zoxide init zsh)"
+alias cd='z'
+alias cdi='zi'
+"""
+        # Bash configuration
+        self.zoxide_init_bash = """
+# zoxide initialization (smart cd)
+eval "$(zoxide init bash)"
+alias cd='z'
+alias cdi='zi'
 """
 
         self.logger.debug("zoxide integration configured")
@@ -2891,24 +2895,44 @@ alias cdi='zi'  # Interactive zoxide
         alt_c = self.get_config("terminal_tools.fzf.alt_c", True)
         preview = self.get_config("terminal_tools.fzf.preview", True)
 
-        # fzf configuration
+        # fzf configuration (Shared)
         preview_cmd = "export FZF_CTRL_T_OPTS='--preview \"bat --color=always --style=numbers --line-range=:500 {}\"'"
+        base_opts = "export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'"
 
-        self.fzf_config = f"""
+        # Helper for common aliases
+        custom_funcs = ""
+        if ctrl_t:
+            custom_funcs += "# CTRL-T: File search\n"
+        if ctrl_r:
+            custom_funcs += "# CTRL-R: History search\n"
+        if alt_c:
+            custom_funcs += "# ALT-C: Directory jump\n"
+
+        # Zsh Configuration
+        self.fzf_config_zsh = f"""
 # fzf configuration
-export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border'
-
-# Use bat for preview if available
+{base_opts}
 {preview_cmd if preview else ""}
 
 # Source fzf key bindings
 [ -f /usr/share/doc/fzf/examples/key-bindings.zsh ] && source /usr/share/doc/fzf/examples/key-bindings.zsh
 [ -f /usr/share/doc/fzf/examples/completion.zsh ] && source /usr/share/doc/fzf/examples/completion.zsh
 
-# Custom fzf functions
-{"# CTRL-T: File search" if ctrl_t else ""}
-{"# CTRL-R: History search" if ctrl_r else ""}
-{"# ALT-C: Directory jump" if alt_c else ""}
+{custom_funcs}
+"""
+
+        # Bash Configuration
+        self.fzf_config_bash = f"""
+# fzf configuration
+{base_opts}
+{preview_cmd if preview else ""}
+
+# Source fzf key bindings
+[ -f /usr/share/doc/fzf/examples/key-bindings.bash ] && source /usr/share/doc/fzf/examples/key-bindings.bash
+# fallback if specific bash completions not found, sometimes generic completion works or is included in key-bindings
+[ -f /usr/share/doc/fzf/examples/completion.bash ] && source /usr/share/doc/fzf/examples/completion.bash
+
+{custom_funcs}
 """
 
         self.logger.debug("fzf keybindings configured")
@@ -3185,9 +3209,12 @@ fi
             self.logger.error(f"Failed to create goto.sh: {e}", exc_info=True)
             return False
 
-    def _setup_tool_aliases(self) -> str:
+    def _setup_tool_aliases(self, shell: str = "zsh") -> str:
         """
         Generate aliases and functions for terminal tools.
+
+        Args:
+            shell: Target shell ('zsh' or 'bash')
 
         Returns:
             str: Shell configuration snippet with aliases
@@ -3205,12 +3232,14 @@ fi
             aliases += self.eza_aliases
 
         # Add zoxide initialization if configured
-        if hasattr(self, "zoxide_init"):
-            aliases += self.zoxide_init
+        zoxide_conf = getattr(self, f"zoxide_init_{shell}", None)
+        if zoxide_conf:
+            aliases += zoxide_conf
 
         # Add fzf configuration if configured
-        if hasattr(self, "fzf_config"):
-            aliases += self.fzf_config
+        fzf_conf = getattr(self, f"fzf_config_{shell}", None)
+        if fzf_conf:
+            aliases += fzf_conf
 
         # Add custom aliases
         aliases += """
@@ -3282,8 +3311,10 @@ function extract() {
                 self.logger.info("No regular users found for terminal tools configuration")
                 return True
 
-            # Generate aliases and configs
-            tool_config = self._setup_tool_aliases()
+            # Generate aliases and configs for Zsh
+            tool_config_zsh = self._setup_tool_aliases(shell="zsh")
+            # Generate aliases and configs for Bash
+            tool_config_bash = self._setup_tool_aliases(shell="bash")
 
             configured_count = 0
 
@@ -3302,7 +3333,7 @@ function extract() {
                         # Check if already configured
                         if "Terminal Tools Configuration" not in content:
                             # Append configuration
-                            new_content = content + "\n\n" + tool_config
+                            new_content = content + "\n\n" + tool_config_zsh
                             self.write_file(zshrc_file, new_content, mode=0o644)
 
                             self.logger.debug(f"✓ Updated .zshrc for {username}")
@@ -3319,7 +3350,7 @@ function extract() {
                             content = f.read()
 
                         if "Terminal Tools Configuration" not in content:
-                            new_content = content + "\n\n" + tool_config
+                            new_content = content + "\n\n" + tool_config_bash
                             self.write_file(bashrc_file, new_content, mode=0o644)
 
                             self.logger.debug(f"✓ Updated .bashrc for {username}")
