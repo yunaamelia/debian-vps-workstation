@@ -49,6 +49,12 @@ ROOT_MODE=false
 DRY_RUN=false
 ERROR_CONTEXT=""
 ERROR_CODE=$EXIT_GENERAL
+NEW_USER=""
+NEW_PASS=""
+DELETE_USER=""
+SSH_KEY_VAL=""
+SUDO_TIMEOUT="-1"
+MANAGE_ONLY=false
 
 # Colors for output
 readonly RED='\033[0;31m'
@@ -76,12 +82,14 @@ rotate_logs() {
     fi
 
     local count
-    count=$(ls -1t "$LOG_DIR"/install_*.log 2>/dev/null | wc -l | tr -d ' ')
+    # Fix: Prevent script exit if no logs exist (ls returns 2) due to set -eo pipefail
+    count=$(find "$LOG_DIR" -maxdepth 1 -name "install_*.log" 2>/dev/null | wc -l || echo 0)
     if [ "$count" -le "$LOG_RETENTION" ]; then
         return 0
     fi
 
-    ls -1t "$LOG_DIR"/install_*.log 2>/dev/null | tail -n +$((LOG_RETENTION + 1)) | xargs -r rm -f
+    # Fix: Safely list and rotate logs
+    (ls -1t "$LOG_DIR"/install_*.log 2>/dev/null || true) | tail -n +$((LOG_RETENTION + 1)) | xargs -r rm -f
 }
 
 log_line() {
@@ -656,7 +664,7 @@ execute_configurator_install() {
         return 0
     fi
 
-    if [ "$ROOT_MODE" != true ]; then
+    if [ "$ROOT_MODE" != true ] && [ -z "$NEW_USER" ]; then
         if [ -f "venv/bin/activate" ]; then
             source venv/bin/activate
         else
@@ -664,8 +672,23 @@ execute_configurator_install() {
         fi
     fi
 
-    print_info "Executing: vps-configurator install --profile advanced"
-    vps-configurator install --profile advanced
+    if [ -n "$NEW_USER" ]; then
+        print_info "Transferring execution to user: $NEW_USER"
+        print_info "Executing: sudo vps-configurator install --profile advanced (as $NEW_USER)"
+
+        # Determine how to run sudo based on password availability
+        if [ -n "$NEW_PASS" ]; then
+            # We have the password, use it to bypass the prompt for this initial run
+            # Use 'su -' to simulate full login shell
+            su - "$NEW_USER" -c "echo '$NEW_PASS' | sudo -S -p '' vps-configurator install --profile advanced"
+        else
+            # Interactive mode - user must type password
+            su - "$NEW_USER" -c "sudo vps-configurator install --profile advanced"
+        fi
+    else
+        print_info "Executing: vps-configurator install --profile advanced (as root)"
+        vps-configurator install --profile advanced
+    fi
 
     create_checkpoint "deployment_executed"
     print_success "Deployment execution completed"
@@ -780,8 +803,18 @@ EOF
     fi
 
     check_root
+
+    # If in management mode, only run user tasks
+    if [ "$MANAGE_ONLY" = true ]; then
+        log_section "User Management Mode"
+        setup_user_auth
+        print_success "User management tasks completed"
+        exit 0
+    fi
+
     pre_flight_checks
     install_system_deps
+    setup_user_auth
     setup_venv
     install_python_deps
     execute_configurator_install
@@ -798,8 +831,41 @@ parse_args() {
                 DRY_RUN=true
                 shift
                 ;;
+            --user|-u)
+                NEW_USER="$2"
+                shift 2
+                ;;
+            --password|-p)
+                NEW_PASS="$2"
+                shift 2
+                ;;
+            --delete-user|-d)
+                DELETE_USER="$2"
+                MANAGE_ONLY=true
+                shift 2
+                ;;
+            --add-ssh-key|-k)
+                SSH_KEY_VAL="$2"
+                shift 2
+                ;;
+            --sudo-config|-c)
+                SUDO_TIMEOUT="$2"
+                shift 2
+                ;;
+            --manage-only|-m)
+                MANAGE_ONLY=true
+                shift
+                ;;
             --help|-h)
-                echo "Usage: $SCRIPT_NAME [--dry-run]"
+                echo "Usage: $SCRIPT_NAME [options]"
+                echo "Options:"
+                echo "  --dry-run, -n          Simulate actions"
+                echo "  --user, -u <name>      Create/Update user"
+                echo "  --password, -p <pass>  Set password for user"
+                echo "  --delete-user, -d <name> Delete specified user"
+                echo "  --add-ssh-key, -k <key> Add SSH public key to user"
+                echo "  --sudo-config, -c <val> Set sudo timeout (-1=once, 0=always, X=mins)"
+                echo "  --manage-only, -m      Run only user management tasks"
                 exit 0
                 ;;
             *)
@@ -807,6 +873,96 @@ parse_args() {
                 ;;
         esac
     done
+}
+
+setup_user_auth() {
+    # 1. Handle Deletion
+    if [ -n "$DELETE_USER" ]; then
+        print_header "Deleting User: $DELETE_USER"
+        if id "$DELETE_USER" &>/dev/null; then
+            if [ "$DRY_RUN" = true ]; then
+                print_info "DRY RUN: userdel -r $DELETE_USER"
+                print_info "DRY RUN: rm /etc/sudoers.d/99-$DELETE_USER-timeout"
+            else
+                userdel -r "$DELETE_USER" || print_warning "Failed to remove home directory"
+                rm -f "/etc/sudoers.d/99-$DELETE_USER-timeout"
+                print_success "User $DELETE_USER removed"
+            fi
+        else
+            print_warning "User $DELETE_USER does not exist"
+        fi
+    fi
+
+    # 2. Handle Creation / Update
+    if [ -n "$NEW_USER" ]; then
+        print_header "Configuring User: $NEW_USER"
+
+        if [ "$ROOT_MODE" = false ]; then
+            print_warning "Must be root to manage users."
+            return 0
+        fi
+
+        # Create
+        if id "$NEW_USER" &>/dev/null; then
+            print_info "User $NEW_USER exists (updating configuration)"
+        else
+            print_info "Creating user $NEW_USER..."
+            if [ "$DRY_RUN" = true ]; then
+                    print_info "DRY RUN: useradd -m -s /bin/bash $NEW_USER"
+            else
+                    useradd -m -s /bin/bash "$NEW_USER"
+            fi
+        fi
+
+        # Password
+        if [ -n "$NEW_PASS" ]; then
+            print_info "Updating password..."
+            if [ "$DRY_RUN" = true ]; then
+                print_info "DRY RUN: chpasswd $NEW_USER"
+            else
+                echo "$NEW_USER:$NEW_PASS" | chpasswd
+            fi
+        fi
+
+        # Sudo Group
+        if [ "$DRY_RUN" = true ]; then
+            print_info "DRY RUN: usermod -aG sudo $NEW_USER"
+        else
+            usermod -aG sudo "$NEW_USER"
+        fi
+
+        # Sudo Timeout
+        print_info "Configuring sudo timeout ($SUDO_TIMEOUT)..."
+        if [ "$DRY_RUN" = true ]; then
+            print_info "DRY RUN: writing /etc/sudoers.d/99-$NEW_USER-timeout"
+        else
+            echo "Defaults:$NEW_USER timestamp_timeout=$SUDO_TIMEOUT" > "/etc/sudoers.d/99-$NEW_USER-timeout"
+            chmod 440 "/etc/sudoers.d/99-$NEW_USER-timeout"
+        fi
+
+        # SSH Key
+        if [ -n "$SSH_KEY_VAL" ]; then
+            print_info "Adding SSH key..."
+            if [ "$DRY_RUN" = true ]; then
+                print_info "DRY RUN: adding key to ~$NEW_USER/.ssh/authorized_keys"
+            else
+                local user_home
+                user_home=$(eval echo "~$NEW_USER")
+                mkdir -p "$user_home/.ssh"
+                echo "$SSH_KEY_VAL" >> "$user_home/.ssh/authorized_keys"
+                chown -R "$NEW_USER:$NEW_USER" "$user_home/.ssh"
+                chmod 700 "$user_home/.ssh"
+                chmod 600 "$user_home/.ssh/authorized_keys"
+                print_success "SSH key added"
+            fi
+        fi
+
+        print_success "User $NEW_USER installation/update complete"
+        # We don't checkpoint here if in manage-only mode to allow repeated runs
+        if [ "$MANAGE_ONLY" = false ]; then
+            create_checkpoint "user_auth_setup"
+        fi
+    fi
 }
 
 trap 'error_handler $LINENO' ERR
