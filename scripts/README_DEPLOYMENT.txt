@@ -9,7 +9,7 @@
 
 ```bash
 # Set environment variables
-export REMOTE_HOST="209.38.91.97"
+export REMOTE_HOST="<your-server-ip>"
 export REMOTE_PASS="your_password"
 export TARGET_USER="devtest"
 export TARGET_PASS="target_password"

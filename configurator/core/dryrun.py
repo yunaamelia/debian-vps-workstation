@@ -102,7 +102,7 @@ class DryRunManager:
         report.append("=" * 50)
 
         # Group by type
-        by_type = {}
+        by_type: Dict[str, List[DryRunChange]] = {}
         for c in self.changes:
             if c.type not in by_type:
                 by_type[c.type] = []

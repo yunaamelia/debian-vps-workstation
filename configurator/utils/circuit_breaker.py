@@ -2,7 +2,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import Callable, Dict, Optional, Tuple, Type
+from typing import Any, Callable, Dict, Optional, Tuple, Type
 
 
 @dataclass
@@ -115,7 +115,7 @@ class CircuitBreaker:
 
         self._state_lock = threading.RLock()
 
-    def call(self, func: Callable, *args, **kwargs) -> any:
+    def call(self, func: Callable, *args, **kwargs) -> Any:
         """
         Execute function through circuit breaker.
 

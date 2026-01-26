@@ -121,7 +121,7 @@ class AuditLogger:
         Returns:
             List of event dictionaries
         """
-        events = []
+        events: List[Dict[str, Any]] = []
         if not self.log_path.exists():
             return []
 

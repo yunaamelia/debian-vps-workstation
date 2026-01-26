@@ -22,6 +22,7 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 try:
+    import threading
     import urllib.error
     import urllib.request
 
@@ -475,7 +476,7 @@ class ScheduledMonitor:
         self.interval_hours = interval_hours
         self.logger = logger or logging.getLogger(__name__)
         self._running = False
-        self._thread = None
+        self._thread: Optional[threading.Thread] = None
 
     def start(self):
         """Start scheduled monitoring in background thread."""

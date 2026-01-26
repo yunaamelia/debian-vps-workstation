@@ -41,7 +41,8 @@ class DependencyRegistry:
     @classmethod
     def _get_name(cls, info) -> str:
         """Get name from either type of info object."""
-        return getattr(info, "name", None) or getattr(info, "module_name", None)
+        name = getattr(info, "name", None) or getattr(info, "module_name", None)
+        return str(name) if name else ""
 
     @classmethod
     def _get_depends_on(cls, info) -> List[str]:

@@ -131,9 +131,10 @@ def get_checks() -> List[CISCheck]:
     ]
 
     for item in ssh_checks:
-        cid, param, val, title = item[:4]
+        cid, param, val, title = str(item[0]), str(item[1]), str(item[2]), str(item[3])
         accepted = item[4] if len(item) > 4 else [val]
-        sev = item[5] if len(item) > 5 else Severity.HIGH
+        sev_raw = item[5] if len(item) > 5 else Severity.HIGH
+        sev: Severity = sev_raw if isinstance(sev_raw, Severity) else Severity.HIGH
 
         checks.append(
             CISCheck(

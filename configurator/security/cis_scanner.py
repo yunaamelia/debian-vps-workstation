@@ -58,7 +58,7 @@ class CISCheck:
 class CheckResult:
     """Result of running a CIS check"""
 
-    check: CISCheck
+    check: Optional[CISCheck]
     status: Status
     message: str
     details: Dict = field(default_factory=dict)
@@ -67,17 +67,30 @@ class CheckResult:
 
     def to_dict(self) -> Dict:
         """Serialize to dictionary"""
-        return {
-            "id": self.check.id,
-            "title": self.check.title,
-            "status": self.status.value,
-            "severity": self.check.severity.value,
-            "message": self.message,
-            "details": self.details,
-            "timestamp": self.timestamp.isoformat(),
-            "remediation_available": self.remediation_available,
-            "manual": self.check.manual,
-        }
+        if self.check:
+            return {
+                "id": self.check.id,
+                "title": self.check.title,
+                "status": self.status.value,
+                "severity": self.check.severity.value,
+                "message": self.message,
+                "details": self.details,
+                "timestamp": self.timestamp.isoformat(),
+                "remediation_available": self.remediation_available,
+                "manual": self.check.manual,
+            }
+        else:
+            return {
+                "id": "unknown",
+                "title": "Unknown Check",
+                "status": self.status.value,
+                "severity": "unknown",
+                "message": self.message,
+                "details": self.details,
+                "timestamp": self.timestamp.isoformat(),
+                "remediation_available": self.remediation_available,
+                "manual": False,
+            }
 
 
 @dataclass
@@ -95,7 +108,10 @@ class ScanReport:
 
     def get_summary(self) -> Dict:
         """Get summary statistics"""
-        scored_results = [r for r in self.results if r.check.scored]
+        # Filter valid results first
+        valid_results = [r for r in self.results if r.check is not None]
+
+        scored_results = [r for r in valid_results if r.check and r.check.scored]
         total = len(scored_results)
         passed = len([r for r in scored_results if r.status == Status.PASS])
         failed = len([r for r in scored_results if r.status == Status.FAIL])
@@ -104,35 +120,37 @@ class ScanReport:
             Severity.CRITICAL.value: len(
                 [
                     r
-                    for r in self.results
-                    if r.status == Status.FAIL and r.check.severity == Severity.CRITICAL
+                    for r in valid_results
+                    if r.status == Status.FAIL and r.check and r.check.severity == Severity.CRITICAL
                 ]
             ),
             Severity.HIGH.value: len(
                 [
                     r
-                    for r in self.results
-                    if r.status == Status.FAIL and r.check.severity == Severity.HIGH
+                    for r in valid_results
+                    if r.status == Status.FAIL and r.check and r.check.severity == Severity.HIGH
                 ]
             ),
             Severity.MEDIUM.value: len(
                 [
                     r
-                    for r in self.results
-                    if r.status == Status.FAIL and r.check.severity == Severity.MEDIUM
+                    for r in valid_results
+                    if r.status == Status.FAIL and r.check and r.check.severity == Severity.MEDIUM
                 ]
             ),
             Severity.LOW.value: len(
                 [
                     r
-                    for r in self.results
-                    if r.status == Status.FAIL and r.check.severity == Severity.LOW
+                    for r in valid_results
+                    if r.status == Status.FAIL and r.check and r.check.severity == Severity.LOW
                 ]
             ),
         }
 
         by_category = {}
-        for result in self.results:
+        for result in valid_results:
+            if not result.check:
+                continue
             cat = result.check.category
             if cat not in by_category:
                 by_category[cat] = {"passed": 0, "total": 0, "failed": 0}
@@ -263,7 +281,8 @@ class CISBenchmarkScanner:
                 )
 
         # Calculate score
-        scored_results = [r for r in results if r.check.scored]
+        valid_results = [r for r in results if r.check is not None]
+        scored_results = [r for r in valid_results if r.check and r.check.scored]
         passed = len([r for r in scored_results if r.status == Status.PASS])
         total_scored = len(scored_results)
         score = (passed / total_scored * 100) if total_scored > 0 else 0
@@ -312,7 +331,7 @@ class CISBenchmarkScanner:
         for result in failed_checks:
             check = result.check
 
-            if not check.remediation_function:
+            if check is None or not check.remediation_function:
                 failed += 1
                 continue
 

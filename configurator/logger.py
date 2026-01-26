@@ -52,7 +52,7 @@ class ParallelLogManager:
             self.base_log_dir.mkdir(parents=True, exist_ok=True)
 
         # Shared queue for all workers
-        self.log_queue = queue.Queue(-1)  # Unbounded queue
+        self.log_queue: queue.Queue = queue.Queue(-1)  # Unbounded queue
 
         # Handlers that will process queued records
         self.handlers: List[logging.Handler] = []

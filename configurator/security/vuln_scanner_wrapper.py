@@ -95,8 +95,8 @@ class VulnScannerWrapper:
 
         try:
             # Check if already installed
-            result = subprocess.run(["which", "trivy"], capture_output=True)
-            if result.returncode == 0:
+            which_result = subprocess.run(["which", "trivy"], capture_output=True)
+            if which_result.returncode == 0:
                 self.logger.info("Trivy already installed")
                 return True
 
@@ -111,7 +111,7 @@ apt-get -o Dpkg::Lock::Timeout=300 install -y trivy
             env = os.environ.copy()
             env["DEBIAN_FRONTEND"] = "noninteractive"
 
-            result = subprocess.run(
+            install_result = subprocess.run(
                 install_script,
                 shell=True,
                 capture_output=True,
@@ -120,14 +120,14 @@ apt-get -o Dpkg::Lock::Timeout=300 install -y trivy
                 env=env,
             )
 
-            if result.returncode != 0:
-                self.logger.error(f"Trivy installation failed: {result.stderr}")
+            if install_result.returncode != 0:
+                self.logger.error(f"Trivy installation failed: {install_result.stderr}")
                 return False
 
             # Verify installation
-            result = subprocess.run(["trivy", "--version"], capture_output=True, text=True)
-            if result.returncode == 0:
-                self.logger.info(f"✓ Trivy installed: {result.stdout.strip()}")
+            verify_result = subprocess.run(["trivy", "--version"], capture_output=True, text=True)
+            if verify_result.returncode == 0:
+                self.logger.info(f"✓ Trivy installed: {verify_result.stdout.strip()}")
                 return True
 
             return False

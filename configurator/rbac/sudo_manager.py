@@ -171,6 +171,10 @@ class SudoPolicyManager:
         self.logger = logger or logging.getLogger(__name__)
         self.dry_run = dry_run
 
+        from configurator.rbac.rbac_manager import RBACManager
+
+        self.rbac_manager: Optional[RBACManager] = None
+
         self.SUDOERS_DIR = sudoers_dir or self.SUDOERS_DIR
         self.POLICY_DIR = policy_dir or self.POLICY_DIR
         self.AUDIT_LOG = audit_log or self.AUDIT_LOG

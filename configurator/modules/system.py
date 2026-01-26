@@ -64,19 +64,15 @@ class SystemModule(ConfigurationModule):
         # Check Debian version
         if not os_info.is_debian:
             raise PrerequisiteError(
-                what=f"Unsupported operating system: {os_info.pretty_name}",
-                why="This tool is designed for Debian 13 (Trixie) only",
-                how="Please use a fresh Debian 13 VPS",
+                requirement="Debian 13 (Trixie)",
+                current_value=f"OS: {os_info.pretty_name}",
                 docs_link="https://github.com/yunaamelia/debian-vps-workstation#requirements",
             )
 
         if not os_info.is_debian_13:
             raise PrerequisiteError(
-                what=f"Unsupported Debian version: {os_info.version_id}",
-                why="This tool requires Debian 13 (Trixie)",
-                how=f"Your system: Debian {os_info.version_id}\n"
-                "Required: Debian 13 (Trixie)\n"
-                "Please use a fresh Debian 13 VPS.",
+                requirement="Debian 13 (Trixie)",
+                current_value=f"Debian {os_info.version_id}",
             )
 
         self.logger.info(f"✓ Detected: {os_info.pretty_name}")
@@ -136,7 +132,7 @@ class SystemModule(ConfigurationModule):
 
     def verify(self) -> bool:
         """Verify system configuration."""
-        if self.dry_run_manager.is_enabled:
+        if self.dry_run:
             self.logger.info("Dry-run: skipping system verification")
             return True
 

@@ -19,7 +19,7 @@ class ModuleSearch:
         Returns list of module info dicts with score.
         """
         query = query.lower()
-        results = []
+        # results = []
 
         # Get all known modules (from registry or other source if available)
         # For now we use the registry's known dependencies + maybe a hardcoded list of all modules
@@ -28,7 +28,8 @@ class ModuleSearch:
 
         # Let's check registry first
         # Ideally this class should be initialized with a list of available modules
-        pass
+        results: List[dict] = []
+        return results
 
     def search_in_list(self, query: str, modules: List[str], limit: int = 10) -> List[str]:
         """

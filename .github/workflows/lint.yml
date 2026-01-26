@@ -23,4 +23,4 @@ jobs:
         run: ruff check configurator/
 
       - name: Run mypy
-        run: mypy configurator/ --ignore-missing-imports || true
+        run: mypy configurator/ --ignore-missing-imports

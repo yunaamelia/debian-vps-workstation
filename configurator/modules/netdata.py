@@ -59,7 +59,7 @@ class NetdataModule(ConfigurationModule):
 
     def verify(self) -> bool:
         """Verify Netdata installation."""
-        if self.dry_run_manager.is_enabled:
+        if self.dry_run:
             self.logger.info("Dry-run: skipping verification")
             return True
 

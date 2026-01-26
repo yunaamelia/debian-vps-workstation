@@ -20,11 +20,11 @@ IFS=$'\n\t'        # Safer field splitting
 # CONFIGURATION
 # ============================================================================
 
-# Server credentials (TODO: Move to environment variables in production)
-readonly SERVER_IP="170.64.138.110"
-readonly SERVER_USER="root"
-readonly SERVER_PASS="gg123123@"
-readonly REMOTE_DIR="/opt/debian-vps-configurator"
+# Server credentials (set via environment variables)
+readonly SERVER_IP="${SERVER_IP:-}"
+readonly SERVER_USER="${SERVER_USER:-root}"
+readonly SERVER_PASS="${SERVER_PASS:-}"
+readonly REMOTE_DIR="${REMOTE_DIR:-/opt/debian-vps-configurator}"
 readonly LOCAL_DIR="$(pwd)"
 
 # SSH options for reliability
@@ -118,6 +118,12 @@ command_exists() {
 
 pre_flight_local() {
     log_section "PRE-FLIGHT: Local Environment Check"
+
+    if [ -z "$SERVER_IP" ] || [ -z "$SERVER_PASS" ]; then
+        log_error "Missing required credentials"
+        log_error "Set SERVER_IP and SERVER_PASS as environment variables"
+        exit 1
+    fi
 
     # Check required tools
     log_info "Checking required tools..."

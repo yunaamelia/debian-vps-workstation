@@ -66,7 +66,7 @@ class DockerModule(ConfigurationModule):
 
     def verify(self) -> bool:
         """Verify Docker installation."""
-        if self.dry_run_manager.is_enabled:
+        if self.dry_run:
             return True
 
         checks_passed = True
@@ -118,7 +118,7 @@ class DockerModule(ConfigurationModule):
             docker_key = apt_keys.get("docker", {}) or {}
             expected_fingerprint = docker_key.get("fingerprint")
             if docker_key.get("url"):
-                key_url = docker_key.get("url")
+                key_url = str(docker_key.get("url"))
         except Exception as e:
             self.logger.warning(f"Failed to load checksums: {e}")
 

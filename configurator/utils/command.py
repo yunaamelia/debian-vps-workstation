@@ -29,6 +29,18 @@ class CommandResult:
         """Get combined stdout and stderr."""
         return f"{self.stdout}\n{self.stderr}".strip()
 
+    def check_returncode(self) -> None:
+        """
+        Raise exception if return code is non-zero.
+        Mimics subprocess.CompletedProcess.check_returncode().
+        """
+        if self.return_code != 0:
+            raise ModuleExecutionError(
+                what=f"Command failed: {self.command}",
+                why=f"Exit code: {self.return_code}\n{self.output}",
+                how="Check command output for details",
+            )
+
 
 def run_command(
     command: Union[str, List[str]],

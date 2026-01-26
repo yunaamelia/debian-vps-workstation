@@ -1,3 +1,5 @@
+from typing import Optional
+
 from textual.app import App, ComposeResult
 from textual.containers import Container, ScrollableContainer
 from textual.widgets import Footer, Header, Label
@@ -77,7 +79,9 @@ class InstallationDashboard(App):
         except Exception:
             pass
 
-    def update_module(self, module_name: str, status: str = None, progress: int = None):
+    def update_module(
+        self, module_name: str, status: Optional[str] = None, progress: Optional[int] = None
+    ):
         """Update module status."""
         try:
             card = self.query_one(f"#card-{module_name}", ModuleCard)

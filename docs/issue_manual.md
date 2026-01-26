@@ -64,7 +64,7 @@ Day 1-2: Parallel Logging [COMPLETED] → Day 3: Rich TUI Fixes → Day 4: Dynam
 - [x] Update `configurator/core/execution/parallel.py`
 - [x] Replace `RichProgressReporter` with `ThreadSafeRichReporter`
 - [x] Run `pytest tests/unit/test_parallel_logging.py`
-- [x] Test on staging VPS (Validated: 170.64.232.208)
+- [x] Test on staging VPS (Validated: <staging-ip>)
 - [x] Deploy to production
 
 ### Prerequisites

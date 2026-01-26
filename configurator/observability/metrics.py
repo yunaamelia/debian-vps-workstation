@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 
 class MetricType(Enum):
@@ -93,7 +93,7 @@ class Gauge:
 class Histogram:
     """Histogram metric - distribution of values."""
 
-    def __init__(self, name: str, help_text: str, buckets: List[float] = None):
+    def __init__(self, name: str, help_text: str, buckets: Optional[List[float]] = None):
         self.name = name
         self.help_text = help_text
         self.buckets = buckets or [0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0, 2.5, 5.0, 10.0]
@@ -235,7 +235,9 @@ class MetricsCollector:
                 self._gauges[name] = Gauge(name, help_text)
             return self._gauges[name]
 
-    def histogram(self, name: str, help_text: str, buckets: List[float] = None) -> Histogram:
+    def histogram(
+        self, name: str, help_text: str, buckets: Optional[List[float]] = None
+    ) -> Histogram:
         """Create or get a histogram metric."""
         with self._lock:
             if name not in self._histograms:

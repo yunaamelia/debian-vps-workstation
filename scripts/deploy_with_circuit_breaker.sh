@@ -1,9 +1,13 @@
 #!/bin/bash
 set -e
 
-HOST="209.97.162.195"
-USER="root"
+HOST="${REMOTE_HOST:-}"
+USER="${REMOTE_USER:-root}"
 PASS="${REMOTE_PASSWORD:-}"
+if [ -z "$HOST" ]; then
+    echo "ERROR: REMOTE_HOST environment variable not set"
+    exit 1
+fi
 if [ -z "$PASS" ]; then
     echo "ERROR: REMOTE_PASSWORD environment variable not set"
     exit 1

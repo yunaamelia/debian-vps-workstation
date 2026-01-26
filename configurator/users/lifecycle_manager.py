@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 class UserStatus(Enum):
@@ -134,6 +134,13 @@ class UserLifecycleManager:
     ):
         self.logger = logger or logging.getLogger(__name__)
         self.dry_run = dry_run
+
+        # Initialize manager types
+        from configurator.rbac.rbac_manager import RBACManager
+
+        self.rbac_manager: Optional[RBACManager] = None
+        self.ssh_manager: Any = None
+        self.mfa_manager: Any = None
 
         self.USER_REGISTRY_FILE = registry_file or self.USER_REGISTRY_FILE
         self.USER_ARCHIVE_DIR = archive_dir or self.USER_ARCHIVE_DIR
@@ -821,7 +828,11 @@ class UserLifecycleManager:
         return list(self.users.values())
 
     def _audit_log(
-        self, event: LifecycleEvent, username: str, performed_by: str, details: Dict = None
+        self,
+        event: LifecycleEvent,
+        username: str,
+        performed_by: str,
+        details: Optional[Dict[str, Any]] = None,
     ):
         """Log lifecycle event for audit."""
         log_entry = {

@@ -1,6 +1,7 @@
 import os
 import pwd
 import shutil
+import tempfile
 import time
 from pathlib import Path
 
@@ -15,7 +16,6 @@ class DesktopModule(ConfigurationModule):
 
     Phases:
     1. XRDP Performance Optimization (Critical)
-    2. XFCE Compositor + Polkit Configuration (Important)
     2. XFCE Compositor + Polkit Configuration (Important)
     2. XFCE Compositor + Polkit Configuration (Important)
     3. Themes, Icons, Fonts (Implemented)
@@ -98,7 +98,7 @@ class DesktopModule(ConfigurationModule):
 
     def verify(self) -> bool:
         """Verify desktop environment installation."""
-        if self.dry_run_manager.is_enabled:
+        if self.dry_run:
             return True
 
         if not self.get_config("enabled", True):
@@ -1045,7 +1045,7 @@ echo "Configuration complete. Please restart your session for changes to take fu
             time.sleep(2)
 
             # Verify service is running
-            if not self.dry_run_manager.is_enabled:
+            if self.dry_run_manager and not self.dry_run_manager.is_enabled:
                 result = self.run("systemctl is-active xrdp", check=False)
                 if result.success and "active" in result.stdout.lower():
                     self.logger.info("✓ XRDP service is running")
@@ -1461,7 +1461,7 @@ ResultActive=yes
         GitHub: https://github.com/EliverLara/Nordic
         """
         try:
-            theme_dir = "/tmp/nordic-theme"
+            theme_dir = os.path.join(tempfile.gettempdir(), "nordic-theme")
             install_dir = "/usr/share/themes"
 
             # Clone repository
@@ -1545,7 +1545,7 @@ ResultActive=yes
         GitHub: https://github.com/vinceliuice/WhiteSur-gtk-theme
         """
         try:
-            theme_dir = "/tmp/whitesur-theme"
+            theme_dir = os.path.join(tempfile.gettempdir(), "whitesur-theme")
 
             # Clone repository
             clone_cmd = (
@@ -1584,7 +1584,7 @@ ResultActive=yes
         GitHub: https://github.com/dracula/gtk
         """
         try:
-            theme_dir = "/tmp/dracula-theme"
+            theme_dir = os.path.join(tempfile.gettempdir(), "dracula-theme")
             install_dir = "/usr/share/themes/Dracula"
 
             # Clone repository
@@ -1692,7 +1692,7 @@ ResultActive=yes
     def _install_tela_icons(self) -> bool:
         """Install Tela icon theme."""
         try:
-            theme_dir = "/tmp/tela-icons"
+            theme_dir = os.path.join(tempfile.gettempdir(), "tela-icons")
 
             # Clone repository
             clone_cmd = (
@@ -2037,7 +2037,7 @@ ResultActive=yes
                     )
                     return False
 
-            installer_path = Path("/tmp/ohmyzsh_install.sh")
+            installer_path = Path(tempfile.gettempdir()) / "ohmyzsh_install.sh"
 
             # Download with verification
             self.logger.debug("Downloading Oh My Zsh installer with security verification...")
@@ -3312,9 +3312,9 @@ function extract() {
                 return True
 
             # Generate aliases and configs for Zsh
-            tool_config_zsh = self._setup_tool_aliases(shell="zsh")
+            tool_config_zsh = self._setup_tool_aliases(shell="zsh")  # nosec B604
             # Generate aliases and configs for Bash
-            tool_config_bash = self._setup_tool_aliases(shell="bash")
+            tool_config_bash = self._setup_tool_aliases(shell="bash")  # nosec B604
 
             configured_count = 0
 

@@ -6,7 +6,7 @@ Manages the execution order of modules and handles errors.
 
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, Optional, Type
 
 from configurator.config import ConfigManager
 from configurator.core.container import Container
@@ -35,7 +35,7 @@ from configurator.validators.orchestrator import ValidationOrchestrator
 try:
     from configurator.core.reporter.rich_reporter import RichProgressReporter
 
-    DEFAULT_REPORTER = RichProgressReporter
+    DEFAULT_REPORTER: Type[ReporterInterface] = RichProgressReporter
 except ImportError:
     DEFAULT_REPORTER = ConsoleReporter
 

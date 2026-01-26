@@ -12,6 +12,7 @@ Handles:
 """
 
 import os
+from typing import Any, Dict
 
 from configurator.exceptions import ModuleExecutionError
 from configurator.modules.base import ConfigurationModule
@@ -81,7 +82,7 @@ Phase 2 Advanced Security:
 
     def verify(self) -> bool:
         """Verify security configuration."""
-        if self.dry_run_manager.is_enabled:
+        if self.dry_run:
             return True
 
         checks_passed = True
@@ -167,7 +168,7 @@ Phase 2 Advanced Security:
         self.run("ufw --force enable", check=True)
 
         # Verify
-        if not self.dry_run_manager.is_enabled:
+        if not self.dry_run:
             result = self.run("ufw status", check=True)
             if "Status: active" not in result.stdout:
                 raise ModuleExecutionError(
@@ -618,7 +619,7 @@ APT::Periodic::AutocleanInterval "7";
 
             self.write_file(cron_file, cron_line)
 
-            if not self.dry_run_manager.is_enabled:
+            if not self.dry_run:
                 os.chmod(cron_file, 0o644)
 
             self.logger.debug(f"Created cron job: {cron_file}")
@@ -635,7 +636,7 @@ APT::Periodic::AutocleanInterval "7";
         """
         from datetime import datetime
 
-        report = {
+        report: Dict[str, Any] = {
             "timestamp": datetime.now().isoformat(),
             "basic_security": {
                 "firewall": self._check_firewall_status(),
@@ -674,8 +675,8 @@ APT::Periodic::AutocleanInterval "7";
                 try:
                     from configurator.security.mfa_manager_wrapper import MFAManagerWrapper
 
-                    manager = MFAManagerWrapper(self.config, self.logger)
-                    report["advanced_security"]["mfa"] = manager.verify_mfa_status()
+                    mfa_manager = MFAManagerWrapper(self.config, self.logger)
+                    report["advanced_security"]["mfa"] = mfa_manager.verify_mfa_status()
                 except Exception:
                     pass
 

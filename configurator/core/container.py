@@ -131,11 +131,11 @@ class Container:
                 return self._instances[name]
 
             if name in self._factories:
-                factory = self._factories[name]
-                if self._is_factory_expecting_container(factory):
-                    return factory(self, **kwargs)
+                factory_func = self._factories[name]
+                if self._is_factory_expecting_container(factory_func):
+                    return factory_func(self, **kwargs)
                 else:
-                    return factory(**kwargs)  # type: ignore
+                    return factory_func(**kwargs)  # type: ignore
 
         finally:
             self._resolving.remove(name)

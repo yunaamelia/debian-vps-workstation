@@ -121,7 +121,10 @@ class SSHKey:
         if self.last_used is None:
             # Never used, check age
             return (datetime.now() - self.created_at).days > inactive_days
-        return self.days_since_last_use() > inactive_days
+
+        # We know last_used is not None here
+        delta = datetime.now() - self.last_used
+        return delta.days > inactive_days
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize to dictionary."""

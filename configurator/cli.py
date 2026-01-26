@@ -682,8 +682,12 @@ def audit_query(type: Optional[str], limit: int):
         if type:
             # Validate type
             try:
+                from configurator.core.audit import AuditEventType
+
                 event_type = AuditEventType(type)
             except ValueError:
+                from configurator.core.audit import AuditEventType
+
                 console.print(f"[red]Invalid event type: {type}. Valid types:[/red]")
                 for mode in AuditEventType:
                     console.print(f"  {mode.value}")
@@ -1390,11 +1394,15 @@ def cert_status(domain, as_json):
 
             for cert_data in summary["certificates"]:
                 status = cert_data["status"]
-                status_color = {"valid": "green", "expiring_soon": "yellow", "expired": "red"}
+                summary_status_color = {
+                    "valid": "green",
+                    "expiring_soon": "yellow",
+                    "expired": "red",
+                }
 
                 console.print(f"\n[bold]{cert_data['domain']}[/bold]")
                 console.print(
-                    f"  Status: [{status_color.get(status, 'white')}]{status.upper()}[/{status_color.get(status, 'white')}]"
+                    f"  Status: [{summary_status_color.get(status, 'white')}]{status.upper()}[/{summary_status_color.get(status, 'white')}]"
                 )
                 console.print(
                     f"  Expires: {cert_data['valid_until'][:10]} ({cert_data['days_remaining']} days)"
@@ -1731,7 +1739,7 @@ def ssh_rotate(user, key_id, grace_days):
 
     result = manager.rotate_key(user, key_id, grace_period_days=grace_days)
 
-    if result.success:
+    if result.success and result.new_key and result.grace_period_until:
         console.print("\n[green]✅ Key rotation successful![/green]")
         console.print(f"  New Key ID: [cyan]{result.new_key.key_id}[/cyan]")
         console.print(f"  New Private Key: [dim]{result.new_private_key_path}[/dim]")
@@ -1773,7 +1781,11 @@ def ssh_list_keys(user, as_json):
         return
 
     # Group by user
-    by_user = {}
+    from typing import Dict, List
+
+    from configurator.security.ssh_manager import SSHKey
+
+    by_user: Dict[str, List[SSHKey]] = {}
     for key in keys:
         if key.user not in by_user:
             by_user[key.user] = []
@@ -1803,7 +1815,9 @@ def ssh_list_keys(user, as_json):
 
             if key.expires_at:
                 days = key.days_until_expiry()
-                if days < 0:
+                if days is None:
+                    console.print("     Expires: [dim]Unknown[/dim]")
+                elif days < 0:
                     console.print(f"     Expires: [red]EXPIRED ({abs(days)} days ago)[/red]")
                 elif days <= 14:
                     console.print(
@@ -3186,6 +3200,8 @@ def activity_log(ctx: click.Context, user: str, activity_type: str, command: str
         monitor = ActivityMonitor(logger=logger)
 
         # Convert string to enum
+        from configurator.core.activity_monitor import ActivityType
+
         activity_type_enum = ActivityType[activity_type.upper()]
 
         event = monitor.log_activity(

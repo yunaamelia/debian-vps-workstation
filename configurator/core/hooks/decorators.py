@@ -1,5 +1,5 @@
 from functools import wraps
-from typing import Callable, List, Union
+from typing import Any, Callable, List, Union
 
 from .events import HookEvent, HookPriority
 
@@ -14,23 +14,26 @@ def hook(events: Union[HookEvent, List[HookEvent]], priority: HookPriority = Hoo
     """
 
     def decorator(func: Callable):
-        if not hasattr(func, "_hook_events"):
-            func._hook_events = []
+        # Cast to Any to allow dynamic attribute assignment
+        f: Any = func
+        if not hasattr(f, "_hook_events"):
+            f._hook_events = []
 
         _events = events if isinstance(events, list) else [events]
         for event in _events:
-            if event not in func._hook_events:
-                func._hook_events.append(event)
+            if event not in f._hook_events:
+                f._hook_events.append(event)
 
-        func._hook_priority = priority
+        f._hook_priority = priority
 
         @wraps(func)
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs)
 
         # Copy attributes to wrapper
-        wrapper._hook_events = func._hook_events
-        wrapper._hook_priority = func._hook_priority
+        w: Any = wrapper
+        w._hook_events = f._hook_events
+        w._hook_priority = f._hook_priority
 
         return wrapper
 

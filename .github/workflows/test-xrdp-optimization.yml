@@ -111,13 +111,13 @@ jobs:
 
       - name: Run Bandit security linter
         run: |
-          bandit -r configurator/modules/desktop.py -ll || true
+          bandit -r configurator/modules/desktop.py -ll
         continue-on-error: true
 
       - name: Check dependencies for vulnerabilities
         run: |
           pip install -r requirements.txt
-          safety check --ignore 70612 || true
+          safety check --ignore 70612
         continue-on-error: true
 
   test-summary:

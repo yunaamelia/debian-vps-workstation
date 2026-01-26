@@ -147,7 +147,7 @@ class FileIntegrityMonitor:
             # Convert dataclasses to dicts
             baseline_data = {k: asdict(v) for k, v in self.baseline.items()}
 
-            output_data = {"baseline": baseline_data}
+            output_data: Dict[str, Any] = {"baseline": baseline_data}
 
             if self._hmac_key:
                 # Sign the canonical content of baseline
@@ -228,7 +228,7 @@ class FileIntegrityMonitor:
         Returns:
             List of violations (dictionaries describing changes)
         """
-        violations = []
+        violations: List[Dict[str, Any]] = []
 
         if not self.baseline:
             logger.warning("No baseline found. Please run 'initialize' first.")
@@ -258,14 +258,14 @@ class FileIntegrityMonitor:
                 changes.append("ownership_modified")
 
             if changes:
-                violation = {
+                modified_violation: Dict[str, Any] = {
                     "path": path,
                     "type": "file_modified",
                     "changes": changes,
                     "severity": "high" if "content_modified" in changes else "medium",
                     "details": f"Changes detected: {', '.join(changes)}",
                 }
-                violations.append(violation)
+                violations.append(modified_violation)
 
         # Log violations
         if violations:

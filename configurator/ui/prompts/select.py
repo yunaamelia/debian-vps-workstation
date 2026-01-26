@@ -38,6 +38,8 @@ class SelectPrompt(PromptBase):
                     default=str(self.choices.index(self.default) + 1) if self.default else None,
                 )
 
+                if response is None:
+                    continue
                 index = int(response) - 1
 
                 if 0 <= index < len(self.choices):

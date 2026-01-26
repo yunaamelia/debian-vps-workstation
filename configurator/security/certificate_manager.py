@@ -215,7 +215,7 @@ class CertificateManager:
             logger: Optional logger instance
         """
         self.logger = logger or logging.getLogger(__name__)
-        self._certbot_available = None
+        self._certbot_available: Optional[bool] = None
 
     def is_certbot_available(self) -> bool:
         """Check if Certbot is installed and available."""
@@ -893,7 +893,7 @@ echo "$(date): Certificate renewal check completed" >> /var/log/certbot-renewal.
         """
         certs = self.list_certificates()
 
-        summary = {
+        summary: Dict[str, Any] = {
             "total": len(certs),
             "valid": 0,
             "expiring_soon": 0,

@@ -90,13 +90,13 @@ cat > "$DEPLOY_DIR/DEPLOYMENT_README.md" << 'EOF'
 1. **Transfer this package to the server:**
    ```bash
    # From your local machine:
-   scp -r deploy_package root@129.212.239.4:/root/
+   scp -r deploy_package root@<your-server-ip>:/root/
    # Or use any other transfer method (rsync, sftp, etc.)
    ```
 
 2. **SSH into the server:**
    ```bash
-   ssh root@129.212.239.4
+   ssh root@<your-server-ip>
    ```
 
 3. **Extract and run:**
@@ -161,8 +161,8 @@ echo "Package location: $PROJECT_ROOT/$ARCHIVE_NAME"
 echo "Package size: $(du -h "$ARCHIVE_NAME" | cut -f1)"
 echo ""
 echo "To deploy:"
-echo "  1. Transfer: scp $ARCHIVE_NAME root@129.212.239.4:/root/"
-echo "  2. SSH: ssh root@129.212.239.4"
+echo "  1. Transfer: scp $ARCHIVE_NAME root@<your-server-ip>:/root/"
+echo "  2. SSH: ssh root@<your-server-ip>"
 echo "  3. Extract: tar -xzf $ARCHIVE_NAME"
 echo "  4. Run: cd deploy_package && bash deploy_on_server.sh"
 echo ""

@@ -200,13 +200,12 @@ class ConfigManager:
             profile: Profile name (beginner, intermediate, advanced)
         """
         # Convert config_file to Path if it's a string
+        self.config_file: Optional[Path] = None
         if config_file is not None:
             if isinstance(config_file, str):
                 self.config_file = Path(config_file)
             else:
                 self.config_file = config_file
-        else:
-            self.config_file = None
 
         self.profile = profile
         self._config: Dict[str, Any] = {}

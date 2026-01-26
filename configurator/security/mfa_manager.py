@@ -249,7 +249,7 @@ class MFAManager:
 
         return config, qr_code
 
-    def _generate_backup_codes(self, count: int = None) -> List[str]:
+    def _generate_backup_codes(self, count: Optional[int] = None) -> List[str]:
         """Generate one-time backup codes."""
         if count is None:
             count = self.BACKUP_CODE_COUNT

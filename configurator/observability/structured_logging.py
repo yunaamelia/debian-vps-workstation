@@ -10,7 +10,7 @@ import uuid
 from contextvars import ContextVar
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 # Thread-safe context variable for correlation ID
 correlation_id: ContextVar[Optional[str]] = ContextVar("correlation_id", default=None)
@@ -53,7 +53,7 @@ class StructuredLogger:
 
     def _build_log_dict(self, message: str, **kwargs) -> Dict[str, Any]:
         """Build structured log dictionary."""
-        log_dict = {
+        log_dict: Dict[str, Any] = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "logger": self.name,
             "message": message,
@@ -171,7 +171,7 @@ class LogAggregator:
         Returns:
             List of log dictionaries
         """
-        logs = []
+        logs: List[Dict[str, Any]] = []
 
         if not self.log_file.exists():
             return logs

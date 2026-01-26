@@ -3,6 +3,7 @@ Lazy loading utility for optimizing CLI startup time.
 """
 
 import importlib
+import importlib.util
 import threading
 import time
 import types

@@ -46,7 +46,7 @@ class TLSConfig:
         session_cache_size: Session cache size (MB)
     """
 
-    protocols: List[TLSProtocol] = None
+    protocols: Optional[List[TLSProtocol]] = None
     ciphers: str = ""
     hsts_enabled: bool = True
     hsts_max_age: int = 31536000  # 1 year
@@ -132,7 +132,10 @@ class NginxConfigurator:
         config = tls_config or TLSConfig()
 
         # Build protocols string
-        protocols = " ".join(p.value for p in config.protocols)
+        # protocols is initialized in __post_init__ so it should not be None practically,
+        # but type checker needs assurance
+        protocols_list = config.protocols or []
+        protocols = " ".join(p.value for p in protocols_list)
 
         # HSTS header
         hsts_parts = [f"max-age={config.hsts_max_age}"]
@@ -447,7 +450,8 @@ class ApacheConfigurator:
             root_path = Path(f"/var/www/{domain}/html")
 
         # Build protocols string for Apache
-        " ".join(p.value for p in config.protocols)
+        protocols_list = config.protocols or []
+        " ".join(p.value for p in protocols_list)
 
         # HSTS header value
         hsts_parts = [f"max-age={config.hsts_max_age}"]

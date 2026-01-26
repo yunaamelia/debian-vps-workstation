@@ -17,7 +17,7 @@ echo "  - TARGET_PASS (target user password)"
 echo ""
 if [[ -z "$REMOTE_HOST" ]]; then
     echo "ERROR: REMOTE_HOST not set"
-    echo "Example: export REMOTE_HOST=209.38.91.97"
+    echo "Example: export REMOTE_HOST=<your-server-ip>"
     exit 1
 fi
 

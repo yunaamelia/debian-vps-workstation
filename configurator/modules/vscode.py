@@ -62,7 +62,7 @@ class VSCodeModule(ConfigurationModule):
 
     def verify(self) -> bool:
         """Verify VS Code installation."""
-        if self.dry_run_manager.is_enabled:
+        if self.dry_run:
             return True
 
         checks_passed = True

@@ -107,15 +107,27 @@ class PrerequisiteError(ConfiguratorError):
     https://github.com/yunaamelia/debian-vps-workstation#requirements
     """
 
-    def __init__(self, requirement: str, current_value: str, **kwargs):
-        what = f"System does not meet requirement: {requirement}"
-        why = f"Current value: {current_value}"
-        how = (
-            "1. Check system specs: vps-configurator check-system\n"
-            "2. Review requirements: cat README.md | grep -A 10 'Requirements'\n"
-            "3. Upgrade system or adjust configuration"
-        )
-        super().__init__(what=what, why=why, how=how, **kwargs)
+    def __init__(
+        self,
+        requirement: str = "Unspecified",
+        current_value: str = "Unknown",
+        what: Optional[str] = None,
+        **kwargs,
+    ):
+        if what:
+            # Custom message provided via kwargs
+            super().__init__(what=what, **kwargs)
+        else:
+            super().__init__(
+                what=f"System does not meet requirement: {requirement}",
+                why=f"Current value: {current_value}",
+                how=(
+                    "1. Check system specs: vps-configurator check-system\n"
+                    "2. Review requirements: cat README.md | grep -A 10 'Requirements'\n"
+                    "3. Upgrade system or adjust configuration"
+                ),
+                **kwargs,
+            )
 
 
 class ConfigurationError(ConfiguratorError):
@@ -235,16 +247,31 @@ class NetworkError(ConfiguratorError):
     4. Try again: Network issues may be temporary
     """
 
-    def __init__(self, url: str, error_details: str, **kwargs):
-        what = "Network operation failed"
-        why = f"Cannot access: {url}\nError: {error_details}"
-        how = (
-            "1. Check internet: ping -c 3 8.8.8.8\n"
-            "2. Check DNS: host deb.debian.org\n"
-            "3. Check proxy/firewall settings\n"
-            "4. Retry: vps-configurator install --retry"
-        )
-        super().__init__(what=what, why=why, how=how, **kwargs)
+    def __init__(
+        self,
+        url: Optional[str] = None,
+        error_details: Optional[str] = None,
+        what: Optional[str] = None,
+        why: Optional[str] = None,
+        how: Optional[str] = None,
+        **kwargs,
+    ):
+        if what:
+            # Custom message provided
+            super().__init__(what=what, why=why or "", how=how or "", **kwargs)
+        else:
+            # Default formatting
+            url_str = url or "unknown URL"
+            err_str = error_details or "unknown error"
+            base_what = "Network operation failed"
+            base_why = f"Cannot access: {url_str}\nError: {err_str}"
+            base_how = (
+                "1. Check internet: ping -c 3 8.8.8.8\n"
+                "2. Check DNS: host deb.debian.org\n"
+                "3. Check proxy/firewall settings\n"
+                "4. Retry: vps-configurator install --retry"
+            )
+            super().__init__(what=base_what, why=base_why, how=base_how, **kwargs)
 
 
 class UserCancelledError(ConfiguratorError):

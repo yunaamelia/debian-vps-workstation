@@ -2,7 +2,7 @@ import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import List
+from typing import Any, Dict, List
 
 from configurator.security.vulnerability_scanner import (
     ScanResult,
@@ -31,7 +31,7 @@ class VulnReportGenerator:
         Generate JSON report for one or more scan results.
         Returns the path to the generated file.
         """
-        report_data = {
+        report_data: Dict[str, Any] = {
             "generated_at": datetime.now().isoformat(),
             "total_scans": len(results),
             "scans": [],

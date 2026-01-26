@@ -212,7 +212,9 @@ class NetworkOperationWrapper:
                     self.logger.error(f"❌ All {self.retry_config.max_retries} attempts failed")
 
         # All retries exhausted
-        raise last_exception
+        if last_exception:
+            raise last_exception
+        raise Exception("Operation failed with no exception captured")
 
     def apt_update_with_retry(self) -> bool:
         """
@@ -274,6 +276,9 @@ class NetworkOperationWrapper:
             )
 
             # Stream output line by line to show progress
+            if process.stdout is None:
+                raise Exception("Failed to capture stdout")
+
             last_log_time = time.time()
             for line in iter(process.stdout.readline, ""):
                 if line:

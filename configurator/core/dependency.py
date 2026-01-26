@@ -26,7 +26,7 @@ class DependencyGraph:
         self.module_info: Dict[str, ModuleDependency] = {}
 
     def add_module(
-        self, name: str, depends_on: List[str] = None, force_sequential: bool = False
+        self, name: str, depends_on: Optional[List[str]] = None, force_sequential: bool = False
     ) -> None:
         """
         Add module to dependency graph.

@@ -9,7 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 class ActivityType(Enum):
@@ -623,7 +623,7 @@ class ActivityMonitor:
         cursor = conn.cursor()
 
         query = "SELECT * FROM anomalies WHERE 1=1"
-        params = []
+        params: List[Any] = []
 
         if user:
             query += " AND user = ?"

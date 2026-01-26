@@ -121,19 +121,24 @@ class CISReportGenerator:
         """
 
         # Sort results: Failures first, then by priority
+        valid_results = [r for r in report.results if r.check is not None]
         sorted_results = sorted(
-            report.results,
+            valid_results,
             key=lambda x: (
                 0 if x.status == Status.FAIL else 1,
                 {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}[
-                    x.check.severity.value
+                    x.check.severity.value if x.check else "info"
                 ],
             ),
         )
 
         for res in sorted_results:
-            f"bg-{res.check.severity.value}"
-            f"bg-{res.status.value.lower()}"
+            severity_val = res.check.severity.value if res.check else "info"
+            status_val = res.status.value.lower()
+
+            # Using f-string for template expansion (variables unused but clearer in intention)
+            _bg_sev = f"bg-{severity_val}"
+            _bg_status = f"bg-{status_val}"
             if res.status == Status.MANUAL:
                 pass
 

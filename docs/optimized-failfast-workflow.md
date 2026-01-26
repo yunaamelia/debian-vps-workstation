@@ -39,17 +39,17 @@ rsync -avz --delete --checksum \
   --exclude='.pytest_cache' \
   --exclude='htmlcov' \
   /home/racoon/AgentMemorh/debian-vps-workstation/ \
-  root@143.198.89.149:/opt/vps-configurator/
+    root@<your-server-ip>:/opt/vps-configurator/
 
 # Verify sync
-ssh root@143.198.89.149 "ls -lh /opt/vps-configurator/configurator/__init__.py"
+ssh root@<your-server-ip> "ls -lh /opt/vps-configurator/configurator/__init__.py"
 ```
 
 ### Clean State Restoration
 
 ```bash
 # Step 2: Revert to Clean State (Multi-Strategy)
-ssh root@143.198.89.149 << 'CLEAN_EOF'
+ssh root@<your-server-ip> << 'CLEAN_EOF'
 set -e
 cd /opt/vps-configurator
 
@@ -90,7 +90,7 @@ ITERATION=${1:-1}
 echo "=== Starting Installation - Run #${ITERATION} ===" | tee -a "$INSTALL_LOG"
 echo "Logs: $INSTALL_LOG"
 
-ssh root@143.198.89.149 << 'INSTALL_EOF' 2>&1 | tee -a "$INSTALL_LOG" | \
+ssh root@<your-server-ip> << 'INSTALL_EOF' 2>&1 | tee -a "$INSTALL_LOG" | \
 cd /opt/vps-configurator
 source .venv/bin/activate
 
@@ -121,7 +121,7 @@ while IFS= read -r line; do
         echo "║   CRITICAL FAILURE DETECTED            ║"
         echo "╚════════════════════════════════════════╝"
         echo "Trigger: $line"
-        ssh root@143.198.89.149 "pkill -9 -f vps-configurator"
+        ssh root@<your-server-ip> "pkill -9 -f vps-configurator"
         tail -n 100 "$INSTALL_LOG" > "/tmp/critical_failure_${ITERATION}.log"
         exit 2
     fi
@@ -135,7 +135,7 @@ while IFS= read -r line; do
         echo "╚════════════════════════════════════════╝"
         echo "Trigger: $line"
         echo "Completed before failure: ${COMPLETED_MODULES[*]}"
-        ssh root@143.198.89.149 "pkill -SIGINT -f vps-configurator"
+        ssh root@<your-server-ip> "pkill -SIGINT -f vps-configurator"
         tail -n 100 "$INSTALL_LOG" > "/tmp/error_failure_${ITERATION}.log"
         exit 1
     fi
@@ -156,7 +156,7 @@ done
 
 # Check exit code
 EXIT_CODE=$?
-INSTALL_EXIT=$(ssh root@143.198.89.149 "echo $?")
+INSTALL_EXIT=$(ssh root@<your-server-ip> "echo $?")
 
 if [ $EXIT_CODE -eq 0 ] && [ $INSTALL_EXIT -eq 0 ]; then
     echo ""

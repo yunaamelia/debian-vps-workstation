@@ -111,12 +111,13 @@ class CISComplianceModule(ConfigurationModule):
             critical_failures = [
                 r
                 for r in self.report.results
-                if r.status == Status.FAIL and r.check.severity.value == "critical"
+                if r.status == Status.FAIL and r.check and r.check.severity.value == "critical"
             ]
             if critical_failures:
                 self.logger.error(f"Found {len(critical_failures)} CRITICAL CIS failures.")
                 for failure in critical_failures:
-                    self.logger.error(f"  - {failure.check.id}: {failure.message}")
+                    check_id = failure.check.id if failure.check else "UNKNOWN"
+                    self.logger.error(f"  - {check_id}: {failure.message}")
                 return False
 
         return True

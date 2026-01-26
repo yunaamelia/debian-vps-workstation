@@ -45,7 +45,7 @@ class DependencyGraphVisualizer:
 
         cycles = []
         visited = set()
-        path = []
+        path: List[str] = []
 
         def visit(node):
             if node in path:
