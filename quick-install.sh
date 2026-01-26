@@ -4,7 +4,7 @@
 # Debian VPS Configurator - Quick Install Script
 #
 # Purpose: Install all prerequisites and dependencies required to run
-#          vps-configurator install --profile advanced
+#          sudo vps-configurator install --profile advanced
 #
 # Features:
 # - Structured logging with timestamped log files
@@ -659,7 +659,7 @@ execute_configurator_install() {
     log_section "DEPLOY: Running vps-configurator install"
 
     if [ "$DRY_RUN" = true ]; then
-        print_info "DRY RUN: would run vps-configurator install --profile advanced"
+        print_info "DRY RUN: would run sudo vps-configurator install --profile advanced"
         create_checkpoint "deployment_executed"
         return 0
     fi
@@ -680,14 +680,14 @@ execute_configurator_install() {
         if [ -n "$NEW_PASS" ]; then
             # We have the password, use it to bypass the prompt for this initial run
             # Use 'su -' to simulate full login shell
-            su - "$NEW_USER" -c "echo '$NEW_PASS' | sudo -S -p '' vps-configurator install --profile advanced"
+            su - "$NEW_USER" -c "echo '$NEW_PASS' | sudo -S -p '' sudo vps-configurator install --profile advanced"
         else
             # Interactive mode - user must type password
             su - "$NEW_USER" -c "sudo vps-configurator install --profile advanced"
         fi
     else
-        print_info "Executing: vps-configurator install --profile advanced (as root)"
-        vps-configurator install --profile advanced
+        print_info "Executing: sudo vps-configurator install --profile advanced (as root)"
+        sudo vps-configurator install --profile advanced
     fi
 
     create_checkpoint "deployment_executed"
@@ -774,7 +774,7 @@ main() {
 ║     Debian VPS Configurator - Quick Install Script       ║
 ║                                                           ║
 ║     This script will install all prerequisites needed     ║
-║     to run: vps-configurator install --profile advanced  ║
+║     to run: sudo vps-configurator install --profile advanced  ║
 ║                                                           ║
 ║     Features: Checkpoint system & Auto-recovery          ║
 ║                                                           ║
@@ -792,7 +792,7 @@ EOF
         print_warning "Previous installation checkpoints detected!"
         list_checkpoints
         echo "" | tee -a "$INSTALL_LOG"
-        read -r -p "Resume from last checkpoint? (Y/n) " -n 1 REPLY
+        REPLY="y"
         echo
         if [[ ! $REPLY =~ ^[Nn]$ ]]; then
             restore_from_checkpoint

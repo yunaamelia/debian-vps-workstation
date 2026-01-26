@@ -5,6 +5,7 @@ Manages the execution order of modules and handles errors.
 """
 
 import logging
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
 from configurator.config import ConfigManager
@@ -243,6 +244,101 @@ class Installer:
             # 2. Load Plugins & Hooks
             self.plugin_manager.load_plugins()
             self.hooks_manager.execute(HookEvent.BEFORE_INSTALLATION)
+
+            # 2.5 User Provisioning (New)
+            prov_user = self.config.get("provisioning.user")
+            if prov_user:
+                self.reporter.start_phase("User Provisioning")
+                self.reporter.update(f"Configuring user {prov_user}...")
+
+                try:
+                    from configurator.users.lifecycle_manager import UserLifecycleManager
+
+                    user_manager = UserLifecycleManager(logger=self.logger, dry_run=dry_run)
+
+                    # Create or update user
+                    if user_manager.get_user_profile(prov_user):
+                        self.logger.info(f"User {prov_user} exists, updating configuration...")
+                        # We still want to apply keys/sudo even if user exists
+                        # Using create_user implementation which handles idempotent updates implicitly for some parts,
+                        # but ideally we might want a dedicated provision method.
+                        # For now, we reuse logic or call specific update methods if needed.
+                        # However, create_user raises if user exists. We need to handle this.
+                        # Let's use a try/except or check first.
+                        pass  # Profile updates Logic to be refined or we assume create_user handles "ensure" logic?
+                        # Looking at lifecycle_manager.py, create_user raises ValueError if user exists.
+                        # We should catch that or check validity.
+
+                    # NOTE: Quick-install logic allows updating.
+                    # create_user currently raises. We should treat it as "ensure_user".
+                    # For simplicity in this iteration, we try/except or modifying lifecycle logic was safest.
+                    # Given we can't easily modify lifecycle again without context switch, let's wrap it in try/catch check.
+
+                    # But wait, quick-install updates password/keys even if user exists.
+                    # Use a new helper or just call the specific methods we exposed?
+                    # We exposed _inject_ssh_key and _configure_sudo_timeout as internal but accessible.
+                    # Best approach: Try create, if fails, apply updates.
+
+                    try:
+                        user_manager.create_user(
+                            username=prov_user,
+                            full_name=prov_user,  # Default to username
+                            email=f"{prov_user}@localhost",  # Placeholder
+                            role="developer",  # Default role
+                            password=self.config.get("provisioning.password"),
+                            ssh_key_string=self.config.get("provisioning.ssh_key"),
+                            enable_ssh_key=bool(self.config.get("provisioning.ssh_key")),
+                            sudo_timeout=self.config.get("provisioning.sudo_timeout"),
+                            generate_temp_password=False,
+                        )
+                        self.reporter.update(f"Created user {prov_user}")
+                    except ValueError as e:
+                        if "already exists" in str(e):
+                            self.logger.info(
+                                f"User {prov_user} already exists, updating credentials..."
+                            )
+
+                            # Update password if provided
+                            pwd = self.config.get("provisioning.password")
+                            if pwd and not dry_run:
+                                user_manager._set_user_password(prov_user, pwd, force_change=False)
+
+                            # Update SSH key if provided
+                            key = self.config.get("provisioning.ssh_key")
+                            if key and not dry_run:
+                                # Need home dir
+                                import pwd as system_pwd
+
+                                try:
+                                    home = Path(system_pwd.getpwnam(prov_user).pw_dir)
+                                    user_manager._inject_ssh_key(prov_user, key, home)
+                                except Exception as e2:
+                                    self.logger.warning(f"Could not update SSH key: {e2}")
+
+                            # Update Sudo if provided
+                            sudo = self.config.get("provisioning.sudo_timeout")
+                            if sudo is not None and not dry_run:
+                                user_manager._configure_sudo_timeout(prov_user, sudo)
+
+                            # Ensure RBAC roles and groups are applied (idempotency)
+                            if not dry_run:
+                                self.logger.info(f"Ensuring RBAC configuration for {prov_user}...")
+                                # Re-apply developer role to trigger group syncing/creation
+                                user_manager.update_user_role(
+                                    prov_user, "developer", updated_by="installer"
+                                )
+
+                            self.reporter.update(f"Updated user {prov_user}")
+                        else:
+                            raise e
+
+                    self.reporter.complete_phase(True)
+
+                except Exception as e:
+                    self.logger.error(f"User provisioning failed: {e}")
+                    self.reporter.error(f"Failed to configure user {prov_user}: {e}")
+                    # Decide if we abort or continue? Quick-install seems to fail on critical errors.
+                    return False
 
             # 3. Build Graph
             enabled_modules = self.config.get_enabled_modules()

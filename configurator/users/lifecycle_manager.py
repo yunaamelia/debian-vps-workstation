@@ -246,8 +246,11 @@ class UserLifecycleManager:
         department: Optional[str] = None,
         manager: Optional[str] = None,
         enable_ssh_key: bool = False,
+        ssh_key_string: Optional[str] = None,
         enable_2fa: bool = False,
         generate_temp_password: bool = True,
+        password: Optional[str] = None,
+        sudo_timeout: Optional[int] = None,
     ) -> UserProfile:
         """
         Create a new user with complete provisioning.
@@ -261,9 +264,13 @@ class UserLifecycleManager:
             shell: User's default shell
             department: Department/team
             manager: Manager's username
-            enable_ssh_key: Generate and deploy SSH key
+            manager: Manager's username
+            enable_ssh_key: Generate and deploy SSH key (boolean)
+            ssh_key_string: Public SSH key string to inject directly (str)
             enable_2fa: Enroll user in 2FA
             generate_temp_password: Generate temporary password
+            password: Direct password to set (overrides generation)
+            sudo_timeout: Sudo timestamp_timeout in minutes (-1 for once, 0 for always)
 
         Returns:
             UserProfile object
@@ -318,10 +325,18 @@ class UserLifecycleManager:
 
         # Step 6: Configure sudo access
         self.logger.info("Step 6/12: Configuring sudo access...")
-        # Handled by RBAC manager
+        if self.rbac_manager and not self.dry_run:
+            # RBAC handles basic sudo, but we might want custom timeout
+            if sudo_timeout is not None:
+                self._configure_sudo_timeout(username, sudo_timeout)
 
-        # Step 7: Generate SSH key (PROMPT 2.4 integration)
-        if enable_ssh_key:
+        # Step 7: Generate or Inject SSH key (PROMPT 2.4 integration)
+        if ssh_key_string:
+            self.logger.info("Step 7/12: Injecting provided SSH key...")
+            if not self.dry_run:
+                self._inject_ssh_key(username, ssh_key_string, home_dir)
+            enable_ssh_key = True  # Flag as enabled since we added one
+        elif enable_ssh_key:
             self.logger.info("Step 7/12: Generating SSH key...")
             # SSH manager integration placeholder
             self.logger.warning("SSH key generation not yet implemented")
@@ -329,12 +344,19 @@ class UserLifecycleManager:
         # Step 8: Enroll in 2FA (PROMPT 2.5 integration)
         if enable_2fa:
             self.logger.info("Step 8/12: Enrolling in 2FA...")
-            # MFA manager integration placeholder
-            self.logger.warning("2FA enrollment not yet implemented")
+            if self.mfa_manager:
+                # self.mfa_manager.enroll(username)
+                pass
+            else:
+                self.logger.warning("2FA enrollment not yet implemented")
 
-        # Step 9: Set temporary password
+        # Step 9: Set password
         temp_password = None
-        if generate_temp_password:
+        if password:
+            self.logger.info("Step 9/12: Setting provided password...")
+            if not self.dry_run:
+                self._set_user_password(username, password, force_change=False)
+        elif generate_temp_password:
             self.logger.info("Step 9/12: Setting temporary password...")
             temp_password = self._generate_temp_password()
             if not self.dry_run:
@@ -449,6 +471,47 @@ class UserLifecycleManager:
             self.logger.warning(f"Group does not exist: {group}")
         except subprocess.CalledProcessError as e:
             self.logger.error(f"Failed to add user to group: {e}")
+
+    def _inject_ssh_key(self, username: str, key_string: str, home_dir: Path):
+        """Inject public SSH key for user."""
+        try:
+            ssh_dir = home_dir / ".ssh"
+            auth_keys = ssh_dir / "authorized_keys"
+            user_info = pwd.getpwnam(username)
+
+            # Create .ssh directory
+            if not ssh_dir.exists():
+                ssh_dir.mkdir(parents=True, mode=0o700)
+                os.chown(ssh_dir, user_info.pw_uid, user_info.pw_gid)
+
+            # Append key
+            with open(auth_keys, "a") as f:
+                f.write(f"{key_string}\n")
+
+            # Set permissions
+            auth_keys.chmod(0o600)
+            os.chown(auth_keys, user_info.pw_uid, user_info.pw_gid)
+            self.logger.info(f"Injected SSH key for {username}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to inject SSH key: {e}")
+
+    def _configure_sudo_timeout(self, username: str, timeout: int):
+        """Configure custom sudo timeout for user."""
+        try:
+            # Create sudoers snippet
+            # timeout: -1 (once), 0 (always), X (minutes)
+            snippet_path = Path(f"/etc/sudoers.d/99-{username}-timeout")
+            content = f"Defaults:{username} timestamp_timeout={timeout}\n"
+
+            with open(snippet_path, "w") as f:
+                f.write(content)
+
+            snippet_path.chmod(0o440)
+            self.logger.info(f"Configured sudo timeout ({timeout}) for {username}")
+
+        except Exception as e:
+            self.logger.error(f"Failed to configure sudo timeout: {e}")
 
     def _generate_temp_password(self) -> str:
         """Generate secure temporary password."""

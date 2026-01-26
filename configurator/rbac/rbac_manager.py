@@ -433,8 +433,19 @@ class RBACManager:
             try:
                 subprocess.run(["usermod", "-aG", group, user], check=True, capture_output=True)
                 self.logger.info("Added %s to group %s", user, group)
-            except subprocess.CalledProcessError as exc:  # pragma: no cover - requires root
-                self.logger.error("Failed to add %s to group %s: %s", user, group, exc.stderr)
+            except subprocess.CalledProcessError as exc:
+                if b"does not exist" in exc.stderr:
+                    self.logger.warning("Group %s does not exist; creating it", group)
+                    try:
+                        subprocess.run(["groupadd", group], check=True, capture_output=True)
+                        subprocess.run(
+                            ["usermod", "-aG", group, user], check=True, capture_output=True
+                        )
+                        self.logger.info("Created group %s and added %s", group, user)
+                    except subprocess.CalledProcessError as e2:
+                        self.logger.error("Failed to create group %s: %s", group, e2.stderr)
+                else:
+                    self.logger.error("Failed to add %s to group %s: %s", user, group, exc.stderr)
 
     def _configure_sudo(self, user: str, role: Role) -> None:
         sudoers_file = self.sudoers_dir / f"rbac-{user}"

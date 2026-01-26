@@ -9,6 +9,7 @@ Provides commands:
 """
 
 import json
+import os
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -137,6 +138,30 @@ def main(ctx: click.Context, verbose: bool, quiet: bool):
     type=click.Choice(["DEBUG", "INFO", "WARNING", "ERROR"], case_sensitive=False),
     help="Set logging level (overrides -v/-q)",
 )
+@click.option(
+    "--user",
+    "-u",
+    help="Create/Update specified user (with sudo access)",
+)
+@click.option(
+    "--password",
+    help="Password for the user (if creating/updating)",
+)
+@click.option(
+    "--password-file",
+    type=click.Path(exists=True, path_type=Path),
+    help="Read password from file (secure)",
+)
+@click.option(
+    "--ssh-key",
+    help="Public SSH key string to add to authorized_keys",
+)
+@click.option(
+    "--sudo-timeout",
+    type=int,
+    default=None,
+    help="Sudo timeout in minutes (-1=once, 0=always)",
+)
 @click.pass_context
 def install(
     ctx: click.Context,
@@ -150,6 +175,11 @@ def install(
     verbose: bool,
     modules: Optional[str],
     log_level: Optional[str],
+    user: Optional[str],
+    password: Optional[str],
+    password_file: Optional[Path],
+    ssh_key: Optional[str],
+    sudo_timeout: Optional[int],
 ):
     """
     Install and configure the workstation.
@@ -237,6 +267,31 @@ def install(
         logger=logger,
         reporter=reporter,
     )
+
+    # Configure user provisioning if requested
+    if user:
+        config_manager.set("provisioning.user", user)
+
+        # Resolve password securely: CLI > File > Env > None
+        final_password = None
+        if password:
+            final_password = password
+        elif password_file:
+            try:
+                final_password = password_file.read_text().strip()
+            except Exception as e:
+                logger.error(f"Failed to read password file: {e}")
+                sys.exit(1)
+        else:
+            final_password = os.environ.get("VPS_PASSWORD")
+
+        if final_password:
+            config_manager.set("provisioning.password", final_password)
+
+        if ssh_key:
+            config_manager.set("provisioning.ssh_key", ssh_key)
+        if sudo_timeout is not None:
+            config_manager.set("provisioning.sudo_timeout", sudo_timeout)
 
     if dry_run:
         console.print("[yellow]DRY RUN MODE - No changes will be made[/yellow]\n")

@@ -27,12 +27,12 @@ devops:
     - service:*:status
   sudo_access: limited
   sudo_commands:
-    - systemctl restart *
-    - systemctl status *
-    - systemctl reload *
-    - docker *
-    - apt-get update
-    - apt-get upgrade
+    - /usr/bin/systemctl restart *
+    - /usr/bin/systemctl status *
+    - /usr/bin/systemctl reload *
+    - /usr/bin/docker *
+    - /usr/bin/apt-get update
+    - /usr/bin/apt-get upgrade
   system_groups:
     - devops
     - docker
@@ -53,11 +53,11 @@ developer:
     - system:logs:read
   sudo_access: limited
   sudo_commands:
-    - systemctl restart myapp
-    - systemctl status myapp
-    - journalctl -u myapp
-    - docker ps
-    - docker logs *
+    - /usr/bin/systemctl restart myapp
+    - /usr/bin/systemctl status myapp
+    - /usr/bin/journalctl -u myapp
+    - /usr/bin/docker ps
+    - /usr/bin/docker logs *
   system_groups:
     - developers
     - docker
