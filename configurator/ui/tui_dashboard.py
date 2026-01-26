@@ -100,7 +100,7 @@ class InstallationDashboard(App):
         except Exception:
             pass
 
-    def log(self, message: str):
+    def log_to_widget(self, message: str):
         """Add log message."""
         try:
             widget = self.query_one("#log-widget", ActivityLog)

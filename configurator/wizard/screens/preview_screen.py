@@ -43,7 +43,8 @@ class PreviewScreen(Screen):
     """
 
     def compose(self) -> ComposeResult:
-        level = self.app.wizard_data.get("experience_level", "beginner")
+        wizard_data = getattr(self.app, "wizard_data", {})
+        level = wizard_data.get("experience_level", "beginner")
 
         with Container(id="preview-container"):
             yield Static("Configuration Preview", id="title")
@@ -75,7 +76,9 @@ class PreviewScreen(Screen):
             self.app.exit(
                 result={
                     "action": "install",
-                    "profile": self.app.wizard_data.get("experience_level", "beginner"),
+                    "profile": getattr(self.app, "wizard_data", {}).get(
+                        "experience_level", "beginner"
+                    ),
                 }
             )
         elif event.button.id == "back":

@@ -17,6 +17,7 @@ isort>=5.13.2
 types-PyYAML>=6.0.12
 types-requests>=2.32.0
 types-paramiko>=3.5.0
+types-python-dateutil>=2.9.0
 
 # Workflow
 pre-commit>=4.0.1

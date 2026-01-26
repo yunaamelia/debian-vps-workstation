@@ -120,11 +120,19 @@ class ExperienceLevelScreen(Screen):
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle level selection."""
+        if not event.button.id:
+            return
+
         if event.button.id.startswith("select-"):
             level = event.button.id.replace("select-", "")
 
             # Store selection in app
-            self.app.wizard_data["experience_level"] = level
+            from typing import Any, cast
+
+            app = cast(Any, self.app)
+            if not hasattr(app, "wizard_data"):
+                app.wizard_data = {}
+            app.wizard_data["experience_level"] = level
 
             # Navigate based on level
             if level == "advanced":
