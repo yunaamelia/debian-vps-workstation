@@ -67,10 +67,10 @@ class ActivityEvent:
     session_id: Optional[str] = None
     command: Optional[str] = None
     file_path: Optional[Path] = None
-    details: Dict = field(default_factory=dict)
+    details: Dict[str, Any] = field(default_factory=dict)
     risk_level: RiskLevel = RiskLevel.LOW
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Serialize to dictionary."""
         return {
             "user": self.user,
@@ -112,10 +112,10 @@ class Anomaly:
     anomaly_type: AnomalyType
     detected_at: datetime
     risk_score: int  # 0-100
-    details: Dict = field(default_factory=dict)
+    details: Dict[str, Any] = field(default_factory=dict)
     resolved: bool = False
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Serialize to dictionary."""
         return {
             "anomaly_id": self.anomaly_id,
@@ -159,7 +159,7 @@ class ActivityMonitor:
         self._ensure_database()
         self._init_tables()
 
-    def _ensure_database(self):
+    def _ensure_database(self) -> None:
         """Ensure database directory and file exist."""
         try:
             self.DB_FILE.parent.mkdir(parents=True, exist_ok=True, mode=0o755)
@@ -167,7 +167,7 @@ class ActivityMonitor:
         except PermissionError:
             self.logger.debug("No permission to create directories; will use temp")
 
-    def _init_tables(self):
+    def _init_tables(self) -> None:
         """Initialize database tables."""
         conn = sqlite3.connect(self.DB_FILE)
         cursor = conn.cursor()
@@ -276,7 +276,7 @@ class ActivityMonitor:
         session_id: Optional[str] = None,
         command: Optional[str] = None,
         file_path: Optional[Path] = None,
-        details: Optional[Dict] = None,
+        details: Optional[Dict[str, Any]] = None,
         timestamp: Optional[datetime] = None,
     ) -> ActivityEvent:
         """
@@ -365,7 +365,7 @@ class ActivityMonitor:
         else:
             return RiskLevel.LOW
 
-    def _store_activity(self, event: ActivityEvent):
+    def _store_activity(self, event: ActivityEvent) -> None:
         """Store activity in database."""
         conn = sqlite3.connect(self.DB_FILE)
         cursor = conn.cursor()
@@ -393,7 +393,7 @@ class ActivityMonitor:
         conn.commit()
         conn.close()
 
-    def _write_audit_log(self, event: ActivityEvent):
+    def _write_audit_log(self, event: ActivityEvent) -> None:
         """Write activity to audit log file."""
         try:
             with open(self.AUDIT_LOG, "a") as f:
@@ -460,7 +460,7 @@ class ActivityMonitor:
 
         return events
 
-    def _check_for_anomalies(self, event: ActivityEvent):
+    def _check_for_anomalies(self, event: ActivityEvent) -> None:
         """Check if activity represents an anomaly."""
         # Get user's normal behavior
         baseline = self._get_user_baseline(event.user)
@@ -504,7 +504,7 @@ class ActivityMonitor:
             if anomaly.risk_score >= 70:
                 self._send_alert(anomaly)
 
-    def _get_user_baseline(self, user: str) -> Dict:
+    def _get_user_baseline(self, user: str) -> Dict[str, Any]:
         """Get user's baseline behavior."""
         # Get last 30 days of activity
         start_date = datetime.now() - timedelta(days=30)
@@ -525,7 +525,7 @@ class ActivityMonitor:
             "source_ips": source_ips,
         }
 
-    def _is_unusual_time(self, timestamp: datetime, baseline: Dict) -> bool:
+    def _is_unusual_time(self, timestamp: datetime, baseline: Dict[str, Any]) -> bool:
         """Check if time is unusual based on baseline."""
         hour = timestamp.hour
         login_hours = baseline.get("login_hours", [])
@@ -565,7 +565,7 @@ class ActivityMonitor:
         self,
         user: str,
         anomaly_type: AnomalyType,
-        details: Dict,
+        details: Dict[str, Any],
         risk_score: int,
     ) -> Anomaly:
         """Create anomaly object."""
@@ -580,7 +580,7 @@ class ActivityMonitor:
             details=details,
         )
 
-    def _store_anomaly(self, anomaly: Anomaly):
+    def _store_anomaly(self, anomaly: Anomaly) -> None:
         """Store anomaly in database."""
         conn = sqlite3.connect(self.DB_FILE)
         cursor = conn.cursor()
@@ -605,7 +605,7 @@ class ActivityMonitor:
         conn.commit()
         conn.close()
 
-    def _send_alert(self, anomaly: Anomaly):
+    def _send_alert(self, anomaly: Anomaly) -> None:
         """Send alert for high-risk anomaly."""
         self.logger.warning(
             f"🚨 ANOMALY DETECTED: {anomaly.anomaly_type.value} "
@@ -669,7 +669,7 @@ class ActivityMonitor:
         user: str,
         start_date: datetime,
         end_date: datetime,
-    ) -> Dict:
+    ) -> Dict[str, Any]:
         """Generate comprehensive activity report."""
         activities = self.get_user_activity(user, start_date, end_date)
 
@@ -740,7 +740,7 @@ class ActivityMonitor:
 
         return session_id
 
-    def end_ssh_session(self, session_id: str):
+    def end_ssh_session(self, session_id: str) -> None:
         """End tracking an SSH session."""
         conn = sqlite3.connect(self.DB_FILE)
         cursor = conn.cursor()

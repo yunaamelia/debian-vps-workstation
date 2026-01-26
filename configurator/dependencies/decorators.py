@@ -5,7 +5,7 @@ Provides decorators that can be applied to module classes to define
 their dependencies, conflicts, and execution priority.
 """
 
-from typing import Callable, List, Optional
+from typing import Any, Callable, List, Optional
 
 from configurator.dependencies.models import ModuleDependency
 from configurator.dependencies.registry import DependencyRegistry
@@ -18,7 +18,7 @@ def module(
     optional_deps: Optional[List[str]] = None,
     conflicts_with: Optional[List[str]] = None,
     force_sequential: bool = False,
-) -> Callable:
+) -> Callable[[type[Any]], type[Any]]:
     """
     Decorator to define module metadata.
 
@@ -41,7 +41,7 @@ def module(
             pass
     """
 
-    def decorator(cls):
+    def decorator(cls: type[Any]) -> type[Any]:
         # Set attributes on class
         module_name = name or cls.__name__.replace("Module", "").lower()
         cls._module_name = module_name
@@ -67,7 +67,7 @@ def module(
     return decorator
 
 
-def depends_on(*dependencies: str) -> Callable:
+def depends_on(*dependencies: str) -> Callable[[type[Any]], type[Any]]:
     """
     Shorthand decorator for defining dependencies.
 
@@ -87,7 +87,7 @@ def depends_on(*dependencies: str) -> Callable:
     return module(depends_on=list(dependencies))
 
 
-def conflicts_with(*modules: str) -> Callable:
+def conflicts_with(*modules: str) -> Callable[[type[Any]], type[Any]]:
     """
     Shorthand decorator for defining conflicts.
 

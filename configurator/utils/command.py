@@ -5,7 +5,7 @@ Command execution utilities with error handling.
 import shlex
 import subprocess
 from dataclasses import dataclass
-from typing import List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 from configurator.exceptions import ModuleExecutionError
 
@@ -48,7 +48,7 @@ def run_command(
     capture_output: bool = True,
     shell: bool = False,
     cwd: Optional[str] = None,
-    env: Optional[dict] = None,
+    env: Optional[Dict[str, str]] = None,
     timeout: Optional[int] = None,
     input_text: Optional[str] = None,
 ) -> CommandResult:

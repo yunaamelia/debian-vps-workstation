@@ -4,7 +4,7 @@ Network utilities for connectivity checks and downloads.
 
 import socket
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple, cast
 
 import requests
 
@@ -12,7 +12,7 @@ from configurator.exceptions import NetworkError
 
 
 def check_internet(
-    hosts: Optional[list] = None,
+    hosts: Optional[list[tuple[str, int]]] = None,
     timeout: int = 5,
 ) -> bool:
     """
@@ -155,7 +155,7 @@ def get_public_ip() -> Optional[str]:
 
 
 @retry(max_retries=2, base_delay=1.0)
-def get_latest_github_release(repo: str) -> Optional[dict]:
+def get_latest_github_release(repo: str) -> Optional[dict[str, Any]]:
     """
     Get the latest release info from a GitHub repository.
 
@@ -170,7 +170,7 @@ def get_latest_github_release(repo: str) -> Optional[dict]:
     try:
         response = requests.get(url, timeout=10)
         if response.status_code == 200:
-            return response.json()
+            return cast(dict[str, Any], response.json())
         return None
     except requests.RequestException:
         return None

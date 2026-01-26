@@ -6,7 +6,7 @@ as part of the installation process.
 """
 
 import logging
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from configurator.modules.base import ConfigurationModule
 from configurator.security.cis_scanner import CISBenchmarkScanner, ScanReport, Status
@@ -27,7 +27,9 @@ class CISComplianceModule(ConfigurationModule):
     depends_on = ["system", "security"]  # Run after basic system/security setup
     priority = 80  # Run late in the process
 
-    def __init__(self, config: Dict, logger: Optional[logging.Logger] = None, **kwargs):
+    def __init__(
+        self, config: Dict[str, Any], logger: Optional[logging.Logger] = None, **kwargs: Any
+    ) -> None:
         super().__init__(config, logger, **kwargs)
         self.scanner = CISBenchmarkScanner(logger=self.logger)
         self.report: Optional[ScanReport] = None

@@ -1,3 +1,5 @@
+from typing import Any
+
 from configurator.ui.prompts.base import PromptBase, PromptResult
 
 
@@ -6,7 +8,7 @@ class ConfirmPrompt(PromptBase):
     Yes/No confirmation prompt.
     """
 
-    def __init__(self, message: str, default: bool = False, **kwargs):
+    def __init__(self, message: str, default: bool = False, **kwargs: Any) -> None:
         super().__init__(message, default, **kwargs)
 
     def prompt(self) -> PromptResult:

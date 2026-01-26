@@ -34,7 +34,7 @@ class VulnerabilityMonitor:
         self.scanner_manager = VulnerabilityManager(logger=self.logger)
         self.reporter = VulnReportGenerator()
 
-    def start(self):
+    def start(self) -> None:
         """Start the monitoring thread"""
         if not HAS_SCHEDULE:
             raise RuntimeError(
@@ -55,20 +55,20 @@ class VulnerabilityMonitor:
         self._thread = threading.Thread(target=self._monitor_loop, daemon=True)
         self._thread.start()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the monitoring thread"""
         self.is_running = False
         if self._thread:
             self._thread.join(timeout=2.0)
         self.logger.info("Vulnerability monitor stopped")
 
-    def _monitor_loop(self):
+    def _monitor_loop(self) -> None:
         """Main loop for scheduler"""
         while self.is_running:
             schedule.run_pending()
             time.sleep(60)  # check every minute
 
-    def _run_scheduled_scan(self):
+    def _run_scheduled_scan(self) -> None:
         """Execute the scan job"""
         self.logger.info("🕒 Starting scheduled vulnerability scan...")
 

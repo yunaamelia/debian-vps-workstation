@@ -1,4 +1,4 @@
-from typing import List
+from typing import Any, List
 
 
 class SuggestionEngine:
@@ -36,7 +36,7 @@ class SuggestionEngine:
         # Deduplicate and remove already selected
         return [s for s in suggestions if s not in current_modules]
 
-    def suggest_config(self, module_name: str) -> dict:
+    def suggest_config(self, module_name: str) -> dict[str, Any]:
         """
         Suggest configuration options for a module.
         """

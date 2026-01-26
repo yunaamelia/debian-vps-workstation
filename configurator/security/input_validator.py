@@ -16,7 +16,7 @@ import logging
 import re
 import shlex
 from pathlib import Path
-from typing import Union
+from typing import Any, Dict, Union
 
 
 class ValidationError(Exception):
@@ -42,7 +42,7 @@ class InputValidator:
         r">\s*&",  # Redirection
     ]
 
-    def __init__(self, config: dict, logger: logging.Logger):
+    def __init__(self, config: Dict[str, Any], logger: logging.Logger):
         """
         Initialize input validator.
 

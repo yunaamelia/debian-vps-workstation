@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 class AccessType(Enum):
@@ -83,7 +83,7 @@ class TempAccess:
         days_left = self.days_remaining()
         return days_left <= self.notify_before_days and days_left > 0
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Serialize to dictionary."""
         return {
             "access_id": self.access_id,
@@ -117,7 +117,7 @@ class ExtensionRequest:
     approved_by: Optional[str] = None
     approved_at: Optional[datetime] = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Serialize to dictionary."""
         return {
             "request_id": self.request_id,
@@ -168,7 +168,7 @@ class TempAccessManager:
         self._load_access_registry()
         self._load_extensions()
 
-    def _ensure_directories(self):
+    def _ensure_directories(self) -> None:
         """Ensure required directories exist."""
         try:
             self.ACCESS_REGISTRY.parent.mkdir(parents=True, exist_ok=True, mode=0o755)
@@ -177,7 +177,7 @@ class TempAccessManager:
         except PermissionError:
             self.logger.debug("No permission to create directories")
 
-    def _load_access_registry(self):
+    def _load_access_registry(self) -> None:
         """Load access registry."""
         self.access_grants: Dict[str, TempAccess] = {}
 
@@ -193,7 +193,7 @@ class TempAccessManager:
             except Exception as e:
                 self.logger.error(f"Failed to load access registry: {e}")
 
-    def _load_extensions(self):
+    def _load_extensions(self) -> None:
         """Load extension requests."""
         self.extensions: Dict[str, ExtensionRequest] = {}
 
@@ -209,7 +209,7 @@ class TempAccessManager:
             except Exception as e:
                 self.logger.error(f"Failed to load extensions: {e}")
 
-    def _save_access_registry(self):
+    def _save_access_registry(self) -> None:
         """Save access registry."""
         try:
             data = {username: access.to_dict() for username, access in self.access_grants.items()}
@@ -224,7 +224,7 @@ class TempAccessManager:
         except Exception as e:
             self.logger.error(f"Failed to save access registry: {e}")
 
-    def _save_extensions(self):
+    def _save_extensions(self) -> None:
         """Save extension requests."""
         try:
             data = {request_id: ext.to_dict() for request_id, ext in self.extensions.items()}
@@ -239,7 +239,7 @@ class TempAccessManager:
         except Exception as e:
             self.logger.error(f"Failed to save extensions: {e}")
 
-    def _access_from_dict(self, data: Dict) -> TempAccess:
+    def _access_from_dict(self, data: Dict[str, Any]) -> TempAccess:
         """Deserialize TempAccess from dictionary."""
         return TempAccess(
             access_id=data["access_id"],
@@ -259,7 +259,7 @@ class TempAccessManager:
             revoked_by=data.get("revoked_by"),
         )
 
-    def _extension_from_dict(self, data: Dict) -> ExtensionRequest:
+    def _extension_from_dict(self, data: Dict[str, Any]) -> ExtensionRequest:
         """Deserialize ExtensionRequest from dictionary."""
         return ExtensionRequest(
             request_id=data["request_id"],
@@ -349,7 +349,7 @@ class TempAccessManager:
 
         return access
 
-    def _set_account_expiration(self, username: str, expires_at: datetime):
+    def _set_account_expiration(self, username: str, expires_at: datetime) -> None:
         """Set account expiration at OS level."""
         try:
             # Format date for chage command (YYYY-MM-DD)
@@ -430,7 +430,7 @@ class TempAccessManager:
 
         return True
 
-    def _disable_account(self, username: str):
+    def _disable_account(self, username: str) -> None:
         """Disable user account."""
         try:
             subprocess.run(
@@ -572,7 +572,7 @@ class TempAccessManager:
         """Get pending extension requests."""
         return [e for e in self.extensions.values() if e.status == ExtensionStatus.PENDING]
 
-    def _audit_log(self, action: str, **details):
+    def _audit_log(self, action: str, **details: Any) -> None:
         """Log temporary access action."""
         log_entry = {"timestamp": datetime.now().isoformat(), "action": action, **details}
 

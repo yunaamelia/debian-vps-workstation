@@ -461,7 +461,14 @@ class ConfigurationModule(ABC):
 
                 try:
                     # Execute through circuit breaker
-                    result = breaker.call(_install)
+                    from configurator.utils.command import CommandResult
+
+                    result_any = breaker.call(_install)
+                    if isinstance(result_any, CommandResult):
+                        result = result_any
+                    else:
+                        # Should not happen given _install returns CommandResult
+                        raise ModuleExecutionError("APT install returned unexpected type", "", "")
                 except CircuitBreakerError as e:
                     self.logger.debug(f"Circuit breaker open for apt: {e}")
 

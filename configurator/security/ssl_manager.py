@@ -17,7 +17,7 @@ import os
 import subprocess
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -38,7 +38,7 @@ class SSLManager:
     Manages certificate lifecycle using Let's Encrypt or self-signed certs.
     """
 
-    def __init__(self, config: dict, logger: logging.Logger):
+    def __init__(self, config: Dict[str, Any], logger: logging.Logger):
         """
         Initialize SSL manager.
 
@@ -292,7 +292,7 @@ class SSLManager:
             self.logger.error(f"Auto-renewal setup error: {e}", exc_info=True)
             return False
 
-    def _load_certificates(self):
+    def _load_certificates(self) -> None:
         """Load information about installed certificates."""
 
         try:

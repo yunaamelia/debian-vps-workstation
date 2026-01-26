@@ -18,7 +18,7 @@ class LazyLoader:
     or the object is called.
     """
 
-    def __init__(self, module_name: str, import_object: Optional[str] = None):
+    def __init__(self, module_name: str, import_object: Optional[str] = None) -> None:
         """
         Initialize the lazy loader.
 
@@ -58,7 +58,7 @@ class LazyLoader:
         obj = self._load()
         return getattr(obj, name)
 
-    def __call__(self, *args, **kwargs) -> Any:
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         """Proxy call to the underlying object."""
         obj = self._load()
         return obj(*args, **kwargs)
@@ -81,7 +81,7 @@ class LazyModule:
     Helper for lazily registering modules in the module registry.
     """
 
-    def __init__(self, module_path: str, class_name: str):
+    def __init__(self, module_path: str, class_name: str) -> None:
         self.module_path = module_path
         self.class_name = class_name
         self._loader = LazyLoader(module_path, class_name)
@@ -89,11 +89,17 @@ class LazyModule:
     def __getattr__(self, name: str) -> Any:
         return getattr(self._loader, name)
 
-    def __call__(self, *args, **kwargs) -> Any:
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
         return self._loader(*args, **kwargs)
 
     @classmethod
-    def register_lazy(cls, registry: dict, key: str, module_path: str, class_name: str):
+    def register_lazy(
+        cls,
+        registry: dict[str, Any],
+        key: str,
+        module_path: str,
+        class_name: str,
+    ) -> None:
         """
         Register a lazy module in a dictionary registry.
 

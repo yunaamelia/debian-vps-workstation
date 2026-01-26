@@ -68,7 +68,7 @@ class PluginLoader:
             List of discovered plugins
         """
         plugins: List[LoadedPlugin] = []
-        seen_names: set = set()
+        seen_names: set[str] = set()
 
         all_dirs = self.PLUGIN_DIRS + self._extra_dirs
 

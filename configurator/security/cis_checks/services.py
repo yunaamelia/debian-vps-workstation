@@ -1,10 +1,18 @@
-from typing import List
+from typing import Callable, List
 
 from configurator.security.cis_checks.utils import (
     check_package_removed,
     remediate_remove_package,
 )
-from configurator.security.cis_scanner import CISCheck, Severity
+from configurator.security.cis_scanner import CheckResult, CISCheck, Severity
+
+
+def _create_check_func(pkg: str) -> Callable[[], CheckResult]:
+    return lambda: check_package_removed(pkg)
+
+
+def _create_remediate_func(pkg: str) -> Callable[[], bool]:
+    return lambda: remediate_remove_package(pkg)
 
 
 def get_checks() -> List[CISCheck]:
@@ -26,8 +34,8 @@ def get_checks() -> List[CISCheck]:
                 rationale="Legacy super-server.",
                 severity=Severity.HIGH,
                 category="Services",
-                check_function=lambda p=pkg: check_package_removed(p),
-                remediation_function=lambda p=pkg: remediate_remove_package(p),
+                check_function=_create_check_func(pkg),
+                remediation_function=_create_remediate_func(pkg),
             )
         )
 
@@ -63,8 +71,8 @@ def get_checks() -> List[CISCheck]:
                 rationale="Reduce attack surface.",
                 severity=severity,
                 category="Services",
-                check_function=lambda p=pkg: check_package_removed(p),
-                remediation_function=lambda p=pkg: remediate_remove_package(p),
+                check_function=_create_check_func(pkg),
+                remediation_function=_create_remediate_func(pkg),
             )
         )
 

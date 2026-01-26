@@ -34,7 +34,7 @@ class ErrorFormatter:
         else:
             self._format_generic_error(error, show_traceback)
 
-    def _format_configurator_error(self, error: ConfiguratorError):
+    def _format_configurator_error(self, error: ConfiguratorError) -> None:
         """Format ConfiguratorError with WHAT/WHY/HOW structure."""
         # Build error panel
         content = []
@@ -74,7 +74,7 @@ class ErrorFormatter:
         )
         self.console.print()
 
-    def _format_generic_error(self, error: Exception, show_traceback: bool):
+    def _format_generic_error(self, error: Exception, show_traceback: bool) -> None:
         """Format generic Python exception."""
         error_type = type(error).__name__
         error_msg = str(error)
@@ -99,7 +99,7 @@ class ErrorFormatter:
 
         self.console.print()
 
-    def format_with_suggestions(self, error: Exception, suggestions: List[str]):
+    def format_with_suggestions(self, error: Exception, suggestions: List[str]) -> None:
         """Format error with actionable suggestions."""
         self.format_error(error)
 

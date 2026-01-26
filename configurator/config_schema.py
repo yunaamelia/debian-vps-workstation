@@ -12,7 +12,7 @@ class SystemConfig(BaseModel):
 
     @field_validator("hostname")
     @classmethod
-    def validate_hostname(cls, v):
+    def validate_hostname(cls, v: str) -> str:
         import re
 
         if not re.match(r"^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?$", v):
@@ -48,7 +48,7 @@ class SecurityConfig(BaseModel):
 
     @field_validator("enabled")
     @classmethod
-    def security_must_be_enabled(cls, v):
+    def security_must_be_enabled(cls, v: bool) -> bool:
         if not v:
             raise ValueError("Security module cannot be disabled")
         return v

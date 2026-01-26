@@ -6,7 +6,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 
 class Severity(Enum):
@@ -43,12 +43,12 @@ class CISCheck:
     scored: bool = True  # Counts toward score?
     level: int = 1  # Level 1 or 2 (1 = essential, 2 = defense-in-depth)
     category: str = "General"  # Category (Services, Network, etc.)
-    check_function: Optional[Callable] = None  # Function to check compliance
-    remediation_function: Optional[Callable] = None  # Function to auto-fix
+    check_function: Optional[Callable[[], Any]] = None  # Function to check compliance
+    remediation_function: Optional[Callable[[], bool]] = None  # Function to auto-fix
     manual: bool = False  # Requires manual verification?
     references: List[str] = field(default_factory=list)  # URLs, CVEs, etc.
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate check definition"""
         if self.check_function is None and not self.manual:
             raise ValueError(f"Check {self.id} must have check_function or be marked manual")
@@ -61,11 +61,11 @@ class CheckResult:
     check: Optional[CISCheck]
     status: Status
     message: str
-    details: Dict = field(default_factory=dict)
+    details: Dict[str, Any] = field(default_factory=dict)
     timestamp: datetime = field(default_factory=datetime.now)
     remediation_available: bool = False
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Serialize to dictionary"""
         if self.check:
             return {
@@ -106,7 +106,7 @@ class ScanReport:
     score: float  # 0-100
     duration_seconds: float
 
-    def get_summary(self) -> Dict:
+    def get_summary(self) -> Dict[str, Any]:
         """Get summary statistics"""
         # Filter valid results first
         valid_results = [r for r in self.results if r.check is not None]
@@ -188,7 +188,7 @@ class CISBenchmarkScanner:
         # auto-discovery logic to be called.
         self._register_checks()
 
-    def _register_checks(self):
+    def _register_checks(self) -> None:
         """
         Register all CIS benchmark checks.
         This method is intended to populate self.checks.
@@ -304,7 +304,7 @@ class CISBenchmarkScanner:
 
         return report
 
-    def remediate(self, report: ScanReport, auto_only: bool = True) -> Dict:
+    def remediate(self, report: ScanReport, auto_only: bool = True) -> Dict[str, Any]:
         """
         Auto-remediate failed checks.
 

@@ -1,4 +1,4 @@
-def run_benchmark():
+def run_benchmark() -> None:
     print("Performance Benchmark Results:")
     print("=============================")
     print("\nInstallation Speed:")

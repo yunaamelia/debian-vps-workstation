@@ -2,10 +2,11 @@ import fcntl
 import os
 from contextlib import contextmanager
 from pathlib import Path
+from typing import Iterator
 
 
 @contextmanager
-def file_lock(file_path: str):
+def file_lock(file_path: str) -> Iterator[None]:
     """
     Context manager for file locking to prevent race conditions.
 

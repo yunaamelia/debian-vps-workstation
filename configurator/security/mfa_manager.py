@@ -16,7 +16,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     import pyotp
@@ -72,7 +72,7 @@ class MFAConfig:
     failed_attempts: int = 0
     status: MFAStatus = MFAStatus.PENDING
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Serialize to dictionary."""
         return {
             "user": self.user,
@@ -87,7 +87,7 @@ class MFAConfig:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "MFAConfig":
+    def from_dict(cls, data: Dict[str, Any]) -> "MFAConfig":
         """Deserialize from dictionary."""
         return cls(
             user=data["user"],
@@ -514,7 +514,7 @@ class MFAManager:
         """List users with MFA configured."""
         return list(self._configs.keys())
 
-    def get_summary(self) -> Dict:
+    def get_summary(self) -> Dict[str, int]:
         """Get MFA summary statistics."""
         total = len(self._configs)
         enabled = sum(1 for c in self._configs.values() if c.enabled)

@@ -76,7 +76,7 @@ class UserProfile:
     last_login: Optional[datetime] = None
     login_count: int = 0
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Serialize to dictionary."""
         return {
             "username": self.username,
@@ -150,7 +150,7 @@ class UserLifecycleManager:
         self._load_user_registry()
         self._init_integrated_managers()
 
-    def _ensure_directories(self):
+    def _ensure_directories(self) -> None:
         """Ensure required directories exist."""
         try:
             self.USER_REGISTRY_FILE.parent.mkdir(parents=True, exist_ok=True, mode=0o755)
@@ -159,7 +159,7 @@ class UserLifecycleManager:
         except PermissionError:
             self.logger.debug("No permission to create directories; will use temp")
 
-    def _init_integrated_managers(self):
+    def _init_integrated_managers(self) -> None:
         """Initialize integrated security/RBAC managers."""
         try:
             from configurator.rbac.rbac_manager import RBACManager
@@ -175,7 +175,7 @@ class UserLifecycleManager:
         # MFA manager not implemented yet
         self.mfa_manager = None
 
-    def _load_user_registry(self):
+    def _load_user_registry(self) -> None:
         """Load user registry from JSON."""
         self.users: Dict[str, UserProfile] = {}
 
@@ -191,7 +191,7 @@ class UserLifecycleManager:
             except Exception as e:
                 self.logger.error(f"Failed to load user registry: {e}")
 
-    def _save_user_registry(self):
+    def _save_user_registry(self) -> None:
         """Save user registry to JSON."""
         try:
             data = {username: profile.to_dict() for username, profile in self.users.items()}
@@ -203,7 +203,7 @@ class UserLifecycleManager:
         except Exception as e:
             self.logger.error(f"Failed to save user registry: {e}")
 
-    def _profile_from_dict(self, data: Dict) -> UserProfile:
+    def _profile_from_dict(self, data: Dict[str, Any]) -> UserProfile:
         """Deserialize UserProfile from dictionary."""
         return UserProfile(
             username=data["username"],
@@ -438,7 +438,7 @@ class UserLifecycleManager:
             self.logger.error(f"Failed to create user: {e.stderr}")
             raise RuntimeError(f"User creation failed: {e.stderr}")
 
-    def _setup_home_directory(self, username: str, home_dir: Path):
+    def _setup_home_directory(self, username: str, home_dir: Path) -> None:
         """Setup user home directory with proper permissions."""
         try:
             user_info = pwd.getpwnam(username)
@@ -461,7 +461,7 @@ class UserLifecycleManager:
         except Exception as e:
             self.logger.error(f"Failed to setup home directory: {e}")
 
-    def _add_user_to_group(self, username: str, group: str):
+    def _add_user_to_group(self, username: str, group: str) -> None:
         """Add user to a system group."""
         try:
             # Check if group exists
@@ -479,7 +479,7 @@ class UserLifecycleManager:
         except subprocess.CalledProcessError as e:
             self.logger.error(f"Failed to add user to group: {e}")
 
-    def _inject_ssh_key(self, username: str, key_string: str, home_dir: Path):
+    def _inject_ssh_key(self, username: str, key_string: str, home_dir: Path) -> None:
         """Inject public SSH key for user."""
         try:
             ssh_dir = home_dir / ".ssh"
@@ -503,7 +503,7 @@ class UserLifecycleManager:
         except Exception as e:
             self.logger.error(f"Failed to inject SSH key: {e}")
 
-    def _configure_sudo_timeout(self, username: str, timeout: int):
+    def _configure_sudo_timeout(self, username: str, timeout: int) -> None:
         """Configure custom sudo timeout for user."""
         try:
             # Create sudoers snippet
@@ -526,7 +526,7 @@ class UserLifecycleManager:
         password = "".join(secrets.choice(alphabet) for _ in range(16))
         return password
 
-    def _set_user_password(self, username: str, password: str, force_change: bool = True):
+    def _set_user_password(self, username: str, password: str, force_change: bool = True) -> None:
         """Set user password."""
         try:
             # Set password using chpasswd
@@ -664,7 +664,7 @@ class UserLifecycleManager:
 
         return True
 
-    def _disable_system_user(self, username: str):
+    def _disable_system_user(self, username: str) -> None:
         """Disable system user account."""
         try:
             # Lock account
@@ -679,7 +679,7 @@ class UserLifecycleManager:
             self.logger.error(f"Failed to disable user: {e}")
             raise
 
-    def _remove_user_from_all_groups(self, username: str):
+    def _remove_user_from_all_groups(self, username: str) -> None:
         """Remove user from all supplementary groups."""
         try:
             # Get current groups
@@ -833,7 +833,7 @@ class UserLifecycleManager:
         username: str,
         performed_by: str,
         details: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         """Log lifecycle event for audit."""
         log_entry = {
             "timestamp": datetime.now().isoformat(),

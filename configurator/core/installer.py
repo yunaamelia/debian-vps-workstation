@@ -110,9 +110,9 @@ class Installer:
         # Register validators
         self._register_validators()
 
-    def _register_services(self):
+    def _register_services(self) -> None:
         """Register core services in container."""
-        services = {
+        services: Dict[str, Any] = {
             "config": lambda: self.config,
             "logger": lambda: self.logger,
             "reporter": lambda: self.reporter,
@@ -128,7 +128,7 @@ class Installer:
         for name, factory in services.items():
             self.container.singleton(name, factory)
 
-    def _register_validators(self):
+    def _register_validators(self) -> None:
         """Register validators in orchestrator."""
         try:
             from configurator.validators.tier1_critical.os_version import OSVersionValidator
@@ -151,7 +151,7 @@ class Installer:
         except Exception as e:
             self.logger.warning(f"Failed to register validators: {e}")
 
-    def _register_modules(self):
+    def _register_modules(self) -> None:
         """Register all available modules."""
         # Helper for lazy loading to verify class existence and typing without runtime impact
         # We perform runtime imports here to strictly control loading order and avoid circularity
@@ -370,7 +370,7 @@ class Installer:
             # 4. Execute Batches
             execution_results = {}
 
-            def execution_callback(module_name: str, stage: str, data: Dict):
+            def execution_callback(module_name: str, stage: str, data: Dict[str, Any]) -> None:
                 """Bridge between Executor, Hooks, and Reporter."""
                 context = HookContext(
                     event=HookEvent.BEFORE_MODULE_CONFIGURE, module_name=module_name, data=data

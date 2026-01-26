@@ -15,7 +15,7 @@ class InputPrompt(PromptBase):
         console: Optional[Console] = None,
         validator: Optional[Callable[[str], bool]] = None,
         password: bool = False,
-    ):
+    ) -> None:
         super().__init__(message, default, console)
         self.validator_func = validator
         self.password = password
@@ -49,7 +49,9 @@ class InputPrompt(PromptBase):
 class PasswordPrompt(InputPrompt):
     """Secure password input prompt."""
 
-    def __init__(self, message: str, console: Optional[Console] = None, confirm: bool = False):
+    def __init__(
+        self, message: str, console: Optional[Console] = None, confirm: bool = False
+    ) -> None:
         super().__init__(message, None, console, password=True)
         self.confirm = confirm
 
@@ -81,7 +83,7 @@ class NumberPrompt(InputPrompt):
         min_value: Optional[int] = None,
         max_value: Optional[int] = None,
         console: Optional[Console] = None,
-    ):
+    ) -> None:
         default_str = str(default) if default is not None else None
         super().__init__(message, default_str, console)
         self.min_value = min_value

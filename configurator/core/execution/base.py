@@ -10,7 +10,7 @@ class ExecutionContext:
 
     module_name: str
     module_instance: Any  # Typed as 'ConfigurationModule' in actual usage, but Any here to avoid circular imports
-    config: Dict
+    config: Dict[str, Any]
     dry_run: bool = False
     force: bool = False
     priority: int = 50
@@ -41,7 +41,9 @@ class ExecutorInterface(ABC):
 
     @abstractmethod
     def execute(
-        self, contexts: List[ExecutionContext], callback: Optional[Callable] = None
+        self,
+        contexts: List[ExecutionContext],
+        callback: Optional[Callable[..., Any]] = None,
     ) -> Dict[str, ExecutionResult]:
         """
         Execute modules.

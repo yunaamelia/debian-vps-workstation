@@ -5,7 +5,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Static
 
 
-class WelcomeScreen(Screen):
+class WelcomeScreen(Screen[None]):
     """Welcome screen for configuration wizard."""
 
     CSS = """

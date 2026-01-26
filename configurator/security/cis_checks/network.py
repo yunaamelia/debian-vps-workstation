@@ -1,7 +1,15 @@
-from typing import List
+from typing import Callable, List
 
 from configurator.security.cis_checks.utils import check_sysctl_param, remediate_sysctl_param
-from configurator.security.cis_scanner import CISCheck, Severity
+from configurator.security.cis_scanner import CheckResult, CISCheck, Severity
+
+
+def _create_sysctl_check(param: str, value: str) -> Callable[[], CheckResult]:
+    return lambda: check_sysctl_param(param, value)
+
+
+def _create_sysctl_remediate(param: str, value: str) -> Callable[[], bool]:
+    return lambda: remediate_sysctl_param(param, value)
 
 
 def get_checks() -> List[CISCheck]:
@@ -130,8 +138,8 @@ def get_checks() -> List[CISCheck]:
                 rationale="Network hardening.",
                 severity=sev,
                 category="Network",
-                check_function=lambda p=param, v=val: check_sysctl_param(p, v),
-                remediation_function=lambda p=param, v=val: remediate_sysctl_param(p, v),
+                check_function=_create_sysctl_check(param, val),
+                remediation_function=_create_sysctl_remediate(param, val),
             )
         )
 

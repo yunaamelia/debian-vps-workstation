@@ -10,7 +10,7 @@ import sqlite3
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 from configurator.core.state.models import (
     InstallationState,
@@ -28,11 +28,13 @@ class StateManager:
     - Checkpoint creation and restore
     - Resume capability after crashes
     - Installation history
+
+    db_path: Union[Path, str]
     """
 
     def __init__(
         self,
-        db_path: Optional[Path] = None,
+        db_path: Optional[Union[Path, str]] = None,
         logger: Optional[logging.Logger] = None,
     ):
         """
@@ -46,6 +48,7 @@ class StateManager:
         self.logger = logger or logging.getLogger(__name__)
 
         # Determine database path
+        self.db_path: Union[Path, str]
         if db_path is None:
             # Try /var/lib first (requires root)
             default_path = Path("/var/lib/debian-vps-configurator/state.db")
@@ -327,7 +330,7 @@ class StateManager:
                 """
             )
             row = cursor.fetchone()
-            return row["count"] > 0
+            return int(row["count"]) > 0
 
     def resume_installation(self) -> Optional[InstallationState]:
         """

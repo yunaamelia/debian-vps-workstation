@@ -11,7 +11,7 @@ import pwd
 import subprocess
 from dataclasses import dataclass
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -34,7 +34,7 @@ class SSHManagerWrapper:
     Manages SSH keys and hardens SSH daemon configuration.
     """
 
-    def __init__(self, config: dict, logger: logging.Logger):
+    def __init__(self, config: Dict[str, Any], logger: logging.Logger):
         """
         Initialize SSH manager.
 

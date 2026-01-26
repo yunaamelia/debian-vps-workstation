@@ -10,7 +10,7 @@ import os
 import secrets
 import subprocess
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Any, Dict, List
 
 
 @dataclass
@@ -30,7 +30,7 @@ class MFAManagerWrapper:
     Manages MFA setup and enforcement via PAM.
     """
 
-    def __init__(self, config: dict, logger: logging.Logger):
+    def __init__(self, config: Dict[str, Any], logger: logging.Logger):
         """
         Initialize MFA manager.
 

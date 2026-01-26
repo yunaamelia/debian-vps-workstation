@@ -31,10 +31,8 @@ class HookPriority(Enum):
     LOW = 75
     LAST = 100
 
-    def __lt__(self, other):
-        if isinstance(other, HookPriority):
-            return self.value < other.value
-        return NotImplemented
+    def __lt__(self, other: "HookPriority") -> bool:
+        return self.value < other.value
 
 
 @dataclass

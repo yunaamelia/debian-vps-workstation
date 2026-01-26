@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from configurator.core.execution.base import ExecutionContext, ExecutionResult, ExecutorInterface
 from configurator.core.execution.parallel import ParallelExecutor
@@ -15,7 +15,7 @@ class HybridExecutor(ExecutorInterface):
     - PipelineExecutor: For large sequential modules
     """
 
-    def __init__(self, max_workers: int = 4, logger: Optional[logging.Logger] = None):
+    def __init__(self, max_workers: int = 4, logger: Optional[logging.Logger] = None) -> None:
         self.logger = logger or logging.getLogger(__name__)
 
         # Initialize sub-executors
@@ -30,7 +30,9 @@ class HybridExecutor(ExecutorInterface):
         return True
 
     def execute(
-        self, contexts: List[ExecutionContext], callback: Optional[Callable] = None
+        self,
+        contexts: List[ExecutionContext],
+        callback: Optional[Callable[..., Any]] = None,
     ) -> Dict[str, ExecutionResult]:
         """
         Execute modules using optimal strategy.

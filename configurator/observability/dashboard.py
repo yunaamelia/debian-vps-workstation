@@ -27,7 +27,7 @@ class InstallationDashboard:
     Requires Rich library for display.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize dashboard."""
         if not RICH_AVAILABLE:
             raise ImportError("Rich library required for dashboard")
@@ -42,7 +42,7 @@ class InstallationDashboard:
         self.metrics: Dict[str, float] = {}
         self.start_time = time.time()
 
-    def start(self):
+    def start(self) -> None:
         """Start the dashboard."""
         # Create layout
         self.layout.split(
@@ -57,7 +57,7 @@ class InstallationDashboard:
         self.live = Live(self.layout, console=self.console, refresh_per_second=2)
         self.live.start()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the dashboard."""
         if self.live:
             self.live.stop()
@@ -68,7 +68,7 @@ class InstallationDashboard:
         status: str,
         progress: int = 0,
         duration: Optional[float] = None,
-    ):
+    ) -> None:
         """
         Update module status.
 
@@ -86,7 +86,7 @@ class InstallationDashboard:
         }
         self._refresh()
 
-    def update_circuit_breaker(self, name: str, state: str, failures: int):
+    def update_circuit_breaker(self, name: str, state: str, failures: int) -> None:
         """Update circuit breaker status."""
         self.circuit_breakers[name] = {
             "state": state,
@@ -95,12 +95,12 @@ class InstallationDashboard:
         }
         self._refresh()
 
-    def update_metric(self, name: str, value: float):
+    def update_metric(self, name: str, value: float) -> None:
         """Update metric value."""
         self.metrics[name] = value
         self._refresh()
 
-    def _refresh(self):
+    def _refresh(self) -> None:
         """Refresh the dashboard display."""
         if not self.live:
             return
@@ -202,15 +202,15 @@ class SimpleProgressReporter:
     Uses plain text output.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize reporter."""
         self.modules: Dict[str, str] = {}
 
-    def start(self):
+    def start(self) -> None:
         """Start reporting (no-op)."""
         print("\n=== Installation Progress ===\n")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop reporting (no-op)."""
         print("\n=== Installation Complete ===\n")
 
@@ -220,7 +220,7 @@ class SimpleProgressReporter:
         status: str,
         progress: int = 0,
         duration: Optional[float] = None,
-    ):
+    ) -> None:
         """Update module status."""
         prev_status = self.modules.get(name)
 
@@ -241,10 +241,10 @@ class SimpleProgressReporter:
 
     def update_circuit_breaker(
         self, name: str, state: str, failure_count: int = 0, failures: Optional[int] = None
-    ):
+    ) -> None:
         """Update circuit breaker (no-op for simple reporter)."""
         pass
 
-    def update_metric(self, name: str, value: float):
+    def update_metric(self, name: str, value: float) -> None:
         """Update metric (no-op for simple reporter)."""
         pass

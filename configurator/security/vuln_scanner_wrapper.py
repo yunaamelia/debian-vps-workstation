@@ -13,7 +13,7 @@ import subprocess
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -37,7 +37,7 @@ class VulnScannerWrapper:
     Integrates Trivy and Lynis for vulnerability scanning.
     """
 
-    def __init__(self, config: dict, logger: logging.Logger):
+    def __init__(self, config: Dict[str, Any], logger: logging.Logger):
         """
         Initialize vulnerability scanner.
 
@@ -225,7 +225,7 @@ apt-get -o Dpkg::Lock::Timeout=300 install -y trivy
             self.logger.warning(f"Vulnerability scan failed (non-blocking): {e}")
             return False
 
-    def _update_vulnerability_db(self):
+    def _update_vulnerability_db(self) -> None:
         """Update vulnerability databases."""
         self.logger.info("Updating vulnerability databases...")
 
@@ -286,7 +286,7 @@ apt-get -o Dpkg::Lock::Timeout=300 install -y trivy
             self.logger.warning(f"Trivy scan error (non-blocking): {e}")
             return False
 
-    def _parse_trivy_results(self, data: dict):
+    def _parse_trivy_results(self, data: Dict[str, Any]) -> None:
         """Parse Trivy JSON output and extract vulnerabilities."""
 
         try:
@@ -348,7 +348,7 @@ apt-get -o Dpkg::Lock::Timeout=300 install -y trivy
             self.logger.error(f"Lynis scan error: {e}", exc_info=True)
             return False
 
-    def _parse_lynis_results(self, output: str):
+    def _parse_lynis_results(self, output: str) -> None:
         """Parse Lynis output for warnings and suggestions."""
 
         try:
@@ -370,7 +370,7 @@ apt-get -o Dpkg::Lock::Timeout=300 install -y trivy
         except Exception as e:
             self.logger.error(f"Error parsing Lynis results: {e}", exc_info=True)
 
-    def _generate_report(self):
+    def _generate_report(self) -> None:
         """Generate JSON report of vulnerabilities."""
 
         try:

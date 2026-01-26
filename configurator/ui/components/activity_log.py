@@ -16,7 +16,7 @@ class ActivityLog(Static):
     def compose(self) -> ComposeResult:
         yield Log(highlight=True, id="log-view")
 
-    def add_line(self, line: str):
+    def add_line(self, line: str) -> None:
         try:
             log = self.query_one("#log-view", Log)
             log.write_line(line)

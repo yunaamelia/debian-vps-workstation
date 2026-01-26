@@ -12,7 +12,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, Dict, List, Optional, cast
 
 from configurator.utils.circuit_breaker import CircuitBreaker, CircuitBreakerError
 
@@ -76,8 +76,11 @@ class NetworkOperationWrapper:
     """
 
     def __init__(
-        self, config: dict, logger: logging.Logger, retry_config: Optional[RetryConfig] = None
-    ):
+        self,
+        config: Dict[str, Any],
+        logger: logging.Logger,
+        retry_config: Optional[RetryConfig] = None,
+    ) -> None:
         """
         Initialize network wrapper.
 
@@ -97,7 +100,7 @@ class NetworkOperationWrapper:
         timeout = cb_config.get("timeout", 60)
 
         # Create circuit breakers for different services
-        self.circuit_breakers = {}
+        self.circuit_breakers: Dict[str, CircuitBreaker] = {}
         if self.cb_enabled:
             services = [
                 "apt_repository",
@@ -156,7 +159,11 @@ class NetworkOperationWrapper:
         return delay
 
     def execute_with_retry(
-        self, operation: Callable, operation_type: NetworkOperationType, *args, **kwargs
+        self,
+        operation: Callable[..., Any],
+        operation_type: NetworkOperationType,
+        *args: Any,
+        **kwargs: Any,
     ) -> Any:
         """
         Execute operation with retry logic and circuit breaker.
@@ -225,7 +232,7 @@ class NetworkOperationWrapper:
         """
         self.logger.info("Updating APT package lists (with retry protection)...")
 
-        def apt_update():
+        def apt_update() -> bool:
             result = subprocess.run(
                 ["apt-get", "update"],
                 capture_output=True,
@@ -265,7 +272,7 @@ class NetworkOperationWrapper:
         self.logger.info(f"Installing packages: {', '.join(packages)}")
         self.logger.info("This may take several minutes for large packages (e.g., xfce4)...")
 
-        def apt_install():
+        def apt_install() -> bool:
             # Use -q instead of -qq to show progress, and add --show-progress for visual feedback
             # This ensures output is generated during long installations
             cmd = ["apt-get", "install", "-y", "-q", "--show-progress"] + packages
@@ -326,7 +333,7 @@ class NetworkOperationWrapper:
 
         self.logger.info(f"Downloading: {url}")
 
-        def download():
+        def download() -> Path:
             cmd = ["curl", "-fsSL"]
             if not verify_ssl:
                 cmd.append("--insecure")
@@ -350,7 +357,10 @@ class NetworkOperationWrapper:
             return dest_path
 
         try:
-            return self.execute_with_retry(download, NetworkOperationType.CURL_DOWNLOAD)
+            return cast(
+                Optional[Path],
+                self.execute_with_retry(download, NetworkOperationType.CURL_DOWNLOAD),
+            )
 
         except Exception as e:
             self.logger.error(f"❌ Download failed: {e}")
@@ -375,7 +385,7 @@ class NetworkOperationWrapper:
 
         self.logger.info(f"Cloning: {url}")
 
-        def git_clone():
+        def git_clone() -> bool:
             cmd = ["git", "clone"]
 
             if depth:
@@ -435,7 +445,7 @@ class NetworkOperationWrapper:
         self.logger.warning("⚠️  Internet connectivity check failed")
         return False
 
-    def get_circuit_breaker_status(self) -> dict:
+    def get_circuit_breaker_status(self) -> Dict[str, Dict[str, Any]]:
         """
         Get status of all circuit breakers.
 

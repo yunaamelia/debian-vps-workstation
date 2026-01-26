@@ -7,7 +7,7 @@ from textual.widgets import Footer, Header, Label
 from configurator.ui.components import ActivityLog, ModuleCard, OverallProgress, ResourceGauge
 
 
-class InstallationDashboard(App):
+class InstallationDashboard(App[None]):
     """Full-screen installation dashboard."""
 
     CSS = """
@@ -68,7 +68,7 @@ class InstallationDashboard(App):
 
         yield Footer()
 
-    def add_module(self, module_name: str):
+    def add_module(self, module_name: str) -> None:
         """Add module card to dashboard."""
         card = ModuleCard(id=f"card-{module_name}")
         card.module_name = module_name
@@ -81,7 +81,7 @@ class InstallationDashboard(App):
 
     def update_module(
         self, module_name: str, status: Optional[str] = None, progress: Optional[int] = None
-    ):
+    ) -> None:
         """Update module status."""
         try:
             card = self.query_one(f"#card-{module_name}", ModuleCard)
@@ -92,7 +92,7 @@ class InstallationDashboard(App):
         except Exception:
             pass
 
-    def update_overall(self, percent: int):
+    def update_overall(self, percent: int) -> None:
         """Update overall progress."""
         try:
             widget = self.query_one("#overall-widget", OverallProgress)
@@ -100,7 +100,7 @@ class InstallationDashboard(App):
         except Exception:
             pass
 
-    def log_to_widget(self, message: str):
+    def log_to_widget(self, message: str) -> None:
         """Add log message."""
         try:
             widget = self.query_one("#log-widget", ActivityLog)
@@ -108,6 +108,6 @@ class InstallationDashboard(App):
         except Exception:
             pass
 
-    def action_quit(self):
+    async def action_quit(self) -> None:
         """Quit the application."""
         self.exit()

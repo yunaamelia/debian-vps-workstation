@@ -9,7 +9,7 @@ Handles:
 """
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
 import yaml
 
@@ -254,7 +254,7 @@ class ConfigManager:
         try:
             with open(path, "r", encoding="utf-8") as f:
                 data = yaml.safe_load(f)
-                return data if data else {}
+                return cast(Dict[str, Any], data) if data else {}
         except yaml.YAMLError as e:
             raise ConfigurationError(
                 what=f"Invalid YAML in {path}",
@@ -268,7 +268,7 @@ class ConfigManager:
 
     def _deep_merge(self, base: Dict[str, Any], override: Dict[str, Any]) -> Dict[str, Any]:
         """Deep merge two dictionaries."""
-        result = self._deep_copy(base)
+        result: Dict[str, Any] = cast(Dict[str, Any], self._deep_copy(base))
 
         for key, value in override.items():
             if key in result and isinstance(result[key], dict) and isinstance(value, dict):
@@ -370,8 +370,8 @@ class ConfigManager:
 
         # Check for explicit module override list (e.g. from CLI)
         explicit_modules = self.get("modules.enabled")
-        if explicit_modules:
-            return explicit_modules
+        if isinstance(explicit_modules, list):
+            return cast(List[str], explicit_modules)
 
         # Always include mandatory modules
         enabled.extend(["system", "security"])

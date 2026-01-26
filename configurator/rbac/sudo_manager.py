@@ -8,7 +8,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
+
+if TYPE_CHECKING:
+    pass
 
 
 class PasswordRequirement(Enum):
@@ -183,7 +186,7 @@ class SudoPolicyManager:
         self._load_policies()
         self._init_rbac_integration()
 
-    def _ensure_directories(self):
+    def _ensure_directories(self) -> None:
         """Ensure required directories exist."""
         try:
             self.POLICY_DIR.mkdir(parents=True, exist_ok=True, mode=0o755)
@@ -194,7 +197,7 @@ class SudoPolicyManager:
         except PermissionError:
             self.logger.debug("No permission to create directories; will use temp")
 
-    def _init_rbac_integration(self):
+    def _init_rbac_integration(self) -> None:
         """Initialize RBAC integration."""
         try:
             from configurator.rbac.rbac_manager import RBACManager
@@ -204,12 +207,12 @@ class SudoPolicyManager:
             self.logger.warning(f"RBAC manager not available: {e}")
             self.rbac_manager = None
 
-    def _load_policies(self):
+    def _load_policies(self) -> None:
         """Load sudo policies from configuration."""
         self.policies: Dict[str, SudoPolicy] = {}
         self._load_default_policies()
 
-    def _load_default_policies(self):
+    def _load_default_policies(self) -> None:
         """Load default sudo policies for standard roles."""
 
         # Developer policy
@@ -460,7 +463,7 @@ class SudoPolicyManager:
             self.logger.error(f"Validation error: {e}")
             return False
 
-    def test_command(self, username: str, command: str) -> Dict:
+    def test_command(self, username: str, command: str) -> Dict[str, Any]:
         """
         Test if a command is allowed for user.
 
@@ -559,7 +562,7 @@ class SudoPolicyManager:
             self.logger.info(f"No sudo file to remove for {username}")
             return False
 
-    def _audit_log(self, action: str, username: str, **details):
+    def _audit_log(self, action: str, username: str, **details: Any) -> None:
         """Log sudo policy action."""
         log_entry = {
             "timestamp": datetime.now().isoformat(),

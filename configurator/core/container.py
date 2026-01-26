@@ -41,12 +41,12 @@ class Container:
         config = container.get('config')
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._services: Dict[str, Any] = {}
         self._singletons: Dict[str, Callable[[], Any]] = {}
         self._factories: Dict[str, Callable[["Container"], Any]] = {}
         self._instances: Dict[str, Any] = {}
-        self._resolving: set = set()
+        self._resolving: set[str] = set()
 
     def singleton(self, name: str, factory: Callable[..., Any]) -> None:
         """
@@ -90,7 +90,7 @@ class Container:
         """Check if a service is registered."""
         return name in self._singletons or name in self._factories or name in self._instances
 
-    def get(self, name: str, **kwargs) -> Any:
+    def get(self, name: str, **kwargs: Any) -> Any:
         """
         Resolve a service by name.
 
@@ -140,11 +140,11 @@ class Container:
         finally:
             self._resolving.remove(name)
 
-    def make(self, name: str, **kwargs) -> Any:
+    def make(self, name: str, **kwargs: Any) -> Any:
         """Alias for get() to match common DI patterns."""
         return self.get(name, **kwargs)
 
-    def _is_factory_expecting_container(self, func: Callable) -> bool:
+    def _is_factory_expecting_container(self, func: Callable[..., Any]) -> bool:
         """Check if the factory function expects an argument (the container)."""
         try:
             sig = inspect.signature(func)

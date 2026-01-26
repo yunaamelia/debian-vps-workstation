@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from typing import List
+from typing import Callable, List
 
 from configurator.security.cis_scanner import CheckResult, CISCheck, Severity, Status
 
@@ -67,6 +67,14 @@ def _remediate_file_permissions(path: str, mode: str, uid: int = 0, gid: int = 0
         return False
 
 
+def _create_file_check(path: str, mode: str, uid: int, gid: int) -> Callable[[], CheckResult]:
+    return lambda: _check_file_permissions(path, mode, uid, gid)
+
+
+def _create_file_remediate(path: str, mode: str, uid: int, gid: int) -> Callable[[], bool]:
+    return lambda: _remediate_file_permissions(path, mode, uid, gid)
+
+
 def get_checks() -> List[CISCheck]:
     checks = []
 
@@ -98,12 +106,8 @@ def get_checks() -> List[CISCheck]:
                 rationale="Prevent unauthorized modification.",
                 severity=sev,
                 category="System Maintenance",
-                check_function=lambda p=path, m=mode, ui=u, gi=g: _check_file_permissions(
-                    p, m, ui, gi
-                ),
-                remediation_function=lambda p=path, m=mode, ui=u, gi=g: _remediate_file_permissions(
-                    p, m, ui, gi
-                ),
+                check_function=_create_file_check(path, mode, u, g),
+                remediation_function=_create_file_remediate(path, mode, u, g),
             )
         )
 

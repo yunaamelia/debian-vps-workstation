@@ -1,6 +1,6 @@
 import threading
 from datetime import datetime
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 from rich.console import Console
 from rich.live import Live
@@ -32,7 +32,7 @@ class RichProgressReporter(ReporterInterface):
     - Thread-safe updates
     """
 
-    def __init__(self, console: Optional[Console] = None):
+    def __init__(self, console: Optional[Console] = None) -> None:
         self.console = console or Console()
         self.start_time: Optional[datetime] = None
         self.current_phase: Optional[str] = None
@@ -58,7 +58,7 @@ class RichProgressReporter(ReporterInterface):
         # Live display
         self.live: Optional[Live] = None
 
-    def start(self, title: str = "Installation"):
+    def start(self, title: str = "Installation") -> None:
         """Display startup banner and start live display."""
         self.start_time = datetime.now()
 
@@ -81,12 +81,12 @@ class RichProgressReporter(ReporterInterface):
         )
         self.live.start()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the live display."""
         if self.live:
             self.live.stop()
 
-    def start_phase(self, name: str, total_steps: int = 100):
+    def start_phase(self, name: str, total_steps: int = 100) -> None:
         """
         Start new installation phase/module.
         Thread-safe.
@@ -110,7 +110,7 @@ class RichProgressReporter(ReporterInterface):
                     visible=True,
                 )
 
-    def update(self, message: str, success: bool = True, module: Optional[str] = None):
+    def update(self, message: str, success: bool = True, module: Optional[str] = None) -> None:
         """
         Update progress status.
         Args:
@@ -138,7 +138,7 @@ class RichProgressReporter(ReporterInterface):
         current: Optional[int] = None,
         total: Optional[int] = None,
         module: Optional[str] = None,
-    ):
+    ) -> None:
         """Update progress percentage."""
         target_module = module or self.current_phase
 
@@ -149,7 +149,7 @@ class RichProgressReporter(ReporterInterface):
             else:
                 self.progress.update(task_id, completed=percent, total=100)
 
-    def complete_phase(self, success: bool = True, module: Optional[str] = None):
+    def complete_phase(self, success: bool = True, module: Optional[str] = None) -> None:
         """Mark current phase as complete."""
         target_module = module or self.current_phase
 
@@ -159,7 +159,7 @@ class RichProgressReporter(ReporterInterface):
             msg = "Done" if success else "Failed"
             self.progress.update(task_id, completed=100, status=f"{icon} {msg}")
 
-    def show_summary(self, results: Dict[str, bool]):
+    def show_summary(self, results: Dict[str, bool]) -> None:
         """Display installation summary."""
         if self.live:
             self.live.stop()
@@ -175,16 +175,18 @@ class RichProgressReporter(ReporterInterface):
 
         self.console.print(table)
 
-    def error(self, message: str):
+    def error(self, message: str) -> None:
         self.console.print(f"[bold red]ERROR:[/bold red] {message}")
 
-    def warning(self, message: str):
+    def warning(self, message: str) -> None:
         self.console.print(f"[bold yellow]WARNING:[/bold yellow] {message}")
 
-    def info(self, message: str):
+    def info(self, message: str) -> None:
         self.console.print(f"[blue]INFO:[/blue] {message}")
 
-    def show_next_steps(self, reboot_required: bool = False, rdp_port: int = 3389, **kwargs):
+    def show_next_steps(
+        self, reboot_required: bool = False, rdp_port: int = 3389, **kwargs: Any
+    ) -> None:
         """Display next steps after installation."""
         self.console.print("\n[bold cyan]Next Steps:[/bold cyan]")
         if reboot_required:

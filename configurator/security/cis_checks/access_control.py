@@ -1,7 +1,7 @@
 import re
 import subprocess
 from pathlib import Path
-from typing import List
+from typing import Callable, List
 
 from configurator.security.cis_scanner import CheckResult, CISCheck, Severity, Status
 
@@ -99,6 +99,18 @@ def _check_cron_permissions(path: str) -> CheckResult:
         return CheckResult(check=None, status=Status.ERROR, message=str(e))
 
 
+def _create_sshd_check(param: str, accepted: List[str]) -> Callable[[], CheckResult]:
+    return lambda: _check_sshd_config(rf"^\s*{param}\s+(.+)$", accepted)
+
+
+def _create_sshd_remediate(param: str, value: str) -> Callable[[], bool]:
+    return lambda: _remediate_sshd_config(param, value)
+
+
+def _create_cron_check(path: str) -> Callable[[], CheckResult]:
+    return lambda: _check_cron_permissions(path)
+
+
 def get_checks() -> List[CISCheck]:
     checks = []
 
@@ -144,10 +156,11 @@ def get_checks() -> List[CISCheck]:
                 rationale="Hardening SSH.",
                 severity=sev,
                 category="Access Control",
-                check_function=lambda p=param, a=accepted: _check_sshd_config(
-                    rf"^\s*{p}\s+(.+)$", a
+                check_function=_create_sshd_check(
+                    param,
+                    list(accepted) if isinstance(accepted, (list, tuple)) else [str(accepted)],
                 ),
-                remediation_function=lambda p=param, v=val: _remediate_sshd_config(p, v),
+                remediation_function=_create_sshd_remediate(param, val),
             )
         )
 
@@ -170,7 +183,7 @@ def get_checks() -> List[CISCheck]:
                 rationale="Prevent unauthorized scheduled jobs.",
                 severity=Severity.MEDIUM,
                 category="Access Control",
-                check_function=lambda p=path: _check_cron_permissions(p),
+                check_function=_create_cron_check(path),
             )
         )
 

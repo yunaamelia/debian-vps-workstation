@@ -8,7 +8,7 @@ Every exception includes:
 - docs_link: Link to relevant documentation (optional)
 """
 
-from typing import Optional
+from typing import Any, Optional
 
 
 class ConfiguratorError(Exception):
@@ -112,8 +112,8 @@ class PrerequisiteError(ConfiguratorError):
         requirement: str = "Unspecified",
         current_value: str = "Unknown",
         what: Optional[str] = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         if what:
             # Custom message provided via kwargs
             super().__init__(what=what, **kwargs)
@@ -152,8 +152,8 @@ class ConfigurationError(ConfiguratorError):
         what: Optional[str] = None,
         why: Optional[str] = None,
         how: Optional[str] = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """
         Initialize ConfigurationError.
 
@@ -219,7 +219,7 @@ class RollbackError(ConfiguratorError):
     4. Use: vps-configurator rollback --force (if safe)
     """
 
-    def __init__(self, module_name: str, failed_operation: str, **kwargs):
+    def __init__(self, module_name: str, failed_operation: str, **kwargs: Any) -> None:
         what = f"Rollback failed for module '{module_name}'"
         why = f"Failed operation: {failed_operation}"
         how = (
@@ -254,8 +254,8 @@ class NetworkError(ConfiguratorError):
         what: Optional[str] = None,
         why: Optional[str] = None,
         how: Optional[str] = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         if what:
             # Custom message provided
             super().__init__(what=what, why=why or "", how=how or "", **kwargs)
@@ -281,7 +281,7 @@ class UserCancelledError(ConfiguratorError):
     This is a clean exit, not an error.
     """
 
-    def __init__(self, message: str = "Operation cancelled by user"):
+    def __init__(self, message: str = "Operation cancelled by user") -> None:
         super().__init__(
             what=message,
             why="You chose to cancel the operation",
@@ -299,5 +299,5 @@ class ProfileError(ConfiguratorError):
     - Profile validation failed
     """
 
-    def __init__(self, what: str, why: str = "", how: str = "", **kwargs):
+    def __init__(self, what: str, why: str = "", how: str = "", **kwargs: Any) -> None:
         super().__init__(what=what, why=why, how=how, **kwargs)

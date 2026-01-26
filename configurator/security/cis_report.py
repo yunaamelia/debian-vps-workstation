@@ -11,7 +11,7 @@ class CISReportGenerator:
     def __init__(self, output_dir: str = "/var/log/vps-configurator/cis-reports"):
         self.output_dir = Path(output_dir)
 
-    def _ensure_output_dir(self):
+    def _ensure_output_dir(self) -> None:
         if not self.output_dir.exists():
             try:
                 self.output_dir.mkdir(parents=True, exist_ok=True)

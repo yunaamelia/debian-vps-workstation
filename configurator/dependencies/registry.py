@@ -17,7 +17,7 @@ class DependencyRegistry:
     _registry: Dict[str, Union[ModuleDependencyInfo, ModuleDependency]] = {}
 
     @classmethod
-    def register(cls, info: Union[ModuleDependencyInfo, ModuleDependency]):
+    def register(cls, info: Union[ModuleDependencyInfo, ModuleDependency]) -> None:
         # Support both ModuleDependencyInfo (name) and ModuleDependency (module_name)
         if hasattr(info, "name"):
             cls._registry[info.name] = info
@@ -35,27 +35,27 @@ class DependencyRegistry:
         return list(cls._registry.values())
 
     @classmethod
-    def clear(cls):
+    def clear(cls) -> None:
         cls._registry = {}
 
     @classmethod
-    def _get_name(cls, info) -> str:
+    def _get_name(cls, info: Union[ModuleDependencyInfo, ModuleDependency]) -> str:
         """Get name from either type of info object."""
         name = getattr(info, "name", None) or getattr(info, "module_name", None)
         return str(name) if name else ""
 
     @classmethod
-    def _get_depends_on(cls, info) -> List[str]:
+    def _get_depends_on(cls, info: Union[ModuleDependencyInfo, ModuleDependency]) -> List[str]:
         """Get depends_on from either type of info object."""
         return getattr(info, "depends_on", [])
 
     @classmethod
-    def _get_conflicts_with(cls, info) -> List[str]:
+    def _get_conflicts_with(cls, info: Union[ModuleDependencyInfo, ModuleDependency]) -> List[str]:
         """Get conflicts_with from either type of info object."""
         return getattr(info, "conflicts_with", [])
 
     @classmethod
-    def _get_priority(cls, info) -> int:
+    def _get_priority(cls, info: Union[ModuleDependencyInfo, ModuleDependency]) -> int:
         """Get priority from either type of info object."""
         return getattr(info, "priority", 50)
 
@@ -97,9 +97,7 @@ class DependencyRegistry:
         for batch in batches:
             sorted_batch = sorted(
                 batch,
-                key=lambda n: cls._get_priority(cls._registry.get(n))
-                if cls._registry.get(n)
-                else 50,
+                key=lambda n: cls._get_priority(cls._registry[n]) if n in cls._registry else 50,
             )
             result.extend(sorted_batch)
         return result

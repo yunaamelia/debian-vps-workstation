@@ -32,7 +32,7 @@ class StructuredLogger:
         name: str,
         level: int = logging.INFO,
         log_file: Optional[Path] = None,
-    ):
+    ) -> None:
         """
         Initialize structured logger.
 
@@ -51,7 +51,7 @@ class StructuredLogger:
             handler.setFormatter(JSONFormatter())
             self.logger.addHandler(handler)
 
-    def _build_log_dict(self, message: str, **kwargs) -> Dict[str, Any]:
+    def _build_log_dict(self, message: str, **kwargs: Any) -> Dict[str, Any]:
         """Build structured log dictionary."""
         log_dict: Dict[str, Any] = {
             "timestamp": datetime.utcnow().isoformat() + "Z",
@@ -66,37 +66,37 @@ class StructuredLogger:
 
         return log_dict
 
-    def debug(self, message: str, **kwargs):
+    def debug(self, message: str, **kwargs: Any) -> None:
         """Log debug message."""
         log_dict = self._build_log_dict(message, **kwargs)
         log_dict["level"] = "DEBUG"
         self.logger.debug(json.dumps(log_dict))
 
-    def info(self, message: str, **kwargs):
+    def info(self, message: str, **kwargs: Any) -> None:
         """Log info message."""
         log_dict = self._build_log_dict(message, **kwargs)
         log_dict["level"] = "INFO"
         self.logger.info(json.dumps(log_dict))
 
-    def warning(self, message: str, **kwargs):
+    def warning(self, message: str, **kwargs: Any) -> None:
         """Log warning message."""
         log_dict = self._build_log_dict(message, **kwargs)
         log_dict["level"] = "WARNING"
         self.logger.warning(json.dumps(log_dict))
 
-    def error(self, message: str, **kwargs):
+    def error(self, message: str, **kwargs: Any) -> None:
         """Log error message."""
         log_dict = self._build_log_dict(message, **kwargs)
         log_dict["level"] = "ERROR"
         self.logger.error(json.dumps(log_dict))
 
-    def critical(self, message: str, **kwargs):
+    def critical(self, message: str, **kwargs: Any) -> None:
         """Log critical message."""
         log_dict = self._build_log_dict(message, **kwargs)
         log_dict["level"] = "CRITICAL"
         self.logger.critical(json.dumps(log_dict))
 
-    def correlation_context(self):
+    def correlation_context(self) -> "CorrelationContext":
         """
         Context manager for correlation ID.
 
@@ -116,7 +116,12 @@ class CorrelationContext:
         correlation_id.set(corr_id)
         return corr_id
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: Optional[type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[Any],
+    ) -> None:
         """Clear correlation ID."""
         correlation_id.set(None)
 
@@ -148,7 +153,7 @@ class LogAggregator:
     Can parse and analyze log files.
     """
 
-    def __init__(self, log_file: Any):
+    def __init__(self, log_file: Any) -> None:
         """Initialize log aggregator."""
         if isinstance(log_file, str):
             log_file = Path(log_file)

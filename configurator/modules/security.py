@@ -627,7 +627,7 @@ APT::Periodic::AutocleanInterval "7";
         except Exception as e:
             self.logger.warning(f"Failed to setup cron job {name}: {e}")
 
-    def generate_security_report(self) -> dict:
+    def generate_security_report(self) -> Dict[str, Any]:
         """
         Generate comprehensive security report.
 

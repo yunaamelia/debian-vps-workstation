@@ -7,7 +7,7 @@ from configurator.wizard.screens.preview_screen import PreviewScreen
 from configurator.wizard.screens.welcome import WelcomeScreen
 
 
-class ConfigWizardApp(App):
+class ConfigWizardApp(App[Optional[Dict[str, Any]]]):
     """Interactive Configuration Wizard Application."""
 
     CSS = """
@@ -16,7 +16,7 @@ class ConfigWizardApp(App):
     }
     """
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(**kwargs)
         self.wizard_data: Dict[str, Any] = {}
 

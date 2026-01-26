@@ -1,5 +1,5 @@
 from difflib import SequenceMatcher
-from typing import List
+from typing import Any, List
 
 from configurator.dependencies.registry import DependencyRegistry
 
@@ -9,11 +9,11 @@ class ModuleSearch:
     Search functionality for modules.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.registry = DependencyRegistry()
         # Cache module list?
 
-    def search(self, query: str, limit: int = 10) -> List[dict]:
+    def search(self, query: str, limit: int = 10) -> List[dict[str, Any]]:
         """
         Fuzzy search for modules.
         Returns list of module info dicts with score.
@@ -28,7 +28,7 @@ class ModuleSearch:
 
         # Let's check registry first
         # Ideally this class should be initialized with a list of available modules
-        results: List[dict] = []
+        results: List[dict[str, Any]] = []
         return results
 
     def search_in_list(self, query: str, modules: List[str], limit: int = 10) -> List[str]:
@@ -61,7 +61,7 @@ class ModuleSearch:
 
 # Simple Autocomplete as well
 class Autocomplete:
-    def __init__(self, words: List[str]):
+    def __init__(self, words: List[str]) -> None:
         self.words = words
 
     def complete(self, text: str) -> List[str]:

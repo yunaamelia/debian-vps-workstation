@@ -1,3 +1,5 @@
+from typing import Any
+
 from textual.app import ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.screen import Screen
@@ -8,8 +10,14 @@ class ExperienceLevelCard(Static):
     """Card widget for experience level."""
 
     def __init__(
-        self, level: str, title: str, description: str, features: list, time: str, **kwargs
-    ):
+        self,
+        level: str,
+        title: str,
+        description: str,
+        features: list[str],
+        time: str,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(**kwargs)
         self.level = level
         self.title = title
@@ -36,7 +44,7 @@ What's included:
         yield Button(f"Select {self.title}", id=f"select-{self.level}", variant="primary")
 
 
-class ExperienceLevelScreen(Screen):
+class ExperienceLevelScreen(Screen[None]):
     """Experience level selection screen."""
 
     CSS = """

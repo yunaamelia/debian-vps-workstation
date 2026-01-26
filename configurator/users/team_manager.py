@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 class TeamStatus(Enum):
@@ -46,7 +46,7 @@ class TeamMember:
     joined_at: Optional[datetime] = None
     left_at: Optional[datetime] = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Serialize to dictionary."""
         return {
             "username": self.username,
@@ -63,7 +63,7 @@ class ResourceQuota:
     disk_quota_gb: Optional[float] = None
     docker_containers: Optional[int] = None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Serialize to dictionary."""
         return {
             "disk_quota_gb": self.disk_quota_gb,
@@ -117,7 +117,7 @@ class Team:
                 return member
         return None
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Serialize to dictionary."""
         return {
             "team_id": self.team_id,
@@ -169,7 +169,7 @@ class TeamManager:
         self._ensure_directories()
         self._load_teams()
 
-    def _ensure_directories(self):
+    def _ensure_directories(self) -> None:
         """Ensure required directories exist."""
         try:
             self.TEAMS_REGISTRY.parent.mkdir(parents=True, exist_ok=True, mode=0o755)
@@ -179,7 +179,7 @@ class TeamManager:
         except PermissionError:
             self.logger.debug("No permission to create directories; will use temp")
 
-    def _load_teams(self):
+    def _load_teams(self) -> None:
         """Load teams from registry."""
         self.teams: Dict[str, Team] = {}
 
@@ -195,7 +195,7 @@ class TeamManager:
             except Exception as e:
                 self.logger.error(f"Failed to load teams: {e}")
 
-    def _save_teams(self):
+    def _save_teams(self) -> None:
         """Save teams to registry."""
         try:
             data = {name: team.to_dict() for name, team in self.teams.items()}
@@ -210,7 +210,7 @@ class TeamManager:
         except Exception as e:
             self.logger.error(f"Failed to save teams: {e}")
 
-    def _team_from_dict(self, data: Dict) -> Team:
+    def _team_from_dict(self, data: Dict[str, Any]) -> Team:
         """Deserialize Team from dictionary."""
         members = [
             TeamMember(
@@ -351,7 +351,7 @@ class TeamManager:
             self.logger.error(f"Group not found after creation: {group_name}")
             raise RuntimeError(f"Group not found: {group_name}")
 
-    def _setup_shared_directory(self, directory: Path, group_name: str, gid: int):
+    def _setup_shared_directory(self, directory: Path, group_name: str, gid: int) -> None:
         """Setup shared directory with proper permissions."""
         # Create directory
         directory.mkdir(parents=True, exist_ok=True, mode=0o2775)
@@ -380,7 +380,7 @@ class TeamManager:
         username: str,
         role: MemberRole = MemberRole.MEMBER,
         skip_system: bool = False,
-    ):
+    ) -> None:
         """Internal method to add member to team."""
         # Add to system group
         if not skip_system:
@@ -555,7 +555,7 @@ class TeamManager:
 
         return True
 
-    def _audit_log(self, action: str, **details):
+    def _audit_log(self, action: str, **details: Any) -> None:
         """Log team action for audit."""
         log_entry = {"timestamp": datetime.now().isoformat(), "action": action, **details}
 

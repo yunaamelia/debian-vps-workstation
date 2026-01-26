@@ -9,7 +9,7 @@ class DependencyGraphVisualizer:
     Visualize module dependencies as ASCII tree.
     """
 
-    def __init__(self, modules: List[str]):
+    def __init__(self, modules: List[str]) -> None:
         self.modules = modules
 
     def detect_cycles(self) -> List[List[str]]:
@@ -47,7 +47,7 @@ class DependencyGraphVisualizer:
         visited = set()
         path: List[str] = []
 
-        def visit(node):
+        def visit(node: str) -> None:
             if node in path:
                 cycle = path[path.index(node) :] + [node]
                 cycles.append(cycle)

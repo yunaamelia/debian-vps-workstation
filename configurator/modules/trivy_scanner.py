@@ -6,7 +6,7 @@ as part of the installation process.
 """
 
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 from configurator.modules.base import ConfigurationModule
 from configurator.security.vulnerability_scanner import (
@@ -31,7 +31,9 @@ class TrivyScannerModule(ConfigurationModule):
     depends_on = ["system", "security"]  # Scan after basic system/security setup
     priority = 85  # Run very late
 
-    def __init__(self, config: Dict, logger: Optional[logging.Logger] = None, **kwargs):
+    def __init__(
+        self, config: Dict[str, Any], logger: Optional[logging.Logger] = None, **kwargs: Any
+    ) -> None:
         super().__init__(config, logger, **kwargs)
         self.vuln_manager = VulnerabilityManager(logger=self.logger)
         self.scan_results: List[ScanResult] = []

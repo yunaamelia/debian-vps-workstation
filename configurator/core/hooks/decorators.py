@@ -1,10 +1,15 @@
 from functools import wraps
-from typing import Any, Callable, List, Union
+from typing import Any, Callable, List, TypeVar, Union, cast
 
 from .events import HookEvent, HookPriority
 
+F = TypeVar("F", bound=Callable[..., Any])
 
-def hook(events: Union[HookEvent, List[HookEvent]], priority: HookPriority = HookPriority.NORMAL):
+
+def hook(
+    events: Union[HookEvent, List[HookEvent]],
+    priority: HookPriority = HookPriority.NORMAL,
+) -> Callable[[F], F]:
     """
     Decorator to register a function as a hook.
 
@@ -13,7 +18,7 @@ def hook(events: Union[HookEvent, List[HookEvent]], priority: HookPriority = Hoo
         priority: Execution priority
     """
 
-    def decorator(func: Callable):
+    def decorator(func: F) -> F:
         # Cast to Any to allow dynamic attribute assignment
         f: Any = func
         if not hasattr(f, "_hook_events"):
@@ -27,7 +32,7 @@ def hook(events: Union[HookEvent, List[HookEvent]], priority: HookPriority = Hoo
         f._hook_priority = priority
 
         @wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args: Any, **kwargs: Any) -> Any:
             return func(*args, **kwargs)
 
         # Copy attributes to wrapper
@@ -35,6 +40,6 @@ def hook(events: Union[HookEvent, List[HookEvent]], priority: HookPriority = Hoo
         w._hook_events = f._hook_events
         w._hook_priority = f._hook_priority
 
-        return wrapper
+        return cast(F, wrapper)
 
     return decorator

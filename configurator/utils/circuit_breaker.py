@@ -31,7 +31,7 @@ class CircuitBreakerError(Exception):
         failure_count: int,
         last_failure_time: Optional[datetime],
         retry_after: float,
-    ):
+    ) -> None:
         self.name = name
         self.state = state
         self.failure_count = failure_count
@@ -90,7 +90,7 @@ class CircuitBreaker:
         timeout: float = 60.0,
         expected_exceptions: Tuple[Type[Exception], ...] = (Exception,),
         logger: Optional[logging.Logger] = None,
-    ):
+    ) -> None:
         self.name = name
         self.failure_threshold = failure_threshold
         self.success_threshold = success_threshold
@@ -115,7 +115,7 @@ class CircuitBreaker:
 
         self._state_lock = threading.RLock()
 
-    def call(self, func: Callable, *args, **kwargs) -> Any:
+    def call(self, func: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
         """
         Execute function through circuit breaker.
 
@@ -159,7 +159,7 @@ class CircuitBreaker:
                 self._on_failure(e)
             raise
 
-    def _on_success(self):
+    def _on_success(self) -> None:
         """Handle successful execution"""
         self.total_successes += 1
 
@@ -173,7 +173,7 @@ class CircuitBreaker:
             # Reset failure count on success
             self.failure_count = 0
 
-    def _on_failure(self, exception: Exception):
+    def _on_failure(self, exception: Exception) -> None:
         """Handle failed execution"""
         self.total_failures += 1
         self.failure_count += 1
@@ -192,7 +192,7 @@ class CircuitBreaker:
             if self.failure_count >= self.failure_threshold:
                 self._transition_to_open()
 
-    def _transition_to_open(self):
+    def _transition_to_open(self) -> None:
         """Open the circuit"""
         self.state = CircuitState.OPEN
         self.last_state_change = datetime.now()
@@ -204,7 +204,7 @@ class CircuitBreaker:
             f"Will retry after {self.timeout}s"
         )
 
-    def _transition_to_half_open(self):
+    def _transition_to_half_open(self) -> None:
         """Transition to half-open state"""
         self.state = CircuitState.HALF_OPEN
         self.last_state_change = datetime.now()
@@ -216,7 +216,7 @@ class CircuitBreaker:
             "(testing if service recovered)"
         )
 
-    def _transition_to_closed(self):
+    def _transition_to_closed(self) -> None:
         """Close the circuit"""
         self.state = CircuitState.CLOSED
         self.last_state_change = datetime.now()
@@ -244,7 +244,7 @@ class CircuitBreaker:
         remaining = max(0.0, self.timeout - elapsed)
         return remaining
 
-    def reset(self):
+    def reset(self) -> None:
         """Manually reset circuit breaker"""
         with self._state_lock:
             self.state = CircuitState.CLOSED
@@ -253,7 +253,7 @@ class CircuitBreaker:
             self.last_failure_time = None
             self.logger.info(f"Circuit breaker '{self.name}' manually reset")
 
-    def get_metrics(self) -> dict:
+    def get_metrics(self) -> dict[str, Any]:
         """Get circuit breaker metrics"""
         with self._state_lock:
             return {
@@ -285,26 +285,26 @@ class CircuitBreakerManager:
         result = breaker.call(install_package, 'docker-ce')
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._breakers: Dict[str, CircuitBreaker] = {}
         self.logger = logging.getLogger(__name__)
 
-    def get_breaker(self, name: str, **kwargs) -> CircuitBreaker:
+    def get_breaker(self, name: str, **kwargs: Any) -> CircuitBreaker:
         """Get or create a circuit breaker"""
         if name not in self._breakers:
             self._breakers[name] = CircuitBreaker(name=name, logger=self.logger, **kwargs)
         return self._breakers[name]
 
-    def get_all_metrics(self) -> Dict[str, dict]:
+    def get_all_metrics(self) -> Dict[str, dict[str, Any]]:
         """Get metrics for all circuit breakers"""
         return {name: breaker.get_metrics() for name, breaker in self._breakers.items()}
 
-    def reset_all(self):
+    def reset_all(self) -> None:
         """Reset all circuit breakers"""
         for breaker in self._breakers.values():
             breaker.reset()
 
-    def get_open_breakers(self) -> list:
+    def get_open_breakers(self) -> list[str]:
         """Get list of open circuit breakers"""
         return [
             name for name, breaker in self._breakers.items() if breaker.state == CircuitState.OPEN

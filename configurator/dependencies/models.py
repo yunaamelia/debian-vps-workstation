@@ -23,7 +23,7 @@ class ModuleDependency:
     priority: int = 50
     force_sequential: bool = False
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate dependency configuration."""
         # Ensure no module depends on itself
         if self.module_name in self.depends_on:
@@ -53,7 +53,7 @@ class ConflictRule:
     module_b: str
     reason: str
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         """Validate conflict rule."""
         if self.module_a == self.module_b:
             raise ValueError("A module cannot conflict with itself")

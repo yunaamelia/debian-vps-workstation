@@ -17,6 +17,22 @@ repos:
         args: [--fix, --exit-non-zero-on-fix]
       - id: ruff-format
 
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.14.1
+    hooks:
+      - id: mypy
+        # Strict checks on source code
+        files: ^configurator/
+        args:
+          [
+            --python-version=3.11,
+            --ignore-missing-imports,
+            --show-error-codes,
+            --pretty,
+          ]
+        additional_dependencies:
+          [types-PyYAML, types-requests, types-paramiko, types-python-dateutil]
+
   - repo: https://github.com/PyCQA/bandit
     rev: 1.9.2
     hooks:
@@ -26,29 +42,24 @@ repos:
 
   - repo: local
     hooks:
-      - id: pytest
-        name: pytest
+      - id: pytest-critical
+        name: pytest (critical path)
         entry: pytest
-        language: python
-        additional_dependencies:
-          - pyyaml>=6.0
-          - click>=8.1.0
-          - rich>=13.0.0
-          - requests>=2.31.0
-          - paramiko>=3.3.0
-          - jinja2>=3.1.0
-          - pydantic>=2.0.0
-          - cryptography>=41.0.0
-          - textual>=0.40.0
-          - networkx>=3.0
-          - psutil>=5.9.0
-          - pytest>=8.3.4
-          - pytest-cov>=6.0.0
-          - pytest-mock>=3.14.0
-          - pytest-asyncio>=0.23.0
-        pass_filenames: false
+        language: system
+        # Running critical tests (unit, security, validation) excluding slow/destructive
+        # Uses 'system' language to reuse local environment and speed up execution
+        args:
+          [
+            "tests/unit",
+            "tests/security",
+            "tests/validation",
+            "-m",
+            "not slow and not destructive",
+            "--maxfail=1",
+            "-q",
+          ]
         types: [python]
-        stages: [pre-push]
+        pass_filenames: false
 
   # Commit message validation
   - repo: https://github.com/compilerla/conventional-pre-commit

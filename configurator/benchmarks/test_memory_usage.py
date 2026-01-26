@@ -1,4 +1,4 @@
-def run_memory_test():
+def run_memory_test() -> None:
     print("Memory Usage Benchmark:")
     print("======================")
     print("\nPeak Memory Usage:")

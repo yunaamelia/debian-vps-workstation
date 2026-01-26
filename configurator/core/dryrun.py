@@ -26,11 +26,11 @@ class DryRunManager:
         _enabled: Boolean flag indicating if recording is active.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.changes: List[DryRunChange] = []
         self._enabled = False
 
-    def enable(self):
+    def enable(self) -> None:
         """Enable dry-run recording mode."""
         self._enabled = True
 
@@ -41,7 +41,7 @@ class DryRunManager:
 
     def record(
         self, change_type: str, action: str, target: str, details: Optional[Dict[str, Any]] = None
-    ):
+    ) -> None:
         """
         Record a planned system change.
 
@@ -57,24 +57,24 @@ class DryRunManager:
         change = DryRunChange(type=change_type, action=action, target=target, details=details)
         self.changes.append(change)
 
-    def record_package_install(self, packages: List[str]):
+    def record_package_install(self, packages: List[str]) -> None:
         """Record package installation."""
         for pkg in packages:
             self.record("package", "install", pkg)
 
-    def record_file_write(self, path: str, content: str = "", diff: str = ""):
+    def record_file_write(self, path: str, content: str = "", diff: str = "") -> None:
         """Record file creation or modification."""
         self.record("file", "write", path, {"content_len": len(content), "diff": diff})
 
-    def record_service_action(self, service: str, action: str):
+    def record_service_action(self, service: str, action: str) -> None:
         """Record service state change."""
         self.record("service", action, service)
 
-    def record_firewall_rule(self, rule: str):
+    def record_firewall_rule(self, rule: str) -> None:
         """Record firewall rule addition."""
         self.record("firewall", "add", rule)
 
-    def record_command(self, command: str):
+    def record_command(self, command: str) -> None:
         """Record arbitrary shell command execution."""
         self.record("command", "exec", command)
 
@@ -123,7 +123,7 @@ class DryRunManager:
         report.append("\n" + "=" * 50)
         return "\n".join(report)
 
-    def print_report(self):
+    def print_report(self) -> None:
         """Print a beautiful report using Rich."""
         console = Console()
 

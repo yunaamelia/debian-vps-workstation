@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 import yaml
 
@@ -119,7 +119,7 @@ class Role:
         return False
 
     def get_all_permissions(
-        self, role_registry: Dict[str, "Role"], seen: Optional[set] = None
+        self, role_registry: Dict[str, "Role"], seen: Optional[Set[str]] = None
     ) -> List[Permission]:
         """Return permissions including inherited roles (deduplicated order preserved)."""
         seen = seen or set()
@@ -141,7 +141,7 @@ class Role:
             unique[str(perm)] = perm
         return list(unique.values())
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "name": self.name,
             "description": self.description,
@@ -170,7 +170,7 @@ class RoleAssignment:
     def is_expired(self) -> bool:
         return self.expires_at is not None and datetime.now() > self.expires_at
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         return {
             "user": self.user,
             "role_name": self.role_name,

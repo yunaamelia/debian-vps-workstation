@@ -5,9 +5,11 @@ Defines the complete dependency graph for all 20 modules.
 This acts as the source of truth for execution order.
 """
 
+from typing import Dict, List
+
 import networkx as nx
 
-COMPLETE_MODULE_DEPENDENCIES = {
+COMPLETE_MODULE_DEPENDENCIES: Dict[str, List[str]] = {
     # Phase 1: System base (no dependencies)
     "system": [],
     # Phase 2: Security (requires system)
@@ -41,8 +43,8 @@ COMPLETE_MODULE_DEPENDENCIES = {
 }
 
 
-def validate_dependencies():
-    """Validate dependency graph has no cycles"""
+def validate_dependencies() -> bool:
+    """Validate dependency graph has no cycles."""
     graph = nx.DiGraph()
     for module, deps in COMPLETE_MODULE_DEPENDENCIES.items():
         graph.add_node(module)

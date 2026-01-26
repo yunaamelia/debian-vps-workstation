@@ -152,7 +152,7 @@ class CertificateMonitor:
         self.logger = logger or logging.getLogger(__name__)
         self._alert_callbacks: List[Callable[[CertificateAlert], None]] = []
 
-    def add_alert_callback(self, callback: Callable[[CertificateAlert], None]):
+    def add_alert_callback(self, callback: Callable[[CertificateAlert], None]) -> None:
         """
         Add a callback function for alerts.
 
@@ -282,7 +282,7 @@ class CertificateMonitor:
 
         return success
 
-    def _send_email_alerts(self, alerts: List[CertificateAlert]):
+    def _send_email_alerts(self, alerts: List[CertificateAlert]) -> None:
         """Send email notifications for alerts."""
         if not self.alert_config.email_recipients:
             return
@@ -328,7 +328,7 @@ class CertificateMonitor:
             f"Email alerts sent to {len(self.alert_config.email_recipients)} recipients"
         )
 
-    def _send_webhook_alerts(self, alerts: List[CertificateAlert]):
+    def _send_webhook_alerts(self, alerts: List[CertificateAlert]) -> None:
         """Send webhook notifications for alerts."""
         if not self.alert_config.webhook_url or not HAS_URLLIB:
             return
@@ -352,7 +352,7 @@ class CertificateMonitor:
         with urllib.request.urlopen(req, timeout=30) as response:
             self.logger.info(f"Webhook notification sent: {response.status}")
 
-    def _send_slack_alerts(self, alerts: List[CertificateAlert]):
+    def _send_slack_alerts(self, alerts: List[CertificateAlert]) -> None:
         """Send Slack notifications for alerts."""
         if not self.alert_config.slack_webhook or not HAS_URLLIB:
             return
@@ -478,7 +478,7 @@ class ScheduledMonitor:
         self._running = False
         self._thread: Optional[threading.Thread] = None
 
-    def start(self):
+    def start(self) -> None:
         """Start scheduled monitoring in background thread."""
         import threading
 
@@ -492,14 +492,14 @@ class ScheduledMonitor:
 
         self.logger.info(f"Certificate monitoring started (interval: {self.interval_hours}h)")
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop scheduled monitoring."""
         self._running = False
         if self._thread:
             self._thread.join(timeout=5)
         self.logger.info("Certificate monitoring stopped")
 
-    def _monitor_loop(self):
+    def _monitor_loop(self) -> None:
         """Background monitoring loop."""
         import time
 

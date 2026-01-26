@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime
-from typing import Callable, Dict, Generator, List, Optional, Tuple
+from typing import Any, Callable, Dict, Generator, List, Optional, Tuple
 
 from configurator.core.execution.base import ExecutionContext, ExecutionResult, ExecutorInterface
 
@@ -15,7 +15,7 @@ class PipelineExecutor(ExecutorInterface):
     - Modules with heavy resource usage
     """
 
-    def __init__(self, logger: Optional[logging.Logger] = None):
+    def __init__(self, logger: Optional[logging.Logger] = None) -> None:
         self.logger = logger or logging.getLogger(__name__)
 
     def get_name(self) -> str:
@@ -35,7 +35,9 @@ class PipelineExecutor(ExecutorInterface):
         return getattr(module, "force_sequential", False) or getattr(module, "large_module", False)
 
     def execute(
-        self, contexts: List[ExecutionContext], callback: Optional[Callable] = None
+        self,
+        contexts: List[ExecutionContext],
+        callback: Optional[Callable[..., Any]] = None,
     ) -> Dict[str, ExecutionResult]:
         """Execute modules using pipeline approach."""
         self.logger.info(f"PipelineExecutor: Executing {len(contexts)} module(s)")
@@ -49,7 +51,9 @@ class PipelineExecutor(ExecutorInterface):
         return results
 
     def _execute_pipeline(
-        self, context: ExecutionContext, callback: Optional[Callable]
+        self,
+        context: ExecutionContext,
+        callback: Optional[Callable[..., Any]],
     ) -> ExecutionResult:
         """Execute single module via pipeline."""
         module = context.module_instance
@@ -100,7 +104,7 @@ class PipelineExecutor(ExecutorInterface):
 
     def _create_pipeline(
         self, context: ExecutionContext
-    ) -> Generator[Tuple[str, bool, Dict], None, None]:
+    ) -> Generator[Tuple[str, bool, Dict[str, Any]], None, None]:
         """
         Create execution pipeline for module.
 

@@ -20,7 +20,7 @@ import urllib.parse
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import yaml
 
@@ -99,7 +99,7 @@ class SupplyChainValidator:
     and allowlists to prevent supply chain attacks.
     """
 
-    def __init__(self, config: dict, logger: logging.Logger):
+    def __init__(self, config: Dict[str, Any], logger: logging.Logger):
         """
         Initialize supply chain validator.
 
@@ -111,15 +111,16 @@ class SupplyChainValidator:
         self.logger = logger
 
         # Helper function to get nested config values
-        def get_nested(d, key, default=None):
+        def get_nested(d: Dict[str, Any], key: str, default: Any = None) -> Any:
             """Get nested dict value by dot notation key."""
             keys = key.split(".")
+            current: Any = d
             for k in keys:
-                if isinstance(d, dict):
-                    d = d.get(k, {})
+                if isinstance(current, dict):
+                    current = current.get(k, {})
                 else:
                     return default
-            return d if d != {} else default
+            return current if current != {} else default
 
         self.enabled = get_nested(config, "security_advanced.supply_chain.enabled", True)
         self.verify_checksums = get_nested(
@@ -164,7 +165,7 @@ class SupplyChainValidator:
         # Build trusted sources
         self.trusted_sources = self._build_trusted_sources()
 
-    def _load_checksums(self) -> Dict:
+    def _load_checksums(self) -> Dict[str, Any]:
         """Load checksum database from YAML file."""
         # Look for checksums.yaml next to this module
         checksum_file = Path(__file__).parent / "checksums.yaml"
@@ -187,15 +188,16 @@ class SupplyChainValidator:
         sources = []
 
         # Helper function to get nested config values
-        def get_nested(d, key, default=None):
+        def get_nested(d: Dict[str, Any], key: str, default: Any = None) -> Any:
             """Get nested dict value by dot notation key."""
             keys = key.split(".")
+            current: Any = d
             for k in keys:
-                if isinstance(d, dict):
-                    d = d.get(k, {})
+                if isinstance(current, dict):
+                    current = current.get(k, {})
                 else:
                     return default
-            return d if d != {} else default
+            return current if current != {} else default
 
         allowed = get_nested(self.config, "security_advanced.supply_chain.allowed_sources", {})
 
@@ -423,7 +425,7 @@ class SupplyChainValidator:
                 how="Check network connectivity and GPG installation",
             )
 
-    def _audit_log(self, event_type: str, resource: str, verification: str):
+    def _audit_log(self, event_type: str, resource: str, verification: str) -> None:
         """
         Log supply chain audit event.
 
@@ -432,7 +434,7 @@ class SupplyChainValidator:
             resource: Resource path or URL
             verification: Verification value (checksum, fingerprint, etc.)
         """
-        log_entry = {
+        log_entry: Dict[str, Any] = {
             "timestamp": datetime.now().isoformat(),
             "event": event_type,
             "resource": resource,
@@ -483,7 +485,7 @@ class SupplyChainValidator:
             self.logger.error(f"Supply chain: Signature verification failed: {e}")
             return False
 
-    def store_checksum(self, url: str, checksum: str):
+    def store_checksum(self, url: str, checksum: str) -> None:
         """
         Store checksum in database.
 
@@ -593,7 +595,7 @@ class SupplyChainValidator:
         else:
             return "web"
 
-    def get_audit_report(self) -> Dict:
+    def get_audit_report(self) -> Dict[str, Any]:
         """
         Get audit report of all downloads.
 

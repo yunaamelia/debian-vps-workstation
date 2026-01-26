@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Dict, List, Optional, Tuple
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from .events import HookContext, HookEvent, HookPriority
 
@@ -7,9 +7,11 @@ from .events import HookContext, HookEvent, HookPriority
 class HooksManager:
     """Manages registration and execution of hooks."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Dict[HookEvent, List[Tuple[priority_value, callback]]]
-        self.hooks: Dict[HookEvent, List[Tuple[int, Callable]]] = {event: [] for event in HookEvent}
+        self.hooks: Dict[HookEvent, List[Tuple[int, Callable[[HookContext], None]]]] = {
+            event: [] for event in HookEvent
+        }
         self.logger = logging.getLogger(__name__)
 
     def register(
@@ -17,7 +19,7 @@ class HooksManager:
         event: HookEvent,
         callback: Callable[[HookContext], None],
         priority: HookPriority = HookPriority.NORMAL,
-    ):
+    ) -> None:
         """Register a callback for an event."""
         if event not in self.hooks:
             self.hooks[event] = []
@@ -27,7 +29,7 @@ class HooksManager:
         self.hooks[event].sort(key=lambda x: x[0])
         self.logger.debug(f"Registered hook for {event.name} with priority {priority.name}")
 
-    def register_from_decorator(self, func: Callable):
+    def register_from_decorator(self, func: Callable[..., Any]) -> None:
         """Register a decorated function."""
         if not hasattr(func, "_hook_events"):
             return
@@ -37,7 +39,12 @@ class HooksManager:
         for event in func._hook_events:
             self.register(event, func, priority)
 
-    def execute(self, event: HookEvent, context: Optional[HookContext] = None, **kwargs):
+    def execute(
+        self,
+        event: HookEvent,
+        context: Optional[HookContext] = None,
+        **kwargs: Any,
+    ) -> None:
         """
         Execute all hooks for an event.
 

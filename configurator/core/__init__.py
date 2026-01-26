@@ -1,6 +1,6 @@
-"""
-Core functionality for the configurator.
-"""
+"""Core functionality for the configurator."""
+
+from typing import Any
 
 # Lazy imports to avoid circular dependencies
 # Import these directly when needed:
@@ -17,7 +17,7 @@ __all__ = [
 ]
 
 
-def __getattr__(name):
+def __getattr__(name: str) -> Any:
     """Lazy import to avoid circular imports."""
     if name == "SystemValidator":
         from configurator.core.validator import SystemValidator

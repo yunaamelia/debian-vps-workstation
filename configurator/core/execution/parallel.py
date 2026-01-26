@@ -2,7 +2,7 @@ import logging
 import threading
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 from configurator.core.execution.base import ExecutionContext, ExecutionResult, ExecutorInterface
 
@@ -14,7 +14,7 @@ class ParallelExecutor(ExecutorInterface):
     Best for: Independent modules with no sequential dependencies.
     """
 
-    def __init__(self, max_workers: int = 4, logger: Optional[logging.Logger] = None):
+    def __init__(self, max_workers: int = 4, logger: Optional[logging.Logger] = None) -> None:
         self.max_workers = max_workers
         self.logger = logger or logging.getLogger(__name__)
 
@@ -41,7 +41,9 @@ class ParallelExecutor(ExecutorInterface):
         return True
 
     def execute(
-        self, contexts: List[ExecutionContext], callback: Optional[Callable] = None
+        self,
+        contexts: List[ExecutionContext],
+        callback: Optional[Callable[..., Any]] = None,
     ) -> Dict[str, ExecutionResult]:
         """Execute modules in parallel."""
         self.logger.info(
@@ -80,7 +82,9 @@ class ParallelExecutor(ExecutorInterface):
         return results
 
     def _execute_module(
-        self, context: ExecutionContext, callback: Optional[Callable]
+        self,
+        context: ExecutionContext,
+        callback: Optional[Callable[..., Any]],
     ) -> ExecutionResult:
         """Execute a single module."""
         module = context.module_instance

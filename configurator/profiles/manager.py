@@ -231,7 +231,7 @@ class ProfileManager:
                 how="Check the YAML syntax in the profile file",
             )
 
-    def save_profile(self, profile: Profile, overwrite: bool = False):
+    def save_profile(self, profile: Profile, overwrite: bool = False) -> None:
         """
         Save a profile.
 
@@ -278,7 +278,7 @@ class ProfileManager:
                 how="Check file permissions and disk space",
             )
 
-    def delete_profile(self, name: str):
+    def delete_profile(self, name: str) -> None:
         """Delete a custom profile."""
         # Can't delete built-in
         builtin_path = self.BUILTIN_PROFILES_DIR / f"{name}.yaml"
@@ -310,7 +310,7 @@ class ProfileManager:
             return self.DEFAULT_PROFILE_FILE.read_text().strip()
         return None
 
-    def set_default_profile(self, name: str):
+    def set_default_profile(self, name: str) -> None:
         """Set the default profile."""
         # Verify profile exists
         self.load_profile(name)  # Raises if not found

@@ -5,13 +5,16 @@ Uses QueueHandler + QueueListener pattern to prevent log interleaving
 in multi-threaded/multi-process environments.
 """
 
+from __future__ import annotations
+
 import atexit
 import logging
 import logging.handlers
 import queue
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union
+from types import TracebackType
+from typing import Any, Dict, List, Literal, Mapping, Optional, Union
 
 from rich.console import Console
 from rich.logging import RichHandler
@@ -19,6 +22,14 @@ from rich.logging import RichHandler
 # Default log directory
 LOG_DIR = Path("/var/log/debian-vps-configurator")
 LOG_FILE = LOG_DIR / "install.log"
+
+ExcInfoType = (
+    bool
+    | BaseException
+    | tuple[type[BaseException], BaseException, TracebackType | None]
+    | tuple[None, None, None]
+    | None
+)
 
 
 class ParallelLogManager:
@@ -37,7 +48,7 @@ class ParallelLogManager:
         console_level: int = logging.INFO,
         file_level: int = logging.DEBUG,
         enable_per_module_logs: bool = True,
-    ):
+    ) -> None:
         self.base_log_dir = base_log_dir
         self.console_level = console_level
         self.file_level = file_level
@@ -52,7 +63,7 @@ class ParallelLogManager:
             self.base_log_dir.mkdir(parents=True, exist_ok=True)
 
         # Shared queue for all workers
-        self.log_queue: queue.Queue = queue.Queue(-1)  # Unbounded queue
+        self.log_queue: queue.Queue[logging.LogRecord] = queue.Queue(-1)
 
         # Handlers that will process queued records
         self.handlers: List[logging.Handler] = []
@@ -65,7 +76,7 @@ class ParallelLogManager:
 
         self._setup_handlers()
 
-    def _setup_handlers(self):
+    def _setup_handlers(self) -> None:
         """Create output handlers (console + files)."""
         # 1. Console handler (Rich)
         console_handler = RichHandler(
@@ -91,7 +102,7 @@ class ParallelLogManager:
         )
         self.handlers.append(file_handler)
 
-    def start(self):
+    def start(self) -> None:
         """Start the queue listener."""
         if not self.listener:
             self.listener = logging.handlers.QueueListener(
@@ -99,7 +110,7 @@ class ParallelLogManager:
             )
             self.listener.start()
 
-    def stop(self):
+    def stop(self) -> None:
         """Stop the queue listener and flush logs."""
         if self.listener:
             self.listener.stop()
@@ -145,7 +156,7 @@ class ParallelLogManager:
         self.module_loggers[module_name] = logger
         return logger
 
-    def set_console_level(self, level: int):
+    def set_console_level(self, level: int) -> None:
         """
         Dynamically change console log level.
 
@@ -162,7 +173,7 @@ class ParallelLogManager:
 _log_manager: Optional[ParallelLogManager] = None
 
 
-def get_log_manager(**kwargs) -> ParallelLogManager:
+def get_log_manager(**kwargs: Any) -> ParallelLogManager:
     """Get or create the global log manager."""
     global _log_manager
     if _log_manager is None:
@@ -171,7 +182,7 @@ def get_log_manager(**kwargs) -> ParallelLogManager:
     return _log_manager
 
 
-def shutdown_log_manager():
+def shutdown_log_manager() -> None:
     """Shutdown the global log manager."""
     global _log_manager
     if _log_manager:
@@ -190,10 +201,10 @@ class DynamicLogger:
     Allows changing log levels at runtime by communicating with the LogManager.
     """
 
-    def __init__(self, logger: logging.Logger):
+    def __init__(self, logger: logging.Logger) -> None:
         self._logger = logger
 
-    def set_console_level(self, level: int):
+    def set_console_level(self, level: int) -> None:
         """
         Dynamically change console output verbosity.
 
@@ -202,15 +213,15 @@ class DynamicLogger:
         """
         get_log_manager().set_console_level(level)
 
-    def enable_verbose(self):
+    def enable_verbose(self) -> None:
         """Quick enable: DEBUG level on console."""
         self.set_console_level(logging.DEBUG)
 
-    def enable_quiet(self):
+    def enable_quiet(self) -> None:
         """Quick enable: ERROR level on console."""
         self.set_console_level(logging.ERROR)
 
-    def enable_normal(self):
+    def enable_normal(self) -> None:
         """Quick enable: INFO level on console."""
         self.set_console_level(logging.INFO)
 
@@ -224,28 +235,136 @@ class DynamicLogger:
         return logging.INFO
 
     # Proxy methods to underlying logger
-    def debug(self, msg, *args, **kwargs):
-        self._logger.debug(msg, *args, **kwargs)
+    # Proxy methods to underlying logger
+    def debug(
+        self,
+        msg: object,
+        *args: object,
+        exc_info: ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: Optional[Mapping[str, object]] = None,
+    ) -> None:
+        self._logger.debug(
+            msg,
+            *args,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            stacklevel=stacklevel,
+            extra=extra,
+        )
 
-    def info(self, msg, *args, **kwargs):
-        self._logger.info(msg, *args, **kwargs)
+    def info(
+        self,
+        msg: object,
+        *args: object,
+        exc_info: ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: Optional[Mapping[str, object]] = None,
+    ) -> None:
+        self._logger.info(
+            msg,
+            *args,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            stacklevel=stacklevel,
+            extra=extra,
+        )
 
-    def warning(self, msg, *args, **kwargs):
-        self._logger.warning(msg, *args, **kwargs)
+    def warning(
+        self,
+        msg: object,
+        *args: object,
+        exc_info: ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: Optional[Mapping[str, object]] = None,
+    ) -> None:
+        self._logger.warning(
+            msg,
+            *args,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            stacklevel=stacklevel,
+            extra=extra,
+        )
 
-    def error(self, msg, *args, **kwargs):
-        self._logger.error(msg, *args, **kwargs)
+    def error(
+        self,
+        msg: object,
+        *args: object,
+        exc_info: ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: Optional[Mapping[str, object]] = None,
+    ) -> None:
+        self._logger.error(
+            msg,
+            *args,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            stacklevel=stacklevel,
+            extra=extra,
+        )
 
-    def critical(self, msg, *args, **kwargs):
-        self._logger.critical(msg, *args, **kwargs)
+    def critical(
+        self,
+        msg: object,
+        *args: object,
+        exc_info: ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: Optional[Mapping[str, object]] = None,
+    ) -> None:
+        self._logger.critical(
+            msg,
+            *args,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            stacklevel=stacklevel,
+            extra=extra,
+        )
 
-    def exception(self, msg, *args, **kwargs):
-        self._logger.exception(msg, *args, **kwargs)
+    def exception(
+        self,
+        msg: object,
+        *args: object,
+        exc_info: ExcInfoType = True,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: Optional[Mapping[str, object]] = None,
+    ) -> None:
+        self._logger.exception(
+            msg,
+            *args,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            stacklevel=stacklevel,
+            extra=extra,
+        )
 
-    def log(self, level, msg, *args, **kwargs):
-        self._logger.log(level, msg, *args, **kwargs)
+    def log(
+        self,
+        level: int,
+        msg: object,
+        *args: object,
+        exc_info: ExcInfoType = None,
+        stack_info: bool = False,
+        stacklevel: int = 1,
+        extra: Optional[Mapping[str, object]] = None,
+    ) -> None:
+        self._logger.log(
+            level,
+            msg,
+            *args,
+            exc_info=exc_info,
+            stack_info=stack_info,
+            stacklevel=stacklevel,
+            extra=extra,
+        )
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> object:
         """Delegate other attributes to the underlying logger."""
         return getattr(self._logger, name)
 
@@ -282,7 +401,7 @@ class LogContext:
         logger: Union[logging.Logger, DynamicLogger],
         operation: str,
         show_time: bool = True,
-    ):
+    ) -> None:
         self.logger = logger
         self.operation = operation
         self.show_time = show_time

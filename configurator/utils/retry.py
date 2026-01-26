@@ -3,9 +3,11 @@ import logging
 import os
 import random
 import time
-from typing import Any, Callable, Tuple, Type, Union
+from typing import Any, Callable, Tuple, Type, TypeVar, Union, cast
 
 logger = logging.getLogger(__name__)
+
+F = TypeVar("F", bound=Callable[..., Any])
 
 
 def retry(
@@ -15,7 +17,7 @@ def retry(
     backoff_factor: float = 2.0,
     jitter: bool = True,
     exceptions: Union[Type[Exception], Tuple[Type[Exception], ...]] = (Exception,),
-) -> Callable:
+) -> Callable[[F], F]:
     """
     Decorator for retrying a function with exponential backoff.
 
@@ -31,7 +33,7 @@ def retry(
         Decorated function
     """
 
-    def decorator(func: Callable) -> Callable:
+    def decorator(func: F) -> F:
         @functools.wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> Any:
             # In test mode, drastically reduce retries to prevent test hangs
@@ -76,6 +78,6 @@ def retry(
                     # Increment backoff
                     delay *= backoff_factor
 
-        return wrapper
+        return cast(F, wrapper)
 
     return decorator

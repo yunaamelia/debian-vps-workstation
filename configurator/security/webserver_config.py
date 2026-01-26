@@ -17,7 +17,7 @@ import subprocess
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 
 
 class TLSProtocol(Enum):
@@ -56,7 +56,7 @@ class TLSConfig:
     session_timeout: int = 1440  # 24 hours in minutes
     session_cache_size: int = 50  # MB
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         if self.protocols is None:
             self.protocols = [TLSProtocol.TLS_1_2, TLSProtocol.TLS_1_3]
 
@@ -538,7 +538,7 @@ class WebServerConfigurator:
         cert_path: Path,
         key_path: Path,
         webserver: Optional[str] = None,
-        **kwargs,
+        **kwargs: Any,
     ) -> bool:
         """
         Configure SSL for detected or specified web server.

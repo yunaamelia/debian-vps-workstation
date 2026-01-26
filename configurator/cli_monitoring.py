@@ -22,14 +22,14 @@ console = Console()
 
 
 @click.group(name="monitoring")
-def monitoring_group():
+def monitoring_group() -> None:
     """Monitoring and observability commands."""
     pass
 
 
 @monitoring_group.command(name="status")
 @click.option("--json", "output_json", is_flag=True, help="Output in JSON format")
-def status_command(output_json):
+def status_command(output_json: bool) -> None:
     """
     Show current system status.
 
@@ -37,12 +37,13 @@ def status_command(output_json):
     """
     try:
         import logging
+        from typing import Any, Dict, cast
 
         from configurator.core.health import HealthCheckService
 
         health_service = HealthCheckService(logging.getLogger())
         health_results = health_service.check_all()
-        summary = health_service.get_summary()
+        summary = cast(Dict[str, Any], health_service.get_summary())
 
         if output_json:
             output = {
@@ -119,7 +120,7 @@ def status_command(output_json):
     help="Output format",
 )
 @click.option("--output", "-o", type=click.Path(), help="Output file (default: stdout)")
-def metrics_command(output_format, output):
+def metrics_command(output_format: str, output: str) -> None:
     """
     Export metrics.
 
@@ -153,7 +154,7 @@ def metrics_command(output_format, output):
 
 
 @monitoring_group.command(name="circuit-breakers")
-def circuit_breakers_command():
+def circuit_breakers_command() -> None:
     """Show circuit breaker status."""
     try:
         import logging
@@ -219,7 +220,7 @@ def circuit_breakers_command():
 @click.argument(
     "log_file", type=click.Path(exists=True), default="logs/install.log", required=False
 )
-def logs_command(tail, log_file):
+def logs_command(tail: int, log_file: str) -> None:
     """View recent logs."""
     try:
         if not Path(log_file).exists():
@@ -260,7 +261,7 @@ def logs_command(tail, log_file):
     help="Filter by severity",
 )
 @click.option("--hours", type=int, default=24, help="Show alerts from last N hours")
-def alerts_command(severity, hours):
+def alerts_command(severity: str, hours: int) -> None:
     """
     View recent alerts.
     """
@@ -326,7 +327,7 @@ def alerts_command(severity, hours):
 
 @monitoring_group.command(name="dashboard")
 @click.option("--update-interval", type=float, default=2.0, help="Update interval in seconds")
-def dashboard_command(update_interval):
+def dashboard_command(update_interval: float) -> None:
     """
     Launch real-time monitoring dashboard.
 
@@ -361,6 +362,6 @@ def dashboard_command(update_interval):
 
 
 # Register commands with main CLI
-def register_monitoring_commands(cli):
+def register_monitoring_commands(cli: click.Group) -> None:
     """Register monitoring commands with main CLI."""
     cli.add_command(monitoring_group)

@@ -4,7 +4,7 @@ from textual.screen import Screen
 from textual.widgets import Button, Static
 
 
-class PreviewScreen(Screen):
+class PreviewScreen(Screen[None]):
     """Preview screen before installation."""
 
     CSS = """

@@ -239,7 +239,7 @@ class AlertManager:
         self.history: List[Alert] = []
         self.threshold_rules: Dict[str, Dict[str, Any]] = {}
 
-    def add_channel(self, channel: AlertChannel):
+    def add_channel(self, channel: AlertChannel) -> None:
         """Add alert channel."""
         self.channels.append(channel)
 
@@ -258,7 +258,7 @@ class AlertManager:
         cutoff = datetime.now() - timedelta(hours=hours)
         return [a for a in self.history if a.timestamp >= cutoff]
 
-    def check_thresholds(self, metrics: Dict[str, Any]):
+    def check_thresholds(self, metrics: Dict[str, Any]) -> None:
         """
         Check multiple thresholds at once.
 
@@ -274,7 +274,7 @@ class AlertManager:
         condition: Callable[[Any], bool],
         severity: AlertSeverity,
         message_template: str,
-    ):
+    ) -> None:
         """
         Add threshold rule.
 
@@ -290,7 +290,7 @@ class AlertManager:
             "message_template": message_template,
         }
 
-    def check_threshold(self, metric_name: str, value: Any):
+    def check_threshold(self, metric_name: str, value: Any) -> None:
         """
         Check if metric exceeds threshold.
 
@@ -323,7 +323,7 @@ class AlertManager:
         message: str,
         source: str,
         metadata: Optional[Dict[str, Any]] = None,
-    ):
+    ) -> None:
         """
         Send alert to all channels.
 

@@ -44,7 +44,7 @@ class Counter:
         self._value = 0.0
         self._lock = threading.Lock()
 
-    def inc(self, amount: float = 1.0):
+    def inc(self, amount: float = 1.0) -> None:
         """Increment counter."""
         with self._lock:
             self._value += amount
@@ -54,7 +54,7 @@ class Counter:
         with self._lock:
             return self._value
 
-    def reset(self):
+    def reset(self) -> None:
         """Reset counter to zero."""
         with self._lock:
             self._value = 0.0
@@ -69,17 +69,17 @@ class Gauge:
         self._value = 0.0
         self._lock = threading.Lock()
 
-    def set(self, value: float):
+    def set(self, value: float) -> None:
         """Set gauge value."""
         with self._lock:
             self._value = value
 
-    def inc(self, amount: float = 1.0):
+    def inc(self, amount: float = 1.0) -> None:
         """Increment gauge."""
         with self._lock:
             self._value += amount
 
-    def dec(self, amount: float = 1.0):
+    def dec(self, amount: float = 1.0) -> None:
         """Decrement gauge."""
         with self._lock:
             self._value -= amount
@@ -104,7 +104,7 @@ class Histogram:
         self._count = 0
         self._lock = threading.Lock()
 
-    def observe(self, value: float):
+    def observe(self, value: float) -> None:
         """Record an observation."""
         with self._lock:
             self._sum += value
@@ -151,7 +151,7 @@ class MetricsCollector:
         prometheus_format = metrics.export_prometheus()
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self._counters: Dict[str, Counter] = {}
         self._gauges: Dict[str, Gauge] = {}
         self._histograms: Dict[str, Histogram] = {}
@@ -160,7 +160,7 @@ class MetricsCollector:
         # Initialize standard metrics
         self._init_standard_metrics()
 
-    def _init_standard_metrics(self):
+    def _init_standard_metrics(self) -> None:
         """Initialize standard metrics."""
         # Installation metrics
         self.installations_total = self.counter(
@@ -298,7 +298,7 @@ class MetricsCollector:
 
         return json.dumps(data, indent=2)
 
-    def save_to_file(self, filepath: Path, format: str = "prometheus"):
+    def save_to_file(self, filepath: Path, format: str = "prometheus") -> None:
         """Save metrics to file."""
         filepath.parent.mkdir(parents=True, exist_ok=True)
 
@@ -312,7 +312,7 @@ class MetricsCollector:
         with open(filepath, "w") as f:
             f.write(content)
 
-    def update_resource_metrics(self):
+    def update_resource_metrics(self) -> None:
         """Update system resource metrics."""
         try:
             import psutil
@@ -332,7 +332,7 @@ class MetricsCollector:
 
 
 # Global metrics instance
-_metrics = None
+_metrics: Optional[MetricsCollector] = None
 
 
 def get_metrics() -> MetricsCollector:

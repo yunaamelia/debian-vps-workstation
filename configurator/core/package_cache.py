@@ -12,7 +12,7 @@ import threading
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 
 @dataclass
@@ -30,7 +30,7 @@ class CachedPackage:
     last_accessed: datetime
     access_count: int = 0
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> Dict[str, Any]:
         """Serialize to dictionary"""
         return {
             "name": self.name,
@@ -46,7 +46,7 @@ class CachedPackage:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict) -> "CachedPackage":
+    def from_dict(cls, data: Dict[str, Any]) -> "CachedPackage":
         """Deserialize from dictionary"""
         return cls(
             name=data["name"],
@@ -161,7 +161,7 @@ class PackageCacheManager:
         except Exception as e:
             self.logger.error(f"Failed to save cache index: {e}")
 
-    def _load_stats(self) -> Dict:
+    def _load_stats(self) -> Dict[str, Any]:
         """Load cache statistics"""
         stats_file = self.cache_dir / self.STATS_FILE
 
@@ -175,7 +175,8 @@ class PackageCacheManager:
 
         try:
             with open(stats_file, "r") as f:
-                return json.load(f)
+                stats: Dict[str, Any] = json.load(f)
+                return stats
         except Exception as e:
             self.logger.warning(f"Failed to load stats, resetting: {e}")
             return {}
@@ -476,7 +477,7 @@ class PackageCacheManager:
 
                 return len(to_remove)
 
-    def get_stats(self) -> Dict:
+    def get_stats(self) -> Dict[str, Any]:
         """
         Get cache statistics.
 

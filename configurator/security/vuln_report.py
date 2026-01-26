@@ -20,7 +20,7 @@ class VulnReportGenerator:
         self.logger = logging.getLogger(__name__)
         self._ensure_output_dir()
 
-    def _ensure_output_dir(self):
+    def _ensure_output_dir(self) -> None:
         """Create output directory if it doesn't exist"""
         if not self.output_dir.exists():
             self.output_dir.mkdir(parents=True, exist_ok=True)

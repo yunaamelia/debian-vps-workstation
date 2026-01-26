@@ -135,7 +135,7 @@ class HealthCheckService:
 
         return results
 
-    def get_summary(self) -> dict:
+    def get_summary(self) -> Dict[str, object]:
         """Get health check summary."""
         if not self.last_results:
             self.check_all()
