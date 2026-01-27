@@ -7,6 +7,8 @@ Handles:
 - JAVA_HOME configuration
 """
 
+import os
+
 from configurator.modules.base import ConfigurationModule
 
 
@@ -122,18 +124,49 @@ class JavaModule(ConfigurationModule):
 
     def _configure_environment(self):
         """Configure JAVA_HOME."""
-        self.get_config("version", "17")
+        jdk_version = self.get_config("version", "17")
+        # On Debian, default-jdk typically points to openjdk-17 or similar.
+        # But we need to be precise.
+        # If version is default, we can try to resolve it or just guess.
+        # A safer bet for Debian Trixie is to look at /usr/lib/jvm/default-java if it exists.
 
-        java_env = """
+        java_home_path = f"/usr/lib/jvm/java-{jdk_version}-openjdk-amd64"
+        if jdk_version == "default":
+            java_home_path = "/usr/lib/jvm/default-java"
+
+        java_env = f"""
 # Java environment
-export JAVA_HOME=/usr/lib/jvm/java-{jdk_version}-openjdk-amd64
+export JAVA_HOME={java_home_path}
 export PATH=$PATH:$JAVA_HOME/bin
 """
 
         # Add to /etc/profile.d
-        with open("/etc/profile.d/java.sh", "w") as f:
-            f.write(java_env)
+        try:
+            with open("/etc/profile.d/java.sh", "w") as f:
+                f.write(java_env)
+            self.run("chmod +x /etc/profile.d/java.sh", check=False)
+        except Exception:
+            pass
 
-        self.run("chmod +x /etc/profile.d/java.sh", check=False)
+        # Also add to target user's bashrc and zshrc
+        for rc_file in [".bashrc", ".zshrc"]:
+            target_rc = f"{self.target_home}/{rc_file}"
+
+            try:
+                current_content = ""
+                if os.path.exists(target_rc):
+                    with open(target_rc, "r") as f:
+                        current_content = f.read()
+
+                if "JAVA_HOME" not in current_content:
+                    with open(target_rc, "a") as f:
+                        f.write(java_env)
+                    # Fix permissions
+                    if self.target_user != "root":
+                        self.run(
+                            f"chown {self.target_user}:{self.target_user} {target_rc}", check=False
+                        )
+            except Exception as e:
+                self.logger.warning(f"Failed to update {rc_file}: {e}")
 
         self.logger.info("✓ JAVA_HOME configured")

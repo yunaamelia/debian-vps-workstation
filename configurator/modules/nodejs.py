@@ -42,7 +42,7 @@ class NodeJSModule(ConfigurationModule):
     def validate(self) -> bool:
         """Validate Node.js prerequisites."""
         # Check if nvm is already installed
-        nvm_dir = os.path.expanduser("~/.nvm")
+        nvm_dir = f"{self.target_home}/.nvm"
         if os.path.exists(nvm_dir):
             self.logger.info("✓ nvm is already installed")
 
@@ -80,10 +80,10 @@ class NodeJSModule(ConfigurationModule):
         checks_passed = True
 
         # Source nvm in verification commands
-        nvm_source = 'export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && '
+        nvm_source = f'export NVM_DIR="{self.target_home}/.nvm" && . "$NVM_DIR/nvm.sh" && '
 
         # Check nvm
-        nvm_dir = os.path.expanduser("~/.nvm")
+        nvm_dir = f"{self.target_home}/.nvm"
         if not os.path.exists(nvm_dir):
             self.logger.error("nvm is not installed!")
             checks_passed = False
@@ -107,7 +107,7 @@ class NodeJSModule(ConfigurationModule):
 
     def _install_nvm(self):
         """Install Node Version Manager."""
-        nvm_dir = os.path.expanduser("~/.nvm")
+        nvm_dir = f"{self.target_home}/.nvm"
 
         if os.path.exists(nvm_dir):
             self.logger.info("nvm already installed, updating...")
@@ -117,21 +117,33 @@ class NodeJSModule(ConfigurationModule):
         # Download and run nvm install script
         nvm_url = f"https://raw.githubusercontent.com/nvm-sh/nvm/v{self.NVM_VERSION}/install.sh"
 
-        # Explicitly set NVM_DIR
+        # Explicitly set NVM_DIR and install as target user if applicable
+        # If running as root but targeting user, we must switch user OR fix permissions later.
+        # nvm install script uses $HOME.
+
+        # Strategy: Run as target user if possible
+        cmd = f"curl -o- {nvm_url} | bash"
         env = os.environ.copy()
-        env["NVM_DIR"] = nvm_dir
+
+        if self.target_user != "root" and os.environ.get("USER") == "root":
+            # We are root, targeting a user.
+            # Use su/sudo to run as user
+            # Since 'run' uses subprocess/shell, we can wrap the command
+            # But we also need to set HOME
+            cmd = f"sudo -u {self.target_user} bash -c 'export HOME={self.target_home} && curl -o- {nvm_url} | NVM_DIR={nvm_dir} bash'"
+        else:
+            env["NVM_DIR"] = nvm_dir
 
         result = self.run(
-            f"curl -o- {nvm_url} | bash",
+            cmd,
             check=False,
-            env=env,
+            # env=env # Env not needed if using sudo wrapper with export
         )
 
         if not result.success:
             self.logger.warning("nvm installation may have had issues")
 
-        # Add nvm to bashrc if not already there
-        bashrc = os.path.expanduser("~/.bashrc")
+        # Add nvm to user's bashrc and zshrc
         nvm_init = """
 # NVM (Node Version Manager)
 export NVM_DIR="$HOME/.nvm"
@@ -139,33 +151,57 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/bash_completion" ] && \\. "$NVM_DIR/bash_completion"
 """
 
-        with open(bashrc, "r") as f:
-            bashrc_content = f.read()
+        for rc_file in [".bashrc", ".zshrc"]:
+            target_rc = f"{self.target_home}/{rc_file}"
+            # Only append to zshrc if it exists (or just create it, but desktop.py should have made it)
+            # If desktop module is disabled, we might create a loose .zshrc, which is fine.
 
-        if "NVM_DIR" not in bashrc_content:
-            with open(bashrc, "a") as f:
-                f.write(nvm_init)
+            if os.path.exists(target_rc) or rc_file == ".bashrc":
+                # Always do bashrc, do zshrc if exists or if we want to force it.
+                # Let's check consistency.
+
+                try:
+                    current_content = ""
+                    if os.path.exists(target_rc):
+                        with open(target_rc, "r") as f:
+                            current_content = f.read()
+
+                    if "NVM_DIR" not in current_content:
+                        with open(target_rc, "a") as f:
+                            f.write(nvm_init)
+                        # Fix permissions
+                        if self.target_user != "root":
+                            self.run(
+                                f"chown {self.target_user}:{self.target_user} {target_rc}",
+                                check=False,
+                            )
+                except Exception as e:
+                    self.logger.warning(f"Failed to update {rc_file}: {e}")
 
         self.logger.info("✓ nvm installed")
 
     def _install_nodejs(self):
         """Install Node.js using nvm."""
         node_version = self.get_config("version", "20")  # Default to LTS
-        nvm_dir = os.path.expanduser("~/.nvm")
+        nvm_dir = f"{self.target_home}/.nvm"
 
         self.logger.info(f"Installing Node.js v{node_version} (LTS)...")
 
         # Install and use specified version
-        # NVM_DIR is explicitly set within the bash script for robustness
+        nvm_source = (
+            f'export NVM_DIR="{nvm_dir}" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"'
+        )
         nvm_commands = f"""
-export NVM_DIR="{nvm_dir}"
-[ -s "$NVM_DIR/nvm.sh" ] && \\. "$NVM_DIR/nvm.sh"
+{nvm_source}
 nvm install {node_version}
 nvm use {node_version}
 nvm alias default {node_version}
 """
+        cmd = f"bash -c '{nvm_commands}'"
+        if self.target_user != "root" and os.environ.get("USER") == "root":
+            cmd = f"sudo -u {self.target_user} bash -c '{nvm_commands}'"
 
-        result = self.run(f"bash -c '{nvm_commands}'", check=False)
+        result = self.run(cmd, check=False)
 
         if result.success:
             self.logger.info(f"✓ Node.js v{node_version} installed")
@@ -176,7 +212,10 @@ nvm alias default {node_version}
         """Install yarn and pnpm package managers."""
         package_managers = self.get_config("package_managers", ["npm", "yarn", "pnpm"])
 
-        nvm_source = 'export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && '
+        nvm_dir = f"{self.target_home}/.nvm"
+        nvm_source = (
+            f'export NVM_DIR="{nvm_dir}" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && '
+        )
 
         for pm in package_managers:
             if pm == "npm":
@@ -184,14 +223,18 @@ nvm alias default {node_version}
 
             self.logger.info(f"Installing {pm}...")
 
+            cmd_prefix = ""
+            if self.target_user != "root" and os.environ.get("USER") == "root":
+                cmd_prefix = f"sudo -u {self.target_user} "
+
             if pm == "yarn":
                 result = self.run(
-                    f"bash -c '{nvm_source}npm install -g yarn'",
+                    f"{cmd_prefix}bash -c '{nvm_source}npm install -g yarn'",
                     check=False,
                 )
             elif pm == "pnpm":
                 result = self.run(
-                    f"bash -c '{nvm_source}npm install -g pnpm'",
+                    f"{cmd_prefix}bash -c '{nvm_source}npm install -g pnpm'",
                     check=False,
                 )
 
@@ -209,11 +252,18 @@ nvm alias default {node_version}
 
         self.logger.info("Installing global packages...")
 
-        nvm_source = 'export NVM_DIR="$HOME/.nvm" && . "$NVM_DIR/nvm.sh" && '
+        nvm_dir = f"{self.target_home}/.nvm"
+        nvm_source = (
+            f'export NVM_DIR="{nvm_dir}" && [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" && '
+        )
         packages_str = " ".join(global_packages)
 
+        cmd_prefix = ""
+        if self.target_user != "root" and os.environ.get("USER") == "root":
+            cmd_prefix = f"sudo -u {self.target_user} "
+
         result = self.run(
-            f"bash -c '{nvm_source}npm install -g {packages_str}'",
+            f"{cmd_prefix}bash -c '{nvm_source}npm install -g {packages_str}'",
             check=False,
         )
 

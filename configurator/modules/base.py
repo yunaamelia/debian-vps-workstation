@@ -67,6 +67,31 @@ class ConfigurationModule(ABC):
         self.circuit_breaker_manager = circuit_breaker_manager or CircuitBreakerManager()
         self.package_cache_manager = package_cache_manager
 
+        # Determine target user (SUDO_USER takes precedence)
+        self.target_user = os.environ.get("SUDO_USER", os.environ.get("USER", "root"))
+        if self.target_user == "root":
+            # Fallback: check if we can find a non-root user (e.g. 1000)
+            try:
+                import pwd
+
+                for u in pwd.getpwall():
+                    if 1000 <= u.pw_uid < 60000:
+                        self.target_user = u.pw_name
+                        break
+            except Exception:
+                pass
+
+        # Determine target home
+        if self.target_user == "root":
+            self.target_home = "/root"
+        else:
+            try:
+                import pwd
+
+                self.target_home = pwd.getpwnam(self.target_user).pw_dir
+            except Exception:
+                self.target_home = os.path.expanduser("~")
+
         # Initialize APT Cache Integration if manager is available
         self.apt_cache_integration = None
         if self.package_cache_manager:

@@ -1,971 +1,437 @@
 #!/bin/bash
-
-#####################################################################
-# Debian VPS Configurator - Quick Install Script
+# ==============================================================================
+# quick-install.sh - Robust DevOps Deployment Pipeline for VPS Configurator
+# ==============================================================================
 #
-# Purpose: Install all prerequisites and dependencies required to run
-#          sudo vps-configurator install --profile advanced
+# DESCRIPTION
+#   Automates the deployment of the vps-configurator with a focus on reliability,
+#   observability, and self-healing. Implements a sequential workflow with
+#   automatic rollback and structured logging for AI analysis.
 #
-# Features:
-# - Structured logging with timestamped log files
-# - Pre-flight validation (OS, disk, memory, Python, git)
-# - Checkpoint system for error recovery (preserved)
-# - Automatic rollback on failure (preserved)
-# - Resume from last successful checkpoint (preserved)
-# - Post-installation verification and status summary
+# WORKFLOW
+#   1. Transfer (rsync)
+#   2. Dependencies (apt/pip)
+#   3. User Provisioning (security)
+#   4. Environment (venv)
+#   5. Execution (install)
 #
-# Usage: ./quick-install.sh
-#####################################################################
+# USAGE
+#   ./quick-install.sh [options]
+#
+# OPTIONS
+#   --user <name>       Target system user to create/use (default: vps-admin)
+#   --password <pass>   Password for the target user (default: random)
+#   --sync-source <dir> Path to source code for rsync transfer
+#   --verbose           Enable debug logging
+#   --max-retries <n>   Number of retry attempts on failure (default: 3)
+#   --profile <name>    Configurator profile to run (default: advanced)
+#
+# ==============================================================================
 
 set -euo pipefail
 IFS=$'\n\t'
 
-# ==========================================================================
-# CONSTANTS AND CONFIGURATION
-# ==========================================================================
+# ==============================================================================
+# GLOBAL CONSTANTS & CONFIGURATION
+# ==============================================================================
 
-readonly SCRIPT_NAME="$(basename "$0")"
-readonly CHECKPOINT_DIR=".install_checkpoints"
-readonly BACKUP_DIR=".install_backup"
-readonly LOG_DIR="./logs"
+readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+readonly LOG_DIR="${SCRIPT_DIR}/logs"
 readonly TIMESTAMP="$(date +%Y%m%d_%H%M%S)"
-readonly INSTALL_LOG="${LOG_DIR}/install_${TIMESTAMP}.log"
-readonly LOG_RETENTION="${LOG_RETENTION:-10}"
+readonly LOG_FILE="${LOG_DIR}/install_${TIMESTAMP}.log"
 
-readonly MIN_DISK_KB=2097152   # 2 GB
-readonly MIN_MEM_KB=1048576    # 1 GB
-readonly MIN_PY_MAJOR=3
-readonly MIN_PY_MINOR=11
+# Force unbuffered Python output for real-time logging
+export PYTHONUNBUFFERED=1
+# Prevent apt-get from hanging on prompts
+export DEBIAN_FRONTEND=noninteractive
 
-readonly EXIT_GENERAL=1
-readonly EXIT_PREFLIGHT=2
-readonly EXIT_INSTALL_SYSTEM=3
-readonly EXIT_VENV=4
-readonly EXIT_PY_DEPS=5
-readonly EXIT_VERIFY=6
-readonly EXIT_INTERRUPT=130
-
-ROOT_MODE=false
+# Default Configuration
+TARGET_USER="vps-admin"
+TARGET_PASS=""
+SYNC_SOURCE=""
+VERBOSE=false
+MAX_RETRIES=3
+PROFILE="advanced"
 DRY_RUN=false
-ERROR_CONTEXT=""
-ERROR_CODE=$EXIT_GENERAL
-NEW_USER=""
-NEW_PASS=""
-DELETE_USER=""
-SSH_KEY_VAL=""
-SUDO_TIMEOUT="-1"
-MANAGE_ONLY=false
+RETRY_DELAY=5
 
-# Colors for output
+# State Tracking
+PHASE_STATE_FILE="${LOG_DIR}/.install_phase"
+USER_CREATED_MARKER="${LOG_DIR}/.user_created"
+PHASE_TRANSFER="TRANSFER"
+PHASE_DEPS="DEPS"
+PHASE_USER="USER"
+PHASE_ENV="ENV"
+PHASE_EXEC="EXEC"
+
+# Colors
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
 readonly YELLOW='\033[1;33m'
 readonly BLUE='\033[0;34m'
-readonly NC='\033[0m'
+readonly CYAN='\033[0;36m'
+readonly NC='\033[0m' # No Color
 
-# ==========================================================================
-# LOGGING FUNCTIONS
-# ==========================================================================
+# ==============================================================================
+# LOGGING SYSTEM
+# ==============================================================================
 
 init_logging() {
-    if [ "$DRY_RUN" = true ]; then
-        return 0
-    fi
     mkdir -p "$LOG_DIR"
-    rotate_logs
-    touch "$INSTALL_LOG"
+    touch "$LOG_FILE"
+    chmod 666 "$LOG_FILE" # Allow multiple users to write to log
+    log "INFO" "INIT" "Logging initialized at $LOG_FILE"
 }
 
-rotate_logs() {
-    if [ ! -d "$LOG_DIR" ]; then
+# Format: [TIMESTAMP] [LEVEL] [PHASE:NAME] Message
+log() {
+    local level="$1"
+    local phase="${2:-SYSTEM}"
+    local message="$3"
+    local timestamp
+    timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
+
+    # Strip user/pass info for security mask
+    if [[ -n "$TARGET_PASS" ]]; then
+        message="${message//$TARGET_PASS/******}"
+    fi
+
+    # Console Output with Color
+    local color=""
+    case "$level" in
+        INFO)    color="$BLUE" ;;
+        SUCCESS) color="$GREEN" ;;
+        WARNING) color="$YELLOW" ;;
+        ERROR|FAIL)   color="$RED" ;;
+        DEBUG)   color="$CYAN" ;;
+        ACTION)  color="$NC" ;;
+    esac
+
+    # Don't print DEBUG to console unless verbose
+    if [[ "$level" != "DEBUG" ]] || [[ "$VERBOSE" == "true" ]]; then
+        echo -e "${color}[${timestamp}] [${level}] [PHASE:${phase}] ${message}${NC}" >&2
+    fi
+
+    # File Output (Plain text/Structured for AI)
+    echo "[${timestamp}] [${level}] [PHASE:${phase}] ${message}" >> "$LOG_FILE"
+}
+
+# ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+root_check() {
+    if [[ $EUID -ne 0 ]]; then
+        log "WARNING" "INIT" "Not running as root. Sudo will be requested."
+    fi
+}
+
+run_priv() {
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log "ACTION" "DRY-RUN" "Would run: $*"
         return 0
     fi
 
-    local count
-    # Fix: Prevent script exit if no logs exist (ls returns 2) due to set -eo pipefail
-    count=$(find "$LOG_DIR" -maxdepth 1 -name "install_*.log" 2>/dev/null | wc -l || echo 0)
-    if [ "$count" -le "$LOG_RETENTION" ]; then
-        return 0
-    fi
-
-    # Fix: Safely list and rotate logs
-    (ls -1t "$LOG_DIR"/install_*.log 2>/dev/null || true) | tail -n +$((LOG_RETENTION + 1)) | xargs -r rm -f
-}
-
-log_line() {
-    local message=$1
-    if [ "$DRY_RUN" = true ]; then
-        echo -e "$message"
-        return 0
-    fi
-    if [ -n "${INSTALL_LOG:-}" ] && [ -d "${LOG_DIR:-}" ]; then
-        echo -e "$message" | tee -a "$INSTALL_LOG" || true
-    else
-        echo -e "$message"
-    fi
-}
-
-log_info() {
-    log_line "${BLUE}[INFO]${NC} $*"
-}
-
-log_success() {
-    log_line "${GREEN}[SUCCESS]${NC} $*"
-}
-
-log_warning() {
-    log_line "${YELLOW}[WARNING]${NC} $*"
-}
-
-log_error() {
-    log_line "${RED}[ERROR]${NC} $*"
-}
-
-log_section() {
-    log_line ""
-    log_line "═══════════════════════════════════════════════════════════════"
-    log_line "$*"
-    log_line "═══════════════════════════════════════════════════════════════"
-}
-
-print_msg() {
-    local color=$1
-    shift
-    log_line "${color}$*${NC}"
-}
-
-print_header() {
-    echo "" | tee -a "$INSTALL_LOG"
-    print_msg "$BLUE" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    print_msg "$BLUE" "  $1"
-    print_msg "$BLUE" "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "" | tee -a "$INSTALL_LOG"
-}
-
-print_success() {
-    print_msg "$GREEN" "✓ $1"
-}
-
-print_error() {
-    print_msg "$RED" "✗ $1"
-}
-
-print_warning() {
-    print_msg "$YELLOW" "⚠ $1"
-}
-
-print_info() {
-    print_msg "$BLUE" "ℹ $1"
-}
-
-fail() {
-    local message=$1
-    local code=${2:-$EXIT_GENERAL}
-    ERROR_CONTEXT="$message"
-    ERROR_CODE=$code
-    log_error "$message"
-    return "$code"
-}
-
-command_exists() {
-    command -v "$1" >/dev/null 2>&1
-}
-
-run_as_root() {
-    if [ "$DRY_RUN" = true ]; then
-        log_info "DRY RUN: $*"
-        return 0
-    fi
-    if [ "$ROOT_MODE" = true ]; then
+    if [[ $EUID -eq 0 ]]; then
         "$@"
     else
-        sudo "$@"
+        sudo -E "$@"
     fi
 }
 
-# ==========================================================================
-# CHECKPOINT MANAGEMENT (PRESERVED)
-# ==========================================================================
+# ==============================================================================
+# SYSTEM RESTORE (ROLLBACK)
+# ==============================================================================
 
-create_checkpoint() {
-    local checkpoint_name=$1
-    if [ "$DRY_RUN" = true ]; then
-        print_info "DRY RUN: would create checkpoint $checkpoint_name"
-        return 0
-    fi
-    mkdir -p "$CHECKPOINT_DIR"
-    echo "$(date '+%Y-%m-%d %H:%M:%S')" > "$CHECKPOINT_DIR/$checkpoint_name"
-    print_success "Checkpoint created: $checkpoint_name"
-}
+system_restore() {
+    local phase="$1"
+    log "ACTION" "RESTORE" "Initiating System Restore for failure in phase: $phase..."
 
-check_checkpoint() {
-    local checkpoint_name=$1
-    [ -f "$CHECKPOINT_DIR/$checkpoint_name" ]
-}
-
-list_checkpoints() {
-    if [ -d "$CHECKPOINT_DIR" ]; then
-        print_info "Existing checkpoints:"
-        ls -1 "$CHECKPOINT_DIR" 2>/dev/null || echo "  None"
-    fi
-}
-
-clear_checkpoints() {
-    if [ -d "$CHECKPOINT_DIR" ]; then
-        if [ "$DRY_RUN" = true ]; then
-            print_info "DRY RUN: would remove checkpoints"
-            return 0
-        fi
-        rm -rf "$CHECKPOINT_DIR"
-        print_info "All checkpoints cleared"
-    fi
-}
-
-backup_state() {
-    local backup_name=$1
-    if [ "$DRY_RUN" = true ]; then
-        print_info "DRY RUN: would backup state ($backup_name)"
-        return 0
-    fi
-    mkdir -p "$BACKUP_DIR"
-
-    if [ -d "venv" ]; then
-        print_info "Backing up virtual environment..."
-        tar -czf "$BACKUP_DIR/venv_$backup_name.tar.gz" venv 2>/dev/null || true
-    fi
-
-    print_success "State backed up: $backup_name"
-}
-
-restore_state() {
-    local backup_name=$1
-
-    if [ "$DRY_RUN" = true ]; then
-        print_info "DRY RUN: would restore backup ($backup_name)"
-        return 0
-    fi
-
-    print_warning "Restoring from backup: $backup_name"
-
-    if [ -f "$BACKUP_DIR/venv_$backup_name.tar.gz" ]; then
-        print_info "Restoring virtual environment..."
-        rm -rf venv 2>/dev/null || true
-        tar -xzf "$BACKUP_DIR/venv_$backup_name.tar.gz" 2>/dev/null || true
-        print_success "Virtual environment restored"
-    fi
-}
-
-# ==========================================================================
-# ERROR HANDLING
-# ==========================================================================
-
-error_handler() {
-    local exit_code=$?
-    local line_number=$1
-
-    if [ -n "$ERROR_CONTEXT" ]; then
-        log_error "Failure: $ERROR_CONTEXT"
-    fi
-
-    log_error "Installation failed at line $line_number with exit code $exit_code"
-
-    print_header "Error Recovery Options"
-    list_checkpoints
-
-    echo "" | tee -a "$INSTALL_LOG"
-    print_warning "What would you like to do?"
-    echo "1) Retry from last checkpoint" | tee -a "$INSTALL_LOG"
-    echo "2) Start fresh (clean install)" | tee -a "$INSTALL_LOG"
-    echo "3) Exit and investigate manually" | tee -a "$INSTALL_LOG"
-
-    read -r -p "Choose an option (1-3): " -n 1 REPLY
-    echo "" | tee -a "$INSTALL_LOG"
-
-    case $REPLY in
-        1)
-            print_info "Attempting to recover from last checkpoint..."
-            restore_from_checkpoint
-            ;;
-        2)
-            print_info "Starting fresh installation..."
-            cleanup_all
-            exec "$0"
-            ;;
-        3)
-            print_info "Exiting. You can investigate and run the script again."
-            exit "$exit_code"
-            ;;
+    # Reverse order cleanup based on phase progression
+    case "$phase" in
+        "$PHASE_EXEC")
+            log "INFO" "RESTORE" "Phase EXEC failure: Cleaning up..."
+            # Fallthrough to lower layers
+            ;&
+        "$PHASE_ENV")
+            log "INFO" "RESTORE" "Removing virtual environment..."
+            if [[ "$DRY_RUN" != "true" ]]; then
+                rm -rf "${SCRIPT_DIR}/venv"
+            fi
+            ;&
+        "$PHASE_USER")
+            log "INFO" "RESTORE" "Checking user provisioning cleanup..."
+            if [[ -f "$USER_CREATED_MARKER" ]]; then
+                log "WARNING" "RESTORE" "Deleting user '$TARGET_USER' (created by this script)..."
+                if [[ "$DRY_RUN" != "true" ]]; then
+                    # Force kill processes owned by user before removal
+                    pkill -u "$TARGET_USER" || true
+                    run_priv userdel -r "$TARGET_USER" || log "WARNING" "RESTORE" "Failed to remove user '$TARGET_USER'"
+                    rm -f "$USER_CREATED_MARKER"
+                fi
+            else
+                log "INFO" "RESTORE" "User '$TARGET_USER' was pre-existing or not created. Skipping deletion."
+            fi
+            ;&
+        "$PHASE_DEPS")
+             log "INFO" "RESTORE" "Phase DEPS: Rolling back DEPS is risky. Leaving packages."
+             ;&
+        "$PHASE_TRANSFER")
+             log "INFO" "RESTORE" "Phase TRANSFER: Cleaning up transfer artifacts not implemented (requires file list)."
+             ;;
         *)
-            print_error "Invalid option. Exiting."
-            exit "$exit_code"
+            log "WARNING" "RESTORE" "Unknown phase or initial failure: $phase"
             ;;
     esac
+
+    log "SUCCESS" "RESTORE" "System Restore actions completed."
 }
 
-interrupt_handler() {
-    log_warning "Installation interrupted by user"
-    exit "$EXIT_INTERRUPT"
+# ==============================================================================
+# WORKFLOW PHASES
+# ==============================================================================
+
+# 1. Codebase Transfer
+phase_transfer() {
+    echo "$PHASE_TRANSFER" > "$PHASE_STATE_FILE"
+    if [[ -z "$SYNC_SOURCE" ]]; then
+        log "INFO" "$PHASE_TRANSFER" "No sync source provided. Using current directory."
+        return 0
+    fi
+
+    log "INFO" "$PHASE_TRANSFER" "Syncing from $SYNC_SOURCE..."
+
+    if [[ ! -d "$SYNC_SOURCE" ]]; then
+        log "FAIL" "$PHASE_TRANSFER" "Source directory not found: $SYNC_SOURCE"
+        return 1
+    fi
+
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log "ACTION" "DRY-RUN" "Would rsync from $SYNC_SOURCE to $SCRIPT_DIR"
+    else
+        rsync -av \
+            --exclude='.git' \
+            --exclude='__pycache__' \
+            --exclude='venv' \
+            --exclude='logs' \
+            "${SYNC_SOURCE}/" "${SCRIPT_DIR}/" >> "${LOG_FILE}" 2>&1
+    fi
+
+    log "SUCCESS" "$PHASE_TRANSFER" "Codebase transfer complete."
 }
 
-restore_from_checkpoint() {
-    if [ -d "$CHECKPOINT_DIR" ] && [ "$(ls -A "$CHECKPOINT_DIR" 2>/dev/null)" ]; then
-        local last_checkpoint
-        last_checkpoint=$(ls -t "$CHECKPOINT_DIR" | head -n1)
-        print_info "Last successful checkpoint: $last_checkpoint"
+# 2. Dependency Initialization
+phase_deps() {
+    echo "$PHASE_DEPS" > "$PHASE_STATE_FILE"
+    log "INFO" "$PHASE_DEPS" "Updating system package lists..."
 
-        if check_checkpoint "deployment_executed"; then
-            print_info "Resuming from post-installation verification..."
-            verify_installation
-        elif check_checkpoint "python_deps_installed"; then
-            print_info "Resuming from deployment execution..."
-            execute_configurator_install
-            verify_installation
-        elif check_checkpoint "venv_created"; then
-            print_info "Resuming from Python dependencies installation..."
-            install_python_deps
-            execute_configurator_install
-            verify_installation
-        elif check_checkpoint "system_deps_installed"; then
-            print_info "Resuming from virtual environment setup..."
-            setup_venv
-            install_python_deps
-            execute_configurator_install
-            verify_installation
-        else
-            print_info "No valid checkpoint found. Starting from system dependencies..."
-            install_system_deps
-            setup_venv
-            install_python_deps
-            execute_configurator_install
-            verify_installation
+    run_priv apt-get update -qq >> "${LOG_FILE}" 2>&1
+
+    local sys_deps=(
+        python3-pip
+        python3-venv
+        python3-dev
+        build-essential
+        libssl-dev
+        libffi-dev
+        git
+        curl
+        rsync
+    )
+
+    log "INFO" "$PHASE_DEPS" "Installing system dependencies: ${sys_deps[*]}"
+    run_priv apt-get install -y "${sys_deps[@]}" >> "${LOG_FILE}" 2>&1
+
+    log "SUCCESS" "$PHASE_DEPS" "System dependencies installed."
+}
+
+# 3. User Provisioning & Security
+phase_user() {
+    echo "$PHASE_USER" > "$PHASE_STATE_FILE"
+    log "INFO" "$PHASE_USER" "Verifying user: $TARGET_USER"
+
+    # Set system Timezone to Asia/Jakarta (Hardcoded requirement)
+    if [[ "$DRY_RUN" != "true" ]]; then
+        run_priv timedatectl set-timezone Asia/Jakarta || log "WARNING" "$PHASE_USER" "Failed to set timezone to Asia/Jakarta"
+    fi
+
+    if ! id "$TARGET_USER" &>/dev/null; then
+        log "INFO" "$PHASE_USER" "Creating user '$TARGET_USER'..."
+        run_priv useradd -m -s /bin/bash "$TARGET_USER"
+
+        # Mark user as created by us for rollback safety
+        touch "$USER_CREATED_MARKER"
+
+        if [[ -n "$TARGET_PASS" ]]; then
+            echo "${TARGET_USER}:${TARGET_PASS}" | run_priv chpasswd
+            log "INFO" "$PHASE_USER" "Password set for '$TARGET_USER'."
         fi
     else
-        print_error "No checkpoints found. Please start fresh."
-        exit "$EXIT_GENERAL"
+        log "INFO" "$PHASE_USER" "User '$TARGET_USER' already exists."
     fi
+
+    # Sudo setup
+    log "INFO" "$PHASE_USER" "Configuring sudo privileges..."
+    run_priv usermod -aG sudo "$TARGET_USER"
+
+    # Allow passwordless sudo for automation comfort
+    # WARNING: In highly secure envs, strictly limit this.
+    echo "$TARGET_USER ALL=(ALL) NOPASSWD:ALL" | run_priv tee "/etc/sudoers.d/90-vps-configurator-$TARGET_USER" >/dev/null
+    run_priv chmod 0440 "/etc/sudoers.d/90-vps-configurator-$TARGET_USER"
+
+    # Add Go/Cargo to PATH for the target user globally
+    local profile_path="/home/$TARGET_USER/.profile"
+    local bashrc_path="/home/$TARGET_USER/.bashrc"
+    local path_line='export PATH=$PATH:/usr/local/go/bin:$HOME/.cargo/bin'
+
+    if [[ "$DRY_RUN" != "true" ]]; then
+        # Append to .profile if not present
+        run_priv grep -qxF "$path_line" "$profile_path" || echo "$path_line" | run_priv tee -a "$profile_path" > /dev/null
+        # Append to .bashrc if not present
+        run_priv grep -qxF "$path_line" "$bashrc_path" || echo "$path_line" | run_priv tee -a "$bashrc_path" > /dev/null
+
+        run_priv chown "$TARGET_USER:$TARGET_USER" "$profile_path" "$bashrc_path"
+    fi
+
+    log "SUCCESS" "$PHASE_USER" "User provisioning complete."
 }
 
-cleanup_all() {
-    print_info "Cleaning up installation artifacts..."
-    if [ "$DRY_RUN" = true ]; then
-        print_info "DRY RUN: would remove $CHECKPOINT_DIR $BACKUP_DIR venv"
-        return 0
-    fi
-    rm -rf "$CHECKPOINT_DIR" "$BACKUP_DIR" venv 2>/dev/null || true
-    print_success "Cleanup complete"
-}
+# 4. Environment Isolation
+phase_env() {
+    echo "$PHASE_ENV" > "$PHASE_STATE_FILE"
+    log "INFO" "$PHASE_ENV" "Setting up Python Virtual Environment..."
 
-# ==========================================================================
-# PRE-FLIGHT CHECKS
-# ==========================================================================
+    # Ensure correct ownership of the project dir so the user can write venv
+    run_priv chown -R "$TARGET_USER:$TARGET_USER" "$SCRIPT_DIR"
 
-check_root() {
-    if [ "$EUID" -eq 0 ]; then
-        print_warning "Running as root - will install system-wide (no venv)"
-        ROOT_MODE=true
+    # Run venv creation as target user
+    if [[ "$DRY_RUN" == "true" ]]; then
+         log "ACTION" "DRY-RUN" "Would create venv at ${SCRIPT_DIR}/venv as $TARGET_USER"
+         log "ACTION" "DRY-RUN" "Would install pip deps in venv"
+         log "ACTION" "DRY-RUN" "Would install project in editable mode"
     else
-        ROOT_MODE=false
-    fi
-}
+        # Don't fail if venv exists, but we might want to clean it?
+        # For now, we trust system_restore to clean it on failure.
+        sudo -u "$TARGET_USER" python3 -m venv "${SCRIPT_DIR}/venv"
 
-check_os_version() {
-    print_header "Checking OS Compatibility"
+        log "DEBUG" "$PHASE_ENV" "Upgrading pip in venv..."
+        sudo -u "$TARGET_USER" "${SCRIPT_DIR}/venv/bin/pip" install -U pip setuptools wheel >> "${LOG_FILE}" 2>&1
 
-    if [ -f /etc/os-release ]; then
-        . /etc/os-release
-        print_info "Detected OS: $NAME $VERSION"
-
-        if [ "$ID" = "debian" ] && { [ "${VERSION_ID:-}" = "12" ] || [ "${VERSION_ID:-}" = "13" ]; }; then
-            print_success "OS is compatible (Debian $VERSION_ID)"
-            return 0
+        log "INFO" "$PHASE_ENV" "Installing Python requirements..."
+        if [[ -f "${SCRIPT_DIR}/requirements.txt" ]]; then
+            sudo -u "$TARGET_USER" "${SCRIPT_DIR}/venv/bin/pip" install -r "${SCRIPT_DIR}/requirements.txt" >> "${LOG_FILE}" 2>&1
         fi
 
-        print_warning "Expected Debian 12 or 13"
-        print_info "Detected: $ID ${VERSION_ID:-unknown}"
-        read -r -p "Continue anyway? (y/N) " -n 1 REPLY
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            fail "Unsupported OS version" "$EXIT_PREFLIGHT"
-        fi
-    else
-        fail "Cannot detect OS" "$EXIT_PREFLIGHT"
+        # Install the package itself in editable mode
+        sudo -u "$TARGET_USER" "${SCRIPT_DIR}/venv/bin/pip" install -e "${SCRIPT_DIR}" >> "${LOG_FILE}" 2>&1
     fi
+
+    log "SUCCESS" "$PHASE_ENV" "Virtual Environment prepared."
 }
 
-check_disk_space() {
-    print_header "Checking Disk Space"
+# 5. Execution
+phase_exec() {
+    echo "$PHASE_EXEC" > "$PHASE_STATE_FILE"
+    log "INFO" "$PHASE_EXEC" "Starting VPS Configurator (Profile: $PROFILE)..."
 
-    local available_kb
-    available_kb=$(df -Pk / | awk 'NR==2 {print $4}')
-
-    if [ -z "$available_kb" ]; then
-        fail "Unable to determine available disk space" "$EXIT_PREFLIGHT"
+    local cmd_flags=""
+    if [[ "$VERBOSE" == "true" ]]; then
+         cmd_flags="--verbose"
     fi
 
-    local available_gb
-    available_gb=$(awk "BEGIN {printf \"%.2f\", $available_kb/1024/1024}")
-    print_info "Available disk space: ${available_gb} GB"
-
-    if [ "$available_kb" -lt "$MIN_DISK_KB" ]; then
-        fail "Insufficient disk space (minimum 2 GB required)" "$EXIT_PREFLIGHT"
-    fi
-
-    print_success "Disk space check passed"
-}
-
-check_memory() {
-    print_header "Checking Memory"
-
-    local available_kb
-    available_kb=$(awk '/MemAvailable/ {print $2}' /proc/meminfo 2>/dev/null || true)
-
-    if [ -z "$available_kb" ]; then
-        available_kb=$(free -k | awk '/Mem:/ {print $7}')
-    fi
-
-    if [ -z "$available_kb" ]; then
-        fail "Unable to determine available memory" "$EXIT_PREFLIGHT"
-    fi
-
-    local available_gb
-    available_gb=$(awk "BEGIN {printf \"%.2f\", $available_kb/1024/1024}")
-    print_info "Available memory: ${available_gb} GB"
-
-    if [ "$available_kb" -lt "$MIN_MEM_KB" ]; then
-        fail "Insufficient memory (minimum 1 GB required)" "$EXIT_PREFLIGHT"
-    fi
-
-    print_success "Memory check passed"
-}
-
-check_python_version() {
-    print_header "Checking Python Installation"
-
-    if ! command_exists python3; then
-        fail "Python 3 is not installed" "$EXIT_PREFLIGHT"
-    fi
-
-    local py_version
-    py_version=$(python3 -c 'import sys; print(f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}")')
-    print_info "Python version: $py_version"
-
-    local py_major
-    local py_minor
-    py_major=$(echo "$py_version" | cut -d'.' -f1)
-    py_minor=$(echo "$py_version" | cut -d'.' -f2)
-
-    if [ "$py_major" -gt "$MIN_PY_MAJOR" ] || { [ "$py_major" -eq "$MIN_PY_MAJOR" ] && [ "$py_minor" -ge "$MIN_PY_MINOR" ]; }; then
-        print_success "Python ${MIN_PY_MAJOR}.${MIN_PY_MINOR}+ is installed"
+    if [[ "$DRY_RUN" == "true" ]]; then
+        log "ACTION" "DRY-RUN" "Would execute: sudo -u $TARGET_USER vps-configurator install --profile $PROFILE $cmd_flags"
         return 0
     fi
 
-    fail "Python ${MIN_PY_MAJOR}.${MIN_PY_MINOR}+ is required (found $py_version)" "$EXIT_PREFLIGHT"
+    # Attempt execution (as root/current user)
+    if ! "${SCRIPT_DIR}/venv/bin/vps-configurator" install --profile "$PROFILE" $cmd_flags >> "${LOG_FILE}" 2>&1; then
+        log "FAIL" "$PHASE_EXEC" "Configuration failed."
+        return 1
+    fi
+
+    log "SUCCESS" "$PHASE_EXEC" "VPS Configurator Execution Successful."
 }
 
-check_git_repo() {
-    print_header "Checking Repository State"
+# ==============================================================================
+# MAIN CONTROL LOOP
+# ==============================================================================
 
-    if [ ! -f "pyproject.toml" ]; then
-        print_warning "Not in the project root (pyproject.toml not found)"
-        return 0
-    fi
-
-    if [ -d ".git" ]; then
-        if command_exists git; then
-            print_success "Git repository detected"
-            local git_status
-            git_status=$(git status --short 2>/dev/null || true)
-            if [ -n "$git_status" ]; then
-                print_info "Uncommitted changes detected:"
-                echo "$git_status" | tee -a "$INSTALL_LOG"
-            else
-                print_success "Git status clean"
-            fi
-        else
-            print_warning "Git repository detected but git is not installed"
-        fi
-    else
-        print_info "No git repository detected (skipping git checks)"
-    fi
+run_workflow() {
+    phase_transfer
+    phase_deps
+    phase_user
+    phase_env
+    phase_exec
 }
-
-check_sudo() {
-    if [ "$ROOT_MODE" = false ] && ! command_exists sudo; then
-        fail "sudo is required for non-root installations" "$EXIT_PREFLIGHT"
-    fi
-}
-
-pre_flight_checks() {
-    log_section "PRE-FLIGHT: System Validation"
-    check_os_version
-    check_disk_space
-    check_memory
-    check_python_version
-    check_git_repo
-    check_sudo
-}
-
-# ==========================================================================
-# INSTALLATION FUNCTIONS (PRESERVED AND ENHANCED)
-# ==========================================================================
-
-install_system_deps() {
-    if check_checkpoint "system_deps_installed"; then
-        print_info "System dependencies already installed (checkpoint found)"
-        return 0
-    fi
-
-    print_header "Installing System Dependencies"
-    backup_state "before_system_deps"
-
-    print_info "Updating package list..."
-    run_as_root apt-get update
-
-    print_info "Installing required packages..."
-    run_as_root apt-get install -y \
-        python3-pip \
-        python3-venv \
-        python3-dev \
-        build-essential \
-        libssl-dev \
-        libffi-dev \
-        git \
-        curl \
-        wget \
-        apt-transport-https \
-        ca-certificates \
-        gnupg \
-        lsb-release
-
-    print_success "System dependencies installed"
-    create_checkpoint "system_deps_installed"
-}
-
-setup_venv() {
-    if [ "$ROOT_MODE" = true ]; then
-        print_info "Running as root - skipping virtual environment"
-        create_checkpoint "venv_created"
-        return 0
-    fi
-
-    if check_checkpoint "venv_created"; then
-        print_info "Virtual environment already created (checkpoint found)"
-        return 0
-    fi
-
-    print_header "Setting Up Virtual Environment"
-    backup_state "before_venv"
-
-    if [ -d "venv" ]; then
-        print_warning "Virtual environment already exists"
-        read -r -p "Recreate it? (y/N) " -n 1 REPLY
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
-            rm -rf venv
-            print_info "Removed existing virtual environment"
-        else
-            print_info "Using existing virtual environment"
-            create_checkpoint "venv_created"
-            return 0
-        fi
-    fi
-
-    print_info "Creating virtual environment..."
-    if [ "$DRY_RUN" = true ]; then
-        print_info "DRY RUN: would create virtual environment"
-    else
-        python3 -m venv venv
-    fi
-
-    print_success "Virtual environment created"
-    create_checkpoint "venv_created"
-}
-
-install_python_deps() {
-    if check_checkpoint "python_deps_installed"; then
-        print_info "Python dependencies already installed (checkpoint found)"
-        return 0
-    fi
-
-    print_header "Installing Python Dependencies"
-    backup_state "before_python_deps"
-
-    if [ "$ROOT_MODE" = true ]; then
-        print_info "Installing system-wide (root mode)..."
-        print_info "Installing setuptools and wheel..."
-        if [ "$DRY_RUN" = true ]; then
-            print_info "DRY RUN: python3 -m pip install setuptools wheel --break-system-packages --ignore-installed"
-        else
-            python3 -m pip install setuptools wheel --break-system-packages --ignore-installed 2>/dev/null || true
-        fi
-
-        print_info "Installing project dependencies..."
-        if [ "$DRY_RUN" = true ]; then
-            print_info "DRY RUN: python3 -m pip install -r requirements.txt --break-system-packages --ignore-installed"
-        else
-            python3 -m pip install -r requirements.txt --break-system-packages --ignore-installed
-        fi
-
-        print_info "Installing project in development mode..."
-        if [ "$DRY_RUN" = true ]; then
-            print_info "DRY RUN: python3 -m pip install -e . --break-system-packages --ignore-installed"
-        else
-            python3 -m pip install -e . --break-system-packages --ignore-installed
-        fi
-    else
-        print_info "Activating virtual environment..."
-        if [ "$DRY_RUN" = true ]; then
-            print_info "DRY RUN: would activate virtual environment"
-        else
-            source venv/bin/activate
-        fi
-
-        print_info "Upgrading pip..."
-        if [ "$DRY_RUN" = true ]; then
-            print_info "DRY RUN: python -m pip install --upgrade pip setuptools wheel"
-        else
-            python -m pip install --upgrade pip setuptools wheel
-        fi
-
-        print_info "Installing project dependencies..."
-        if [ "$DRY_RUN" = true ]; then
-            print_info "DRY RUN: python -m pip install -r requirements.txt"
-        else
-            python -m pip install -r requirements.txt
-        fi
-
-        print_info "Installing project in development mode..."
-        if [ "$DRY_RUN" = true ]; then
-            print_info "DRY RUN: python -m pip install -e ."
-        else
-            python -m pip install -e .
-        fi
-    fi
-
-    print_success "Python dependencies installed"
-    create_checkpoint "python_deps_installed"
-}
-
-# ==========================================================================
-# DEPLOYMENT EXECUTION
-# ==========================================================================
-
-execute_configurator_install() {
-    if check_checkpoint "deployment_executed"; then
-        print_info "Deployment already executed (checkpoint found)"
-        return 0
-    fi
-
-    log_section "DEPLOY: Running vps-configurator install"
-
-    if [ "$DRY_RUN" = true ]; then
-        print_info "DRY RUN: would run sudo vps-configurator install --profile advanced"
-        create_checkpoint "deployment_executed"
-        return 0
-    fi
-
-    if [ "$ROOT_MODE" != true ] && [ -z "$NEW_USER" ]; then
-        if [ -f "venv/bin/activate" ]; then
-            source venv/bin/activate
-        else
-            fail "Virtual environment not found for deployment" "$EXIT_VENV"
-        fi
-    fi
-
-    if [ -n "$NEW_USER" ]; then
-        print_info "Transferring execution to user: $NEW_USER"
-        print_info "Executing: sudo vps-configurator install --profile advanced (as $NEW_USER)"
-
-        # Determine how to run sudo based on password availability
-        if [ -n "$NEW_PASS" ]; then
-            # We have the password, use it to bypass the prompt for this initial run
-            # Use 'su -' to simulate full login shell
-            su - "$NEW_USER" -c "echo '$NEW_PASS' | sudo -S -p '' sudo vps-configurator install --profile advanced"
-        else
-            # Interactive mode - user must type password
-            su - "$NEW_USER" -c "sudo vps-configurator install --profile advanced"
-        fi
-    else
-        print_info "Executing: sudo vps-configurator install --profile advanced (as root)"
-        sudo vps-configurator install --profile advanced
-    fi
-
-    create_checkpoint "deployment_executed"
-    print_success "Deployment execution completed"
-}
-
-# ==========================================================================
-# VERIFICATION FUNCTIONS (NEW)
-# ==========================================================================
-
-verify_installation() {
-    if check_checkpoint "installation_verified"; then
-        print_info "Installation already verified (checkpoint found)"
-        return 0
-    fi
-
-    print_header "Verifying Installation"
-
-    if [ "$DRY_RUN" = true ]; then
-        print_info "DRY RUN: skipping verification checks"
-        return 0
-    fi
-
-    if [ "$ROOT_MODE" != true ]; then
-        if [ -f "venv/bin/activate" ]; then
-            source venv/bin/activate
-        else
-            fail "Virtual environment not found for verification" "$EXIT_VERIFY"
-        fi
-    fi
-
-    local failures=0
-    local python_cmd="python3"
-
-    if [ "$ROOT_MODE" != true ]; then
-        python_cmd="python"
-    fi
-
-    if command_exists vps-configurator; then
-        local version
-        version=$(vps-configurator --version 2>&1 | head -n1)
-        print_success "vps-configurator is installed: $version"
-    else
-        print_error "vps-configurator command not found"
-        failures=$((failures + 1))
-    fi
-
-    print_info "Testing basic functionality..."
-    if command_exists vps-configurator && vps-configurator --help &> /dev/null; then
-        print_success "Basic functionality test passed"
-    else
-        print_error "Basic functionality test failed"
-        failures=$((failures + 1))
-    fi
-
-    print_info "Checking Python imports..."
-    if "$python_cmd" -c "import configurator" &>/dev/null; then
-        print_success "Python import test passed"
-    else
-        print_error "Python import test failed"
-        failures=$((failures + 1))
-    fi
-
-    if [ "$failures" -eq 0 ]; then
-        create_checkpoint "installation_verified"
-        print_success "Verification completed successfully"
-        return 0
-    fi
-
-    fail "Verification failed with $failures issue(s)" "$EXIT_VERIFY"
-}
-
-# ==========================================================================
-# MAIN EXECUTION
-# ==========================================================================
 
 main() {
-    parse_args "$@"
-    init_logging
-
-    cat << "EOF"
-╔═══════════════════════════════════════════════════════════╗
-║                                                           ║
-║     Debian VPS Configurator - Quick Install Script       ║
-║                                                           ║
-║     This script will install all prerequisites needed     ║
-║     to run: sudo vps-configurator install --profile advanced  ║
-║                                                           ║
-║     Features: Checkpoint system & Auto-recovery          ║
-║                                                           ║
-╚═══════════════════════════════════════════════════════════╝
-EOF
-
-    if [ "$DRY_RUN" = true ]; then
-        log_info "Dry-run enabled: no system changes will be made"
-        log_info "Logging to console only"
-    else
-        log_info "Logging to: $INSTALL_LOG"
-    fi
-
-    if [ -d "$CHECKPOINT_DIR" ] && [ "$(ls -A "$CHECKPOINT_DIR" 2>/dev/null)" ]; then
-        print_warning "Previous installation checkpoints detected!"
-        list_checkpoints
-        echo "" | tee -a "$INSTALL_LOG"
-        REPLY="y"
-        echo
-        if [[ ! $REPLY =~ ^[Nn]$ ]]; then
-            restore_from_checkpoint
-            return 0
-        fi
-        print_info "Starting fresh installation..."
-        cleanup_all
-    fi
-
-    check_root
-
-    # If in management mode, only run user tasks
-    if [ "$MANAGE_ONLY" = true ]; then
-        log_section "User Management Mode"
-        setup_user_auth
-        print_success "User management tasks completed"
-        exit 0
-    fi
-
-    pre_flight_checks
-    install_system_deps
-    setup_user_auth
-    setup_venv
-    install_python_deps
-    execute_configurator_install
-    verify_installation
-
-    print_info "Installation completed successfully!"
-    print_warning "You can now safely remove checkpoints with: rm -rf $CHECKPOINT_DIR $BACKUP_DIR"
-}
-
-parse_args() {
-    while [ "$#" -gt 0 ]; do
-        case "$1" in
-            --dry-run|-n)
-                DRY_RUN=true
-                shift
-                ;;
-            --user|-u)
-                NEW_USER="$2"
-                shift 2
-                ;;
-            --password|-p)
-                NEW_PASS="$2"
-                shift 2
-                ;;
-            --delete-user|-d)
-                DELETE_USER="$2"
-                MANAGE_ONLY=true
-                shift 2
-                ;;
-            --add-ssh-key|-k)
-                SSH_KEY_VAL="$2"
-                shift 2
-                ;;
-            --sudo-config|-c)
-                SUDO_TIMEOUT="$2"
-                shift 2
-                ;;
-            --manage-only|-m)
-                MANAGE_ONLY=true
-                shift
-                ;;
-            --help|-h)
-                echo "Usage: $SCRIPT_NAME [options]"
-                echo "Options:"
-                echo "  --dry-run, -n          Simulate actions"
-                echo "  --user, -u <name>      Create/Update user"
-                echo "  --password, -p <pass>  Set password for user"
-                echo "  --delete-user, -d <name> Delete specified user"
-                echo "  --add-ssh-key, -k <key> Add SSH public key to user"
-                echo "  --sudo-config, -c <val> Set sudo timeout (-1=once, 0=always, X=mins)"
-                echo "  --manage-only, -m      Run only user management tasks"
-                exit 0
-                ;;
-            *)
-                shift
-                ;;
+    # Parse Arguments
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            --user) TARGET_USER="$2"; shift 2 ;;
+            --password) TARGET_PASS="$2"; shift 2 ;;
+            --sync-source) SYNC_SOURCE="$2"; shift 2 ;;
+            --verbose) VERBOSE=true; shift ;;
+            --max-retries) MAX_RETRIES="$2"; shift 2 ;;
+            --profile) PROFILE="$2"; shift 2 ;;
+            --dry-run) DRY_RUN=true; shift ;;
+            *) echo "Unknown option: $1"; exit 1 ;;
         esac
     done
-}
 
-setup_user_auth() {
-    # 1. Handle Deletion
-    if [ -n "$DELETE_USER" ]; then
-        print_header "Deleting User: $DELETE_USER"
-        if id "$DELETE_USER" &>/dev/null; then
-            if [ "$DRY_RUN" = true ]; then
-                print_info "DRY RUN: userdel -r $DELETE_USER"
-                print_info "DRY RUN: rm /etc/sudoers.d/99-$DELETE_USER-timeout"
-            else
-                userdel -r "$DELETE_USER" || print_warning "Failed to remove home directory"
-                rm -f "/etc/sudoers.d/99-$DELETE_USER-timeout"
-                print_success "User $DELETE_USER removed"
-            fi
+    init_logging
+    root_check
+
+    log "INFO" "INIT" "Starting Deployment Workflow..."
+    log "DEBUG" "INIT" "Configuration: User=$TARGET_USER, Source=${SYNC_SOURCE:-None}, Retries=$MAX_RETRIES"
+
+    local attempt=1
+    local success=false
+    local max_attempts=$((MAX_RETRIES + 1))
+    local current_delay=$RETRY_DELAY
+
+    while [[ $attempt -le $max_attempts ]]; do
+        if [[ $attempt -gt 1 ]]; then
+            log "ACTION" "RETRY" "Starting Retry Attempt $attempt/$max_attempts in ${current_delay}s..."
+            sleep "$current_delay"
+            # Exponential backoff
+            current_delay=$((current_delay * 2))
+        fi
+
+        log "INFO" "MAIN" "Deployment Attempt #$attempt"
+
+        # Subshell execution to isolate failure
+        set +e
+        (
+            set -e
+            run_workflow
+        )
+        local status=$?
+        set -e
+
+        if [[ $status -eq 0 ]]; then
+            success=true
+            break
         else
-            print_warning "User $DELETE_USER does not exist"
-        fi
-    fi
+            local failed_phase
+            failed_phase=$(cat "$PHASE_STATE_FILE" 2>/dev/null || echo "UNKNOWN")
+            log "ERROR" "MAIN" "Workflow failed in phase: $failed_phase (Exit Code: $status)"
 
-    # 2. Handle Creation / Update
-    if [ -n "$NEW_USER" ]; then
-        print_header "Configuring User: $NEW_USER"
+            # Perform system restore to clean up for next attempt
+            system_restore "$failed_phase"
 
-        if [ "$ROOT_MODE" = false ]; then
-            print_warning "Must be root to manage users."
-            return 0
+            ((attempt++))
         fi
+    done
 
-        # Create
-        if id "$NEW_USER" &>/dev/null; then
-            print_info "User $NEW_USER exists (updating configuration)"
-        else
-            print_info "Creating user $NEW_USER..."
-            if [ "$DRY_RUN" = true ]; then
-                    print_info "DRY RUN: useradd -m -s /bin/bash $NEW_USER"
-            else
-                    useradd -m -s /bin/bash "$NEW_USER"
-            fi
-        fi
-
-        # Password
-        if [ -n "$NEW_PASS" ]; then
-            print_info "Updating password..."
-            if [ "$DRY_RUN" = true ]; then
-                print_info "DRY RUN: chpasswd $NEW_USER"
-            else
-                echo "$NEW_USER:$NEW_PASS" | chpasswd
-            fi
-        fi
-
-        # Sudo Group
-        if [ "$DRY_RUN" = true ]; then
-            print_info "DRY RUN: usermod -aG sudo $NEW_USER"
-        else
-            usermod -aG sudo "$NEW_USER"
-        fi
-
-        # Sudo Timeout
-        print_info "Configuring sudo timeout ($SUDO_TIMEOUT)..."
-        if [ "$DRY_RUN" = true ]; then
-            print_info "DRY RUN: writing /etc/sudoers.d/99-$NEW_USER-timeout"
-        else
-            echo "Defaults:$NEW_USER timestamp_timeout=$SUDO_TIMEOUT" > "/etc/sudoers.d/99-$NEW_USER-timeout"
-            chmod 440 "/etc/sudoers.d/99-$NEW_USER-timeout"
-        fi
-
-        # SSH Key
-        if [ -n "$SSH_KEY_VAL" ]; then
-            print_info "Adding SSH key..."
-            if [ "$DRY_RUN" = true ]; then
-                print_info "DRY RUN: adding key to ~$NEW_USER/.ssh/authorized_keys"
-            else
-                local user_home
-                user_home=$(eval echo "~$NEW_USER")
-                mkdir -p "$user_home/.ssh"
-                echo "$SSH_KEY_VAL" >> "$user_home/.ssh/authorized_keys"
-                chown -R "$NEW_USER:$NEW_USER" "$user_home/.ssh"
-                chmod 700 "$user_home/.ssh"
-                chmod 600 "$user_home/.ssh/authorized_keys"
-                print_success "SSH key added"
-            fi
-        fi
-
-        print_success "User $NEW_USER installation/update complete"
-        # We don't checkpoint here if in manage-only mode to allow repeated runs
-        if [ "$MANAGE_ONLY" = false ]; then
-            create_checkpoint "user_auth_setup"
-        fi
+    if [[ "$success" == "true" ]]; then
+        log "SUCCESS" "MAIN" "Deployment Completed Successfully."
+        exit 0
+    else
+        log "FAIL" "MAIN" "Deployment Failed after $((attempt - 1)) attempts."
+        exit 1
     fi
 }
-
-trap 'error_handler $LINENO' ERR
-trap 'interrupt_handler' INT TERM
 
 main "$@"

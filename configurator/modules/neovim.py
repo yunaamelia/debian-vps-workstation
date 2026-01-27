@@ -102,7 +102,7 @@ class NeovimModule(ConfigurationModule):
 
     def _create_config(self):
         """Create basic Neovim configuration."""
-        config_dir = Path(os.path.expanduser("~/.config/nvim"))
+        config_dir = Path(os.path.join(self.target_home, ".config/nvim"))
         config_dir.mkdir(parents=True, exist_ok=True)
 
         init_lua = """-- Neovim Configuration
@@ -237,8 +237,17 @@ require("lazy").setup(plugins)
 print("Neovim configured! Press <Space> to see available commands.")
 """
 
+        # Write config
         config_file = config_dir / "init.lua"
-        config_file.write_text(init_lua)
+        # Use our write_file to handle dry-run (though it takes string path)
+        self.write_file(str(config_file), init_lua)
+
+        # Ensure permissions if not current user
+        if self.target_user != os.environ.get("USER"):
+            self.run(
+                f"chown -R {self.target_user}:{self.target_user} {self.target_home}/.config",
+                check=False,
+            )
 
         self.logger.info("✓ Neovim configuration created")
-        self.logger.info("  Config location: ~/.config/nvim/init.lua")
+        self.logger.info(f"  Config location: {config_file}")

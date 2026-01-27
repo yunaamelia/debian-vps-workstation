@@ -13,6 +13,11 @@ from typing import Any, Dict, List, Optional, cast
 
 import yaml
 
+try:
+    from pydantic import ValidationError
+except ImportError:
+    ValidationError = None
+
 from configurator.exceptions import ConfigurationError
 
 # Default paths
@@ -418,7 +423,8 @@ class ConfigManager:
             ConfigurationError if configuration is invalid
         """
         try:
-            from pydantic import ValidationError
+            if ValidationError is None:
+                raise ImportError("Pydantic not installed")
 
             from configurator.config_schema import Config
 

@@ -128,21 +128,35 @@ export GOPATH=$HOME/go
 export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 """
 
-        # Add to /etc/profile.d for all users
-        profile_path = "/etc/profile.d/golang.sh"
-        with open(profile_path, "w") as f:
-            f.write(go_env_content)
-
-        self.run(f"chmod +x {profile_path}", check=False)
-
-        # Also add to root's bashrc
-        bashrc = os.path.expanduser("~/.bashrc")
-        with open(bashrc, "r") as f:
-            bashrc_content = f.read()
-
-        if "GOROOT" not in bashrc_content:
-            with open(bashrc, "a") as f:
+        # Add to /etc/profile.d for all users (requires root)
+        try:
+            profile_path = "/etc/profile.d/golang.sh"
+            with open(profile_path, "w") as f:
                 f.write(go_env_content)
+            self.run(f"chmod +x {profile_path}", check=False)
+        except Exception as e:
+            self.logger.warning(f"Could not write to /etc/profile.d: {e}")
+
+        # Also add to target user's bashrc and zshrc
+        for rc_file in [".bashrc", ".zshrc"]:
+            target_rc = f"{self.target_home}/{rc_file}"
+
+            try:
+                current_content = ""
+                if os.path.exists(target_rc):
+                    with open(target_rc, "r") as f:
+                        current_content = f.read()
+
+                if "GOROOT" not in current_content:
+                    with open(target_rc, "a") as f:
+                        f.write(go_env_content)
+                    # Fix permissions
+                    if self.target_user != "root":
+                        self.run(
+                            f"chown {self.target_user}:{self.target_user} {target_rc}", check=False
+                        )
+            except Exception as e:
+                self.logger.warning(f"Failed to update {rc_file}: {e}")
 
         self.logger.info("✓ Go environment configured")
 
@@ -160,8 +174,13 @@ export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
         for tool in tools:
             tool_name = tool.split("/")[-1].split("@")[0]
+
+            cmd = f"bash -c '{env_exports} && go install {tool}'"
+            if self.target_user != "root" and os.environ.get("USER") == "root":
+                cmd = f"sudo -u {self.target_user} {cmd}"
+
             result = self.run(
-                f"bash -c '{env_exports} && go install {tool}'",
+                cmd,
                 check=False,
             )
 
@@ -172,7 +191,7 @@ export PATH=$PATH:$GOROOT/bin:$GOPATH/bin
 
     def _get_go_env(self):
         """Get Go environment variables."""
-        home = os.path.expanduser("~")
+        home = self.target_home
         return {
             "GOROOT": "/usr/local/go",
             "GOPATH": f"{home}/go",

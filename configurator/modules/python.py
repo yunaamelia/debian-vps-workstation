@@ -7,6 +7,8 @@ Handles:
 - Development tools (black, pylint, mypy, etc.)
 """
 
+import os
+
 from configurator.modules.base import ConfigurationModule
 
 
@@ -164,31 +166,41 @@ class PythonModule(ConfigurationModule):
 
         # Install pipx tools
         if pipx_tools:
-            # Ensure pipx path is set up for root if we are running as root
-            # But usually we want these for the user.
-            # If running as root, 'pipx install' goes to /root/.local/bin
-            # We explicitly allow this for now, or just warn.
+            # Install pipx tools for the target user (avoiding root install)
+            self.logger.info(f"Installing tools via pipx for user {self.target_user}...")
+
+            cmd_prefix = ""
+            if self.target_user != "root" and os.environ.get("USER") == "root":
+                cmd_prefix = f"sudo -u {self.target_user} "
 
             for tool in pipx_tools:
                 self.logger.info(f"Installing {tool} via pipx...")
-                result = self.run(f"pipx install {tool} --global", check=False)
 
-                if not result.success:
-                    # Try without --global
-                    result = self.run(f"pipx install {tool}", check=False)
+                # Use --global only if explicitly wanted, but usually standard install is better for user
+                # But pipx install <tool> installs to ~/.local/bin
+                # Ensure ~/.local/bin is in PATH (pipx usually handles ensurepath)
+
+                # First ensure pipx is set up for the user
+                self.run(f"{cmd_prefix}pipx ensurepath", check=False)
+
+                result = self.run(f"{cmd_prefix}pipx install {tool} --force", check=False)
 
                 if result.success:
                     self.logger.info(f"  ✓ Installed {tool} (pipx)")
                 else:
-                    self.logger.warning(f"  ⚠ Failed to install {tool} via pipx")
+                    self.logger.warning(f"  ⚠ Failed to install {tool} via pipx: {result.stderr}")
 
     def _create_example_venv(self):
         """Create an example virtual environment."""
-        example_dir = "/root/python-example"
+        example_dir = f"{self.target_home}/python-example"
 
         self.logger.info(f"Creating example venv at {example_dir}...")
 
         self.run(f"mkdir -p {example_dir}", check=False)
+
+        # Don't use 'python3 -m venv' directly if running as root, permissions will be wrong
+        # Use simple creation then chown, or sudo -u (but we accept run might vary)
+        # Safer to chown after
         result = self.run(f"python3 -m venv {example_dir}/venv", check=False)
 
         if result.success:
@@ -248,3 +260,7 @@ Enjoy coding! 🐍
 """
 
         self.write_file(f"{example_dir}/README.md", readme_content)
+
+        # Fix permissions
+        if self.target_user != os.environ.get("USER"):
+            self.run(f"chown -R {self.target_user}:{self.target_user} {example_dir}", check=False)

@@ -90,40 +90,71 @@ class RustModule(ConfigurationModule):
         self.logger.info("Installing rustup...")
 
         # Download and run rustup installer
-        self.run(
-            "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | "
-            "sh -s -- -y --default-toolchain stable",
-            check=True,
-        )
+        # Use sudo -u if needed to install for target user
+        cmd = "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable"
+        if self.target_user != "root" and os.environ.get("USER") == "root":
+            cmd = f"sudo -u {self.target_user} bash -c 'curl --proto \"=https\" --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable'"
+
+        self.run(cmd, check=True)
+
+        # Explicitly configure shell files as redundancy
+        cargo_env_source = '\n. "$HOME/.cargo/env"\n'
+
+        for rc_file in [".bashrc", ".zshrc"]:
+            target_rc = f"{self.target_home}/{rc_file}"
+            try:
+                current_content = ""
+                if os.path.exists(target_rc):
+                    with open(target_rc, "r") as f:
+                        current_content = f.read()
+
+                if "cargo/env" not in current_content:
+                    with open(target_rc, "a") as f:
+                        f.write(cargo_env_source)
+                    # Fix permissions
+                    if self.target_user != "root":
+                        self.run(
+                            f"chown {self.target_user}:{self.target_user} {target_rc}", check=False
+                        )
+            except Exception as e:
+                self.logger.warning(f"Failed to update {rc_file} for Rust: {e}")
 
         self.logger.info("✓ rustup installed")
 
     def _install_toolchain(self):
         """Install Rust toolchain."""
-        cargo_env = os.path.expanduser("~/.cargo/env")
+        cargo_env = f"{self.target_home}/.cargo/env"
         source_cmd = f"source {cargo_env} && "
 
         toolchain = self.get_config("toolchain", "stable")
 
         self.logger.info(f"Installing {toolchain} toolchain...")
 
+        cmd_prefix = ""
+        if self.target_user != "root" and os.environ.get("USER") == "root":
+            cmd_prefix = f"sudo -u {self.target_user} "
+
         self.run(
-            f"bash -c '{source_cmd}rustup default {toolchain}'",
+            f"{cmd_prefix}bash -c '{source_cmd}rustup default {toolchain}'",
             check=True,
         )
 
     def _install_components(self):
         """Install Rust components."""
-        cargo_env = os.path.expanduser("~/.cargo/env")
+        cargo_env = f"{self.target_home}/.cargo/env"
         source_cmd = f"source {cargo_env} && "
 
         components = ["rustfmt", "clippy", "rust-analyzer"]
 
         self.logger.info("Installing Rust components...")
 
+        cmd_prefix = ""
+        if self.target_user != "root" and os.environ.get("USER") == "root":
+            cmd_prefix = f"sudo -u {self.target_user} "
+
         for component in components:
             result = self.run(
-                f"bash -c '{source_cmd}rustup component add {component}'",
+                f"{cmd_prefix}bash -c '{source_cmd}rustup component add {component}'",
                 check=False,
             )
 
@@ -139,14 +170,18 @@ class RustModule(ConfigurationModule):
         if not tools:
             return
 
-        cargo_env = os.path.expanduser("~/.cargo/env")
+        cargo_env = f"{self.target_home}/.cargo/env"
         source_cmd = f"source {cargo_env} && "
 
         self.logger.info("Installing cargo tools...")
 
+        cmd_prefix = ""
+        if self.target_user != "root" and os.environ.get("USER") == "root":
+            cmd_prefix = f"sudo -u {self.target_user} "
+
         for tool in tools:
             result = self.run(
-                f"bash -c '{source_cmd}cargo install {tool}'",
+                f"{cmd_prefix}bash -c '{source_cmd}cargo install {tool}'",
                 check=False,
             )
 

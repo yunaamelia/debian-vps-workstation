@@ -6,6 +6,8 @@ Handles:
 - Extension installation
 """
 
+import os
+
 from configurator.modules.base import ConfigurationModule
 from configurator.utils.file import write_file
 
@@ -125,13 +127,47 @@ class VSCodeModule(ConfigurationModule):
 
         self.logger.info(f"Installing {len(extensions)} extensions...")
 
+        # Determine user to install extensions for
+        # If running as root, we want to install for target_user
+        # VS Code installs extensions to ~/.vscode/extensions by default
+
+        cmd_prefix = ""
+        user_data_dir_flag = ""
+
+        if self.target_user != "root" and os.environ.get("USER") == "root":
+            cmd_prefix = f"sudo -u {self.target_user} "
+            # We don't strictly need user-data-dir if we run as the user,
+            # but code might complain about running as root if we didn't use sudo.
+            # --no-sandbox is needed if running as root, but as user it's fine.
+        elif self.target_user == "root":
+            # Running as root for root (not recommended for VS Code but supported with args)
+            user_data_dir_flag = "--user-data-dir /root/.config/Code --no-sandbox"
+
         for ext in extensions:
-            try:
-                self.run(
-                    f"code --install-extension {ext} --force --user-data-dir /root/.config/Code --no-sandbox",
-                    check=True,
-                    timeout=300,
-                )
-                self.logger.info(f"  ✓ {ext}")
-            except Exception as e:
-                self.logger.warning(f"  ⚠ Failed to install {ext}: {e}")
+            retries = 3
+            for attempt in range(1, retries + 1):
+                try:
+                    # Construct command
+                    install_cmd = (
+                        f"{cmd_prefix}code --install-extension {ext} --force {user_data_dir_flag}"
+                    )
+
+                    self.run(
+                        install_cmd,
+                        check=True,
+                        timeout=600,
+                    )
+                    self.logger.info(f"  ✓ {ext}")
+                    break
+                except Exception as e:
+                    if attempt == retries:
+                        self.logger.warning(
+                            f"  ⚠ Failed to install {ext} after {retries} attempts: {e}"
+                        )
+                    else:
+                        self.logger.info(
+                            f"  ⚠ Failed to install {ext} (attempt {attempt}/{retries}), retrying..."
+                        )
+                        import time
+
+                        time.sleep(5)

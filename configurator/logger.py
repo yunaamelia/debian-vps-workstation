@@ -10,6 +10,7 @@ from __future__ import annotations
 import atexit
 import logging
 import logging.handlers
+import os
 import queue
 from datetime import datetime
 from pathlib import Path
@@ -57,7 +58,10 @@ class ParallelLogManager:
         # Create log directory
         try:
             self.base_log_dir.mkdir(parents=True, exist_ok=True)
-        except PermissionError:
+            # Check writability
+            if not os.access(self.base_log_dir, os.W_OK):
+                raise PermissionError(f"Cannot write to {self.base_log_dir}")
+        except (PermissionError, OSError):
             # Fallback
             self.base_log_dir = Path.home() / ".debian-vps-configurator"
             self.base_log_dir.mkdir(parents=True, exist_ok=True)

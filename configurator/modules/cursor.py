@@ -70,13 +70,12 @@ class CursorModule(ConfigurationModule):
     def _configure(self) -> None:
         """Configure Cursor settings directory."""
         # Create config directory
-        config_dir = Path.home() / ".config" / "Cursor"
+        config_dir = Path(os.path.join(self.target_home, ".config/Cursor"))
         config_dir.mkdir(parents=True, exist_ok=True)
 
-        # Set permissions if running as sudo
-        sudo_user = os.environ.get("SUDO_USER")
-        if sudo_user:
-            self.run(f"chown -R {sudo_user}:{sudo_user} {config_dir}", check=False)
+        # Set permissions if running as sudo/root
+        if self.target_user != os.environ.get("USER"):
+            self.run(f"chown -R {self.target_user}:{self.target_user} {config_dir}", check=False)
 
     def _install_cursor(self) -> None:
         """Install Cursor IDE via .deb package."""
@@ -85,7 +84,7 @@ class CursorModule(ConfigurationModule):
         # New URL for .deb package (v2.3)
         # Using the specific version endpoint as requested by user
         cursor_url = "https://api2.cursor.sh/updates/download/golden/linux-x64-deb/cursor/2.3"
-        temp_deb = str(Path.home() / "cursor.deb")
+        temp_deb = str(Path(self.target_home) / "cursor.deb")
 
         self.logger.info("Downloading Cursor .deb package...")
         try:
