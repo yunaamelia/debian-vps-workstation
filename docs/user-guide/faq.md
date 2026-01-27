@@ -84,6 +84,7 @@ The tool has automatic rollback:
    ```
 
 3. **Fresh start**: If needed:
+
    ```bash
    vps-configurator uninstall --purge
    ```
@@ -107,6 +108,7 @@ Yes! Three ways:
    ```
 
 3. **Config file**: Edit `config.yaml`:
+
    ```bash
    vps-configurator install --config my-config.yaml
    ```
@@ -167,6 +169,7 @@ Yes! Two ways:
    ```
 
 2. **YAML file**:
+
    ```yaml
    # ~/.config/debian-vps-configurator/profiles/my-profile.yaml
    name: my-profile
@@ -244,6 +247,7 @@ See [Troubleshooting Guide](troubleshooting.md#rdp-connection).
 
 1. Press Ctrl+C to cancel
 2. Resume installation:
+
    ```bash
    vps-configurator install --resume
    ```
@@ -350,10 +354,13 @@ sudo systemctl disable <service>
 1. **Use SSD VPS** (not HDD)
 2. **Choose datacenter near you** (lower latency)
 3. **Use package cache** (enabled by default):
+
    ```bash
    vps-configurator config set performance.package_cache.enabled true
    ```
+
 4. **Increase parallel workers**:
+
    ```bash
    vps-configurator config set performance.max_workers 8
    ```
@@ -366,9 +373,11 @@ sudo systemctl disable <service>
 
 1. Increase VPS resources
 2. Limit container resources:
+
    ```bash
    docker run --memory="512m" --cpus="1.0" ...
    ```
+
 3. Use Docker BuildKit caching
 
 ## Modules
@@ -460,7 +469,7 @@ See [Contributing Guide](../developer-guide/contributing.md).
 - 📚 [Documentation](../index.md)
 - 💬 [GitHub Discussions](https://github.com/ahmadrizal7/debian-vps-workstation/discussions)
 - 🐛 [Issue Tracker](https://github.com/ahmadrizal7/debian-vps-workstation/issues)
-- 📧 Email: support@example.com
+- 📧 Email: <support@example.com>
 - 💬 Discord: [Join our server](#)
 
 ---

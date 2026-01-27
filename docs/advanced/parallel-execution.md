@@ -8,6 +8,7 @@ The installer builds a **Dependency Graph** of all enabled modules.
 It then groups modules into "batches" that can run simultaneously.
 
 **Example:**
+
 - `system`, `security` (Priority 10, 20) -> Sequential (usually) or Parallel if independent?
 Actually, `security` doesn't depend on `system` directly in code, but implicit priority ordering is preserved via sequential execution within batches if needed?
 No, the parallel executor runs items in a batch *concurrently*.
@@ -23,6 +24,7 @@ Parallel execution is enabled by default.
 
 To disable (e.g., for debugging):
 `config.yaml`:
+
 ```yaml
 performance:
   parallel_execution: false
@@ -30,6 +32,7 @@ performance:
 ```
 
 CLI:
+
 ```bash
 vps-configurator install --no-parallel
 ```

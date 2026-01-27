@@ -13,10 +13,10 @@ Implement a wrapper around `certbot` or `acme` client in `configurator/security/
 
 ### Functional
 
-1.  **Issue**: Request new cert for domain(s).
-2.  **Renew**: Check expiry and renew if needed.
-3.  **Hooks**: Reload Nginx/Apache after renewal.
-4.  **Monitoring**: Alert if cert is expiring and renewal failed.
+1. **Issue**: Request new cert for domain(s).
+2. **Renew**: Check expiry and renew if needed.
+3. **Hooks**: Reload Nginx/Apache after renewal.
+4. **Monitoring**: Alert if cert is expiring and renewal failed.
 
 ## 📝 Specifications
 
@@ -39,10 +39,10 @@ class SSLManager:
 
 ## 🪜 Implementation Steps
 
-1.  **Check Certbot**: Ensure `certbot` is installed.
-2.  **Command Construction**: Securely build shell commands.
-3.  **Parser**: Parse `openssl x509 -enddate -noout -in ...` to get expiry.
-4.  **Cron Integration**: Method to add a daily cron job for renewal.
+1. **Check Certbot**: Ensure `certbot` is installed.
+2. **Command Construction**: Securely build shell commands.
+3. **Parser**: Parse `openssl x509 -enddate -noout -in ...` to get expiry.
+4. **Cron Integration**: Method to add a daily cron job for renewal.
 
 ## 🔍 Validation Checklist
 

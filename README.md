@@ -1,12 +1,12 @@
 # 🚀 Debian VPS Configurator v2.0
 
-**Enterprise-Grade Automated VPS Configuration, Security Hardening, and User Management System**
+Enterprise-Grade Automated VPS Configuration, Security Hardening, and User Management System
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%2B-blue.svg)](https://www.python.org/downloads/)
 [![Documentation](https://img.shields.io/badge/docs-comprehensive-green.svg)](docs/)
-[![Status](https://img.shields.io/badge/status-production--ready-green.svg)]()
-[![Coverage](https://img.shields.io/badge/coverage-85%25-green.svg)]()
+[![Status](https://img.shields.io/badge/status-production--ready-green.svg)](https://github.com/yunaamelia/debian-vps-workstation)
+[![Coverage](https://img.shields.io/badge/coverage-85%25-green.svg)](https://github.com/yunaamelia/debian-vps-workstation/actions)
 
 ---
 
@@ -109,7 +109,7 @@
 
 ### Architectural Pattern: Modular Plugin-Based Layered
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────┐
 │                    PRESENTATION LAYER                        │
 │         cli.py (100+ commands) │ wizard.py (TUI)            │
@@ -181,7 +181,7 @@ sudo vps-configurator install --profile beginner -y
 
 ## Project Structure
 
-```
+```text
 debian-vps-workstation/
 ├── configurator/              # Main package
 │   ├── cli.py                 # CLI entry point (100+ commands)
@@ -246,7 +246,7 @@ debian-vps-workstation/
 
 ### Commit Convention
 
-```
+```text
 feat: add new Docker module
 fix: resolve SSH key generation issue
 docs: update architecture blueprint
@@ -306,7 +306,7 @@ self.install_packages(packages)
 
 ### Test Structure
 
-```
+```text
 tests/
 ├── unit/                  # Fast, isolated tests
 ├── integration/           # Component interaction tests
@@ -439,6 +439,6 @@ This project is licensed under the MIT License — see [LICENSE](LICENSE) for de
 
 ---
 
-**Made with ❤️ for the developer community**
+Made with ❤️ for the developer community
 
 _Transform your VPS into a powerful development workstation in minutes, not hours._

@@ -52,6 +52,7 @@ settings:
 
 1. Create a backup of your v1 config
 2. Run the migration tool:
+
    ```bash
    vps-configurator migrate-config --input old-config.yaml --output config.yaml
    ```

@@ -3,6 +3,7 @@
 Make these necessary changes to the app.
 
 - Install client library
+
 ```
 dotnet add package Azure.Monitor.OpenTelemetry.AspNetCore
 ```

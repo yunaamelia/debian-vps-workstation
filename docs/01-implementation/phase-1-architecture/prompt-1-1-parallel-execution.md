@@ -13,16 +13,16 @@ Implement a `ParallelExecutor` class in `configurator/core/parallel.py` that uti
 
 ### Functional
 
-1.  **Parallel Execution**: Run a list of callable tasks concurrently.
-2.  **Configurable Workers**: Number of threads must be configurable via `config.yaml` or CLI args.
-3.  **Error Handling**: If one task fails, capture the exception but allow others to finish (configurable: fail-fast or fail-safe).
-4.  **Result Aggregation**: Return a report of successes and failures.
-5.  **Progress Tracking**: Integrate with a progress bar (Rich library).
+1. **Parallel Execution**: Run a list of callable tasks concurrently.
+2. **Configurable Workers**: Number of threads must be configurable via `config.yaml` or CLI args.
+3. **Error Handling**: If one task fails, capture the exception but allow others to finish (configurable: fail-fast or fail-safe).
+4. **Result Aggregation**: Return a report of successes and failures.
+5. **Progress Tracking**: Integrate with a progress bar (Rich library).
 
 ### Non-Functional
 
-1.  **Thread Safety**: Ensure shared resources (logging, file writes) are thread-safe.
-2.  **Performance**: Minimal overhead for managing threads.
+1. **Thread Safety**: Ensure shared resources (logging, file writes) are thread-safe.
+2. **Performance**: Minimal overhead for managing threads.
 
 ## 📝 Specifications
 
@@ -65,17 +65,17 @@ class ParallelExecutor:
 
 ## 🪜 Implementation Steps
 
-1.  **Create the Module**:
+1. **Create the Module**:
 
     - Create `configurator/core/parallel.py`.
     - Define the `TaskResult` dataclass.
     - Define the `ParallelExecutor` class.
 
-2.  **Implement `__init__`**:
+2. **Implement `__init__`**:
 
     - Load `max_workers` from config if not provided.
 
-3.  **Implement `execute_tasks`**:
+3. **Implement `execute_tasks`**:
 
     - Use `ThreadPoolExecutor`.
     - Submit tasks.
@@ -83,11 +83,11 @@ class ParallelExecutor:
     - Catch exceptions inside the thread execution to prevent crashing only that thread.
     - Collect results.
 
-4.  **Add Helper**:
+4. **Add Helper**:
 
     - Create a decorator `@parallel_task(name="...")` to wrap functions if needed.
 
-5.  **Integration Test**:
+5. **Integration Test**:
     - Create a test script `tests/unit/test_parallel.py` that runs 5 dummy tasks sleeping for 1 second each. Total time should be ~1 second (with 5 workers), not 5 seconds.
 
 ## 🔍 Validation Checklist

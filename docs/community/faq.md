@@ -16,6 +16,7 @@ The Debian VPS Workstation Configurator is an automated tool that transforms a f
 ### Why Debian 13 specifically?
 
 Debian 13 (Trixie) is the latest stable release with:
+
 - Up-to-date software packages
 - Excellent stability
 - Long-term support
@@ -30,6 +31,7 @@ Yes! This tool is 100% free and open source under the MIT license. All installed
 Currently, **only Debian 13 is supported**. The tool validates the OS before installation and will refuse to run on other distributions.
 
 Future versions may support:
+
 - Debian 12 (Bookworm)
 - Ubuntu 24.04
 
@@ -95,6 +97,7 @@ Any standard RDP client:
 ### Why XFCE4 and not GNOME or KDE?
 
 XFCE4 was chosen because it's:
+
 - **Lightweight**: Low resource usage
 - **Fast**: Responsive over network connections
 - **Stable**: Mature and reliable
@@ -133,6 +136,7 @@ Every server connected to the internet faces constant attacks. Mandatory securit
 ### Will I get locked out?
 
 Unlikely with default settings:
+
 - 5 failed SSH attempts triggers 1-hour ban
 - Your RDP access is separate from SSH
 - VPS console access always available
@@ -144,6 +148,7 @@ If locked out, use your VPS provider's console to unban yourself.
 **No.** Security cannot be disabled. This is by design to protect you.
 
 However, you can customize:
+
 - Fail2ban thresholds
 - SSH settings
 - Firewall rules (additional ports)
@@ -167,11 +172,13 @@ languages:
 ### How do I add SSH keys for Git?
 
 1. Generate key on your VPS:
+
    ```bash
    ssh-keygen -t ed25519 -C "your@email.com"
    ```
 
 2. Add to GitHub:
+
    ```bash
    cat ~/.ssh/id_ed25519.pub
    ```
@@ -183,6 +190,7 @@ languages:
 This tool is designed for **development workstations**, not production servers.
 
 For production:
+
 - Use a dedicated server
 - Implement proper CI/CD
 - Add monitoring and logging
@@ -191,6 +199,7 @@ For production:
 ### Does it support container development?
 
 Yes! Docker and Docker Compose are installed. You can:
+
 - Build and run containers
 - Use docker-compose for multi-container apps
 - Access Docker without sudo
@@ -211,6 +220,7 @@ Yes! Docker and Docker Compose are installed. You can:
 ### Why is my desktop slow?
 
 Common causes:
+
 1. **Network latency**: Try a VPS closer to your location
 2. **Low resources**: Upgrade your VPS
 3. **Color depth**: Reduce to 16-bit in RDP client
@@ -219,6 +229,7 @@ Common causes:
 ### How can I monitor resources?
 
 Use the built-in tools:
+
 ```bash
 htop          # CPU and memory
 iotop         # Disk I/O
@@ -283,6 +294,7 @@ We'd love that! The modular architecture makes this possible:
 ### How do I report bugs?
 
 Open an issue with:
+
 - Description of the problem
 - Steps to reproduce
 - Installation logs

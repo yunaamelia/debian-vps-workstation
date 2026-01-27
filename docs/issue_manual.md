@@ -1412,12 +1412,12 @@ def _execute_module(self, context: ExecutionContext, callback: Optional[Callable
 
 | Topic               | Library/Tool     | Documentation URL                                                       |
 | ------------------- | ---------------- | ----------------------------------------------------------------------- |
-| **Rich Progress**   | Textualize/Rich  | https://github.com/textualize/rich/blob/master/docs/source/progress.rst |
-| **Python Logging**  | Python 3.12      | https://docs.python.org/3.12/library/logging.html                       |
-| **QueueHandler**    | Python 3.12      | https://docs.python.org/3.12/library/logging.handlers.html#queuehandler |
-| **Multiprocessing** | Python 3.12      | https://docs.python.org/3.12/library/multiprocessing.html               |
-| **CIS Debian 12**   | Ansible Lockdown | https://github.com/ansible-lockdown/debian12-cis                        |
-| **Trivy Scanner**   | Aqua Security    | https://trivy.dev/                                                      |
+| **Rich Progress**   | Textualize/Rich  | <https://github.com/textualize/rich/blob/master/docs/source/progress.rst> |
+| **Python Logging**  | Python 3.12      | <https://docs.python.org/3.12/library/logging.html>                       |
+| **QueueHandler**    | Python 3.12      | <https://docs.python.org/3.12/library/logging.handlers.html#queuehandler> |
+| **Multiprocessing** | Python 3.12      | <https://docs.python.org/3.12/library/multiprocessing.html>               |
+| **CIS Debian 12**   | Ansible Lockdown | <https://github.com/ansible-lockdown/debian12-cis>                        |
+| **Trivy Scanner**   | Aqua Security    | <https://trivy.dev/>                                                      |
 
 ### 5.2 Code Examples Retrieved via Context7
 
@@ -1457,19 +1457,19 @@ def _execute_module(self, context: ExecutionContext, callback: Optional[Callable
 
 ### Phase 2: High Priority (Quality of Life)
 
-3. ✅ **Dynamic Log Level Control** - Better debugging
+1. ✅ **Dynamic Log Level Control** - Better debugging
    - Implement `DynamicLogger` wrapper
    - Add CLI flag `--log-level`
    - Add runtime level switching
 
 ### Phase 3: Medium Priority (Security)
 
-4. ✅ **CIS Compliance Module** - Automated hardening
+1. ✅ **CIS Compliance Module** - Automated hardening
    - Implement `CISComplianceModule`
    - Add pre/post audit logging
    - Create configuration schema
 
-5. ✅ **Trivy Integration** - Vulnerability scanning
+2. ✅ **Trivy Integration** - Vulnerability scanning
    - Implement `TrivyScanner` module
    - Generate remediation reports
    - Optional auto-fix mode

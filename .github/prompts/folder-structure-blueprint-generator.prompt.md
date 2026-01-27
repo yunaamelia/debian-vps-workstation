@@ -45,6 +45,7 @@ ${INCLUDE_TEMPLATES=true|false}
 
 ${PROJECT_TYPE == "Auto-detect" ?
 "Begin by scanning the folder structure for key files that identify the project type:
+
 - Look for solution/project files (.sln, .csproj, .fsproj, .vbproj) to identify .NET projects
 - Check for build files (pom.xml, build.gradle, settings.gradle) for Java projects
 - Identify package.json with dependencies for JavaScript/TypeScript projects
@@ -56,6 +57,7 @@ ${PROJECT_TYPE == "Auto-detect" ?
 
 ${IS_MONOREPO == "Auto-detect" ?
 "Determine if this is a monorepo by looking for:
+
 - Multiple distinct projects with their own configuration files
 - Workspace configuration files (lerna.json, nx.json, turborepo.json, etc.)
 - Cross-project references and shared dependency patterns
@@ -63,6 +65,7 @@ ${IS_MONOREPO == "Auto-detect" ?
 
 ${INCLUDES_MICROSERVICES == "Auto-detect" ?
 "Check for microservices architecture indicators:
+
 - Multiple service directories with similar/repeated structures
 - Service-specific Dockerfiles or deployment configurations
 - Inter-service communication patterns (APIs, message brokers)
@@ -72,6 +75,7 @@ ${INCLUDES_MICROSERVICES == "Auto-detect" ?
 
 ${INCLUDES_FRONTEND == "Auto-detect" ?
 "Identify frontend components by looking for:
+
 - Web asset directories (wwwroot, public, dist, static)
 - UI framework files (components, modules, pages)
 - Frontend build configuration (webpack, vite, rollup, etc.)
@@ -217,6 +221,7 @@ ${INCLUDE_FILE_PATTERNS ?
 "Document where key file types are located in the project."}
 
 ### 5. Naming and Organization Conventions
+
 Document the naming and organizational conventions observed across the project:
 
 - **File Naming Patterns**:
@@ -240,6 +245,7 @@ Document the naming and organizational conventions observed across the project:
   - Cross-cutting concern organization
 
 ### 6. Navigation and Development Workflow
+
 Provide guidance for navigating and working with the codebase structure:
 
 - **Entry Points**:
@@ -260,11 +266,13 @@ Provide guidance for navigating and working with the codebase structure:
 
 ${INCLUDE_FILE_COUNTS ?
 "- **Content Statistics**:
-  - Files per directory analysis
-  - Code distribution metrics
-  - Complexity concentration areas" : ""}
+
+- Files per directory analysis
+- Code distribution metrics
+- Complexity concentration areas" : ""}
 
 ### 7. Build and Output Organization
+
 Document the build process and output organization:
 
 - **Build Configuration**:
@@ -345,6 +353,7 @@ ${(PROJECT_TYPE == "Node.js" || PROJECT_TYPE == "Auto-detect") ?
   - Secret management approaches" : ""}
 
 ### 9. Extension and Evolution
+
 Document how the project structure is designed to be extended:
 
 - **Extension Points**:

@@ -30,7 +30,7 @@ Progress now shows:
 
 ## For Developers
 
-### Old Way (Deprecated):
+### Old Way (Deprecated)
 
 ```python
 # Direct module execution
@@ -39,7 +39,7 @@ module.configure()
 module.verify()
 ```
 
-### New Way:
+### New Way
 
 ```python
 # Use execution engine

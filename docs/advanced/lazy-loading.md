@@ -29,6 +29,7 @@ def main():
 The `configurator.modules` package uses PEP 562 (`__getattr__`) to lazily load configuration modules.
 
 **Old Way (Slow):**
+
 ```python
 # Imports ALL modules at startup
 from configurator.modules.system import SystemModule
@@ -37,6 +38,7 @@ from configurator.modules.docker import DockerModule
 ```
 
 **New Way (Fast):**
+
 ```python
 # configurator/modules/__init__.py
 def __getattr__(name):

@@ -288,7 +288,7 @@ See the full guide: `docs/XRDP-XFCE-ZSH-GUIDE.md`
 
 ## Getting Help
 
-**Issues**: https://github.com/noviasari42/debian-vps-workstation/issues
+**Issues**: <https://github.com/noviasari42/debian-vps-workstation/issues>
 **Docs**: `docs/XRDP-XFCE-ZSH-GUIDE.md`
 **Implementation**: `docs/implementation/PHASE1-XRDP-OPTIMIZATION.md`
 

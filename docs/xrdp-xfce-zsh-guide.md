@@ -73,6 +73,7 @@ code=20
 ```
 
 **Why this config wins**:
+
 - `tcp_nodelay=true` from Doc 1 is CRITICAL (Doc 2 has it but doesn't emphasize)
 - `bitmap_cache=true` from Doc 1 provides client-side caching
 - Doc 2's `security_layer=tls` is more modern than RDP security
@@ -228,6 +229,7 @@ ResultActive=yes
 **Winner**: Doc 2's `packagekit` rule is more useful than Doc 1's `NetworkManager` rule for desktop usage.
 
 **Apply**:
+
 ```bash
 sudo systemctl restart polkit
 ```
@@ -1032,6 +1034,7 @@ chmod +x ultimate-setup.sh
 ## 🎯 Conclusion
 
 **Use the automation script above** - it combines:
+
 - ✅ Doc 2's complete, copy-paste ready configs
 - ✅ Doc 1's critical performance insights
 - ✅ Enhanced with best practices from both

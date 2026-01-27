@@ -1,14 +1,18 @@
 # Awesome Copilot Resources Analysis
 
 ## Current Status
+
 Total resources available in awesome-copilot:
+
 - **Instructions**: 159 files
 - **Prompts**: 133 files
 - **Agents**: 136 files
 - **Skills**: Multiple specialized skills
 
 ## What We've Installed (15%)
+
 Out of 428 total resources, we've installed only **25 files (6%)**:
+
 - 9 Instructions
 - 9 Prompts
 - 6 Agents
@@ -17,6 +21,7 @@ Out of 428 total resources, we've installed only **25 files (6%)**:
 ## Additional High-Value Resources to Consider
 
 ### Critical Instructions Not Yet Installed
+
 1. **devops-core-principles.instructions.md** - Core DevOps methodology
 2. **kubernetes-deployment-best-practices.instructions.md** - K8s best practices
 3. **terraform.instructions.md** - IaC for infrastructure
@@ -26,6 +31,7 @@ Out of 428 total resources, we've installed only **25 files (6%)**:
 7. **localization.instructions.md** - i18n/l10n standards
 
 ### Valuable Prompts Missing
+
 1. **create-readme.prompt.md** - README generation
 2. **create-architectural-decision-record.prompt.md** - ADR creation
 3. **create-technical-spike.prompt.md** - Research documentation
@@ -35,6 +41,7 @@ Out of 428 total resources, we've installed only **25 files (6%)**:
 7. **first-ask.prompt.md** - Initial project setup questions
 
 ### Power Agents Not Installed
+
 1. **planner.agent.md** / **plan.agent.md** - Strategic planning
 2. **arch.agent.md** - Architecture design
 3. **tdd-*.agent.md** - TDD workflow (red, green, refactor)
@@ -45,11 +52,14 @@ Out of 428 total resources, we've installed only **25 files (6%)**:
 8. **janitor.agent.md** - Code cleanup specialist
 
 ### Collections (Not Yet Explored)
+
 Collections are curated sets of related resources. We haven't copied any yet.
 Available in: `/home/racoon/Desktop/awesome-copilot/collections/`
 
 ## Recommendation
+
 Install a **Phase 2** batch focusing on:
+
 1. DevOps/Infrastructure patterns
 2. Planning and architecture agents
 3. Documentation generation prompts

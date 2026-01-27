@@ -11,7 +11,7 @@
 
 **Status**: [ ] PASS [ ] FAIL [ ] PARTIAL
 
-### Checklist:
+### Checklist
 
 - [ ] Window borders visible and crisp
 - [ ] Title bars styled correctly
@@ -42,7 +42,7 @@
 
 **Status**: [ ] PASS [ ] FAIL [ ] PARTIAL
 
-### Checklist:
+### Checklist
 
 - [ ] Text is sharp, not blurry
 - [ ] No color fringing around letters
@@ -72,7 +72,7 @@
 
 **Status**: [ ] PASS [ ] FAIL [ ] PARTIAL
 
-### Checklist:
+### Checklist
 
 - [ ] Folder icons styled correctly
 - [ ] File type icons present (text, image, video, etc.)
@@ -95,7 +95,7 @@
 
 **Status**: [ ] PASS [ ] FAIL [ ] PARTIAL
 
-### Top Panel Checklist:
+### Top Panel Checklist
 
 - [ ] Panel at top of screen
 - [ ] Menu button visible (left)
@@ -106,7 +106,7 @@
 - [ ] Panel background styled correctly
 - [ ] No visual overlap with windows
 
-### Plank Dock Checklist:
+### Plank Dock Checklist
 
 - [ ] Dock at bottom center
 - [ ] Dock contains pinned applications
@@ -129,7 +129,7 @@
 
 **Status**: [ ] PASS [ ] FAIL [ ] PARTIAL
 
-### Tested Applications:
+### Tested Applications
 
 - [ ] Settings Manager
 - [ ] File Manager (Thunar)
@@ -137,7 +137,7 @@
 - [ ] Text Editor (Mousepad)
 - [ ] Task Manager
 
-### Consistency Checklist:
+### Consistency Checklist
 
 - [ ] All use same theme
 - [ ] Button styles match
@@ -159,7 +159,7 @@
 
 **Status**: [ ] PASS [ ] FAIL [ ] PARTIAL
 
-### Checklist:
+### Checklist
 
 - [ ] Body text readable
 - [ ] Menu text readable

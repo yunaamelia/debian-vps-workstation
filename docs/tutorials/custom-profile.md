@@ -4,15 +4,17 @@ This tutorial guides you through creating a custom profile for your specific nee
 
 ## Steps
 
-1.  **Navigate to the profiles directory:**
+1. **Navigate to the profiles directory:**
+
     ```bash
     cd configurator/profiles
     ```
 
-2.  **Create a new YAML file:**
+2. **Create a new YAML file:**
     Create a file named `my-custom-profile.yaml`.
 
-3.  **Define your settings:**
+3. **Define your settings:**
+
     ```yaml
     name: "My Custom Profile"
     description: "Personalized setup for Python dev"
@@ -25,7 +27,8 @@ This tutorial guides you through creating a custom profile for your specific nee
         enabled: true
     ```
 
-4.  **Use your profile:**
+4. **Use your profile:**
+
     ```bash
     vps-configurator install --profile my-custom-profile
     ```

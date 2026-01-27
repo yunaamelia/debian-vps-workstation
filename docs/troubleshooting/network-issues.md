@@ -124,6 +124,7 @@ ERROR: APT update failed: CircuitBreakerError
    ```
 
 4. **Increase failure threshold** (if network is legitimately unstable):
+
    ```yaml
    # config/default.yaml
    performance:
@@ -235,6 +236,7 @@ ERROR: Command timeout after 300 seconds
    ```
 
 4. **Switch to faster network:**
+
    ```bash
    # If on WiFi, try ethernet
    # If on VPN, try without VPN
@@ -412,6 +414,7 @@ sudo lsof /var/lib/dpkg/lock-frontend
    ```
 
 3. **Change mirror:**
+
    ```bash
    # Use main Debian mirror
    sudo sed -i 's|http://.*debian.org|http://deb.debian.org|g' /etc/apt/sources.list
@@ -470,6 +473,7 @@ ERROR: SSL certificate problem: certificate verify failed
    ```
 
 3. **Temporary workaround (NOT recommended for production):**
+
    ```python
    # Disable SSL verification for testing only
    result = wrapper.download_with_retry(

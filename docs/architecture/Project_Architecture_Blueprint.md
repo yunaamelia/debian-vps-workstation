@@ -730,10 +730,10 @@ def check_requirements(context):
 
 To add support for a new tool (e.g., "Kubernetes"):
 
-1.  Create `configurator/modules/kubernetes.py`.
-2.  Inherit from `ConfigurationModule`.
-3.  Implement `validate()` (check OS version), `configure()` (install kubectl), `verify()` (kubectl version).
-4.  Add to the module registry or import in `cli.py`.
+1. Create `configurator/modules/kubernetes.py`.
+2. Inherit from `ConfigurationModule`.
+3. Implement `validate()` (check OS version), `configure()` (install kubectl), `verify()` (kubectl version).
+4. Add to the module registry or import in `cli.py`.
 
 ### Modification Patterns
 
@@ -750,21 +750,20 @@ To add support for a new tool (e.g., "Kubernetes"):
 
 ### Development Workflow
 
-1.  **Define Requirement**: E.g., "Add support for Redis".
-2.  **Create Module**: `configurator/modules/redis.py`.
-3.  **Implement Lifecycle**:
+1. **Define Requirement**: E.g., "Add support for Redis".
+2. **Create Module**: `configurator/modules/redis.py`.
+3. **Implement Lifecycle**:
     - `validate()`: Check if port 6379 is free.
     - `configure()`: `self.install_packages_resilient(["redis-server"])`, `self.enable_service("redis-server")`.
     - `verify()`: `self.run("redis-cli ping")`.
-4.  **Register**: Ensure the module is discoverable.
-5.  **Test**: Add a test case in `tests/modules/test_redis.py` using `DryRunManager`.
+4. **Register**: Ensure the module is discoverable.
+5. **Test**: Add a test case in `tests/modules/test_redis.py` using `DryRunManager`.
 
 ### Common Pitfalls
 
 - **Bypassing Resilient Wrappers**: Do not use `subprocess.run` directly. Use `self.run()`, which handles logging, dry-run, and rollback.
 - **Ignoring Rollback**: Always register a rollback action when changing state (creating files, installing packages).
 - **Blocking the GI**: For extensive operations, ensure they don't block the UI thread (if using the TUI mode), though mostly this runs sequentially.
-
 
 ---
 
@@ -777,12 +776,14 @@ To add support for a new tool (e.g., "Kubernetes"):
 ### Keeping This Blueprint Current
 
 **Update Triggers:**
+
 - Major architectural changes (new layers, patterns)
 - Addition of cross-cutting concerns
 - New ADRs (Architectural Decision Records)
 - Quarterly review (minimum)
 
 **Update Process:**
+
 1. Review codebase changes since last update
 2. Update relevant sections
 3. Add new ADRs for significant decisions
@@ -790,12 +791,14 @@ To add support for a new tool (e.g., "Kubernetes"):
 5. Update version and date
 
 **Regeneration Command:**
+
 ```bash
 # Use the architecture blueprint generator prompt
 # Located in: .github/prompts/architecture-blueprint-generator.prompt.md
 ```
 
 **Contact:**
+
 - Architecture questions: Open GitHub Discussion
 - Propose changes: Submit PR to `.github/prompts/`
 - Security concerns: See SECURITY.md

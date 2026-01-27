@@ -34,7 +34,6 @@
 
 ### Key Metrics
 
-
 | Metric | Value |
 |--------|-------|
 | **Total Python Files** | 237 files (104 src + 133 tests) |
@@ -112,6 +111,7 @@
 #### PLAN Phase
 
 **Tools & Artifacts:**
+
 - 📄 35 comprehensive documentation files
 - 📐 Architecture blueprints (Project_Architecture_Blueprint.md)
 - 📝 Implementation prompts (15 features)
@@ -119,6 +119,7 @@
 - 🗺️ Implementation roadmap (15-20 weeks)
 
 **Workflow:**
+
 1. Feature requests → GitHub Issues
 2. Requirements → Implementation prompts
 3. Architecture decisions → ADR (Architectural Decision Records)
@@ -127,6 +128,7 @@
 #### CODE Phase
 
 **Tools & Patterns:**
+
 - **Version Control:** Git with feature branching
 - **Code Quality:**
   - Ruff (linting)
@@ -140,6 +142,7 @@
   - Lazy loading (performance)
 
 **Workflow:**
+
 ```python
 # Example: Adding a new configuration module
 # 1. Create module inheriting from base
@@ -160,7 +163,6 @@ class NewModule(ConfigurationModule):
 #### BUILD Phase
 
 **Automated Build Pipeline:**
-
 
 ```yaml
 # .github/workflows/tests.yml - Automated on push/PR
@@ -188,6 +190,7 @@ jobs:
 ```
 
 **Build Triggers:**
+
 - Every push to main/develop
 - Every pull request
 - Manual workflow dispatch
@@ -207,6 +210,7 @@ jobs:
 ```
 
 **Test Categories:**
+
 - **Unit Tests** (`tests/unit/`): 200+ tests, <1s each
 - **Integration Tests** (`tests/integration/`): 50+ tests, service interactions
 - **E2E Tests** (`tests/e2e/`): 10+ tests, full workflows
@@ -214,6 +218,7 @@ jobs:
 - **Security Tests** (`tests/security/`): Vulnerability scanning
 
 **Test Execution:**
+
 ```bash
 # Fast unit tests (CI)
 pytest tests/unit/ -v --cov=configurator
@@ -228,6 +233,7 @@ pytest tests/ -v --cov=configurator --cov-report=xml
 #### RELEASE Phase
 
 **Semantic Versioning:**
+
 - **Major (v2.0.0)**: Breaking API changes
 - **Minor (v1.1.0)**: New features, backward compatible
 - **Patch (v1.0.1)**: Bug fixes
@@ -250,6 +256,7 @@ steps:
 ```
 
 **Release Checklist:**
+
 - [ ] Version bumped in pyproject.toml
 - [ ] CHANGELOG.md updated
 - [ ] All tests passing
@@ -261,22 +268,26 @@ steps:
 **Deployment Strategies:**
 
 1. **Quick Install (Recommended):**
+
 ```bash
 curl -sSL https://raw.githubusercontent.com/yunaamelia/debian-vps-workstation/main/quick-install.sh | bash
 ```
-   - Checks OS compatibility
-   - Installs system dependencies
-   - Sets up virtual environment
-   - Installs Python packages
-   - Verifies installation
 
-2. **PyPI Install (Future):**
+- Checks OS compatibility
+- Installs system dependencies
+- Sets up virtual environment
+- Installs Python packages
+- Verifies installation
+
+1. **PyPI Install (Future):**
+
 ```bash
 pip install debian-vps-configurator
 vps-configurator install --profile advanced
 ```
 
-3. **Source Install:**
+1. **Source Install:**
+
 ```bash
 git clone <repo>
 ./quick-install.sh
@@ -285,6 +296,7 @@ pip install -e .
 ```
 
 **Deployment Features:**
+
 - ✅ **Dry-run mode**: Preview changes without applying
 - ✅ **Rollback**: Automatic rollback on failures
 - ✅ **Circuit breaker**: Protects against cascading failures
@@ -295,6 +307,7 @@ pip install -e .
 **Operational Excellence:**
 
 **1. Health Monitoring:**
+
 ```python
 # Built-in health checks
 class SystemValidator:
@@ -307,6 +320,7 @@ class SystemValidator:
 ```
 
 **2. Rollback Capabilities:**
+
 ```python
 class RollbackManager:
     def add_package_remove(packages)      # APT rollback
@@ -316,12 +330,14 @@ class RollbackManager:
 ```
 
 **3. Dry-Run Mode:**
+
 ```bash
 # Preview changes without applying
 vps-configurator install --dry-run --profile advanced
 ```
 
 **4. Circuit Breaker:**
+
 ```python
 # Protects against repeated failures
 class CircuitBreakerManager:
@@ -331,6 +347,7 @@ class CircuitBreakerManager:
 ```
 
 **5. Incident Response:**
+
 ```bash
 # Troubleshooting tools
 vps-configurator verify           # Check installation
@@ -344,6 +361,7 @@ scripts/validate_phase*.sh        # Phase validation
 **Observability Stack:**
 
 **1. Activity Monitoring:**
+
 ```python
 class ActivityMonitor:
     - Track user logins/logouts
@@ -354,6 +372,7 @@ class ActivityMonitor:
 ```
 
 **2. Audit Logging:**
+
 ```python
 class AuditLogger:
     # Comprehensive audit trail
@@ -366,6 +385,7 @@ class AuditLogger:
 ```
 
 **3. File Integrity Monitoring:**
+
 ```python
 class FileIntegrityMonitor:
     - Baseline critical files
@@ -375,6 +395,7 @@ class FileIntegrityMonitor:
 ```
 
 **4. Metrics Collection:**
+
 - Deployment frequency (DORA metric)
 - Lead time for changes (DORA metric)
 - Time to restore (DORA metric)
@@ -384,6 +405,7 @@ class FileIntegrityMonitor:
 - Resource utilization
 
 **5. Alerting:**
+
 - Failed module installations
 - Security anomalies
 - Circuit breaker trips
@@ -397,6 +419,7 @@ class FileIntegrityMonitor:
 ### Language & Runtime
 
 **Primary Language:** Python
+
 - **Version**: 3.12+ (minimum 3.11)
 - **Type System**: Full type hints with mypy validation
 - **Features Used**:
@@ -468,11 +491,13 @@ class FileIntegrityMonitor:
 ### Entry Points
 
 **Primary Entry Point:** `configurator/cli.py`
+
 - **Type**: Click-based CLI application
 - **Commands**: 106+ commands organized in groups
 - **Invocation**: `vps-configurator <command> [options]`
 
 **Entry Point Groups:**
+
 1. **Core Commands**: install, verify, rollback, wizard
 2. **Security Commands**: cis-scan, vuln-scan, ssl, ssh-keys, 2fa
 3. **User Management**: user, team, temp-access
@@ -480,6 +505,7 @@ class FileIntegrityMonitor:
 5. **Monitoring**: health, metrics, logs
 
 **Example Entry Point Registration:**
+
 ```toml
 # pyproject.toml
 [project.scripts]
@@ -509,6 +535,7 @@ Install and configure a complete VPS development environment with security harde
 User runs: `vps-configurator install --profile advanced -v`
 
 **Success Criteria:**
+
 - All enabled modules configured successfully
 - System passes health checks
 - Remote desktop accessible
@@ -843,6 +870,7 @@ class RollbackManager:
 #### Response Construction
 
 **Success Response:**
+
 ```python
 # Generated by ProgressReporter
 {
@@ -865,6 +893,7 @@ class RollbackManager:
 ```
 
 **Error Response:**
+
 ```python
 {
     "status": "error",
@@ -883,7 +912,6 @@ class RollbackManager:
 
 ---
 
-
 ### Workflow 2: User Lifecycle Management (Secondary Workflow)
 
 **Business Purpose:**
@@ -893,6 +921,7 @@ Automate complete user onboarding process with security best practices, includin
 User runs: `vps-configurator user create johndoe --full-name "John Doe" --email john@company.com --role developer --enable-2fa --generate-ssh-key`
 
 **Success Criteria:**
+
 - User account created with proper permissions
 - SSH key generated and configured
 - 2FA enabled with QR code
@@ -1040,6 +1069,7 @@ Response Generation:
 #### Key Data Models
 
 **User Model:**
+
 ```python
 # configurator/users/models.py
 from dataclasses import dataclass
@@ -1081,6 +1111,7 @@ class User:
 ```
 
 **RBAC Role Model:**
+
 ```python
 # configurator/rbac/models.py
 @dataclass
@@ -1104,11 +1135,13 @@ class Role:
 Automatically build, test, and validate code on every push/PR to ensure code quality and catch issues early.
 
 **Trigger:**
+
 - Git push to main/develop
 - Pull request opened/updated
 - Manual workflow dispatch
 
 **Success Criteria:**
+
 - All linters pass
 - All tests pass (unit + integration)
 - Code coverage >= 85%
@@ -1287,12 +1320,14 @@ Git Push/PR
 ### Build Phase Details
 
 **Stage 1: Code Quality Checks**
+
 - **Duration**: 2-3 minutes
 - **Tools**: Ruff, Mypy
 - **Fail Fast**: Yes
 - **Cacheable**: Pip dependencies
 
 **Stage 2: Multi-Version Testing**
+
 - **Duration**: 5-8 minutes
 - **Parallelization**: Python 3.11 & 3.12 in parallel
 - **Coverage Target**: 85%+
@@ -1301,6 +1336,7 @@ Git Push/PR
   - Integration tests (selected, ~30s each)
 
 **Stage 3: Package Build**
+
 - **Duration**: 1-2 minutes
 - **Outputs**:
   - Wheel (`.whl`) - binary distribution
@@ -1400,7 +1436,6 @@ jobs:
 ```
 
 ---
-
 
 ## 6. Testing Workflows
 
@@ -1822,6 +1857,7 @@ docker run -it --privileged vps-configurator install --profile advanced
 ### Deployment Checklist
 
 **Pre-Deployment:**
+
 - [ ] All tests passing (CI green)
 - [ ] Documentation updated
 - [ ] Version bumped in pyproject.toml
@@ -1829,12 +1865,14 @@ docker run -it --privileged vps-configurator install --profile advanced
 - [ ] Tag created and pushed
 
 **Deployment:**
+
 - [ ] Download/build artifacts
 - [ ] Backup existing installation (if upgrade)
 - [ ] Run deployment script
 - [ ] Verify health checks pass
 
 **Post-Deployment:**
+
 - [ ] Smoke tests executed
 - [ ] Monitoring alerts configured
 - [ ] Rollback plan ready
@@ -2149,7 +2187,6 @@ class MetricsCollector:
 ```
 
 ---
-
 
 ## 9. Security & Compliance Workflows
 
@@ -2636,7 +2673,7 @@ class MyModule(ConfigurationModule):
         self.enable_service("myservice")
 ```
 
-2. **Register Module in Installer**
+1. **Register Module in Installer**
 
 ```python
 # configurator/core/installer.py
@@ -2650,7 +2687,7 @@ def _register_modules(self):
     }
 ```
 
-3. **Add to Configuration**
+1. **Add to Configuration**
 
 ```yaml
 # config/profiles/advanced.yaml
@@ -2661,7 +2698,7 @@ modules:
     option2: value2
 ```
 
-4. **Add Tests**
+1. **Add Tests**
 
 ```python
 # tests/unit/modules/test_mymodule.py

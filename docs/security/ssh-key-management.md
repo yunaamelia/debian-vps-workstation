@@ -18,7 +18,9 @@ vps-configurator ssh status
 ## Commands
 
 ### `ssh setup`
+
 Interactive wizard for SSH security setup:
+
 - Generates Ed25519 key pair
 - Deploys key to authorized_keys
 - Optionally disables password authentication
@@ -30,6 +32,7 @@ vps-configurator ssh setup --disable-password-auth --disable-root-login
 ```
 
 ### `ssh generate-key`
+
 Generate a new SSH key pair:
 
 ```bash
@@ -38,6 +41,7 @@ vps-configurator ssh generate-key --user johndoe --type rsa --rotation-days 180
 ```
 
 Options:
+
 - `--user, -u`: System username (required)
 - `--key-id, -i`: Custom key identifier
 - `--type`: Key type (ed25519, rsa)
@@ -45,6 +49,7 @@ Options:
 - `--deploy`: Deploy to authorized_keys
 
 ### `ssh rotate`
+
 Rotate an existing key with grace period:
 
 ```bash
@@ -55,6 +60,7 @@ vps-configurator ssh rotate --user johndoe --key-id old-key --grace-days 14
 During grace period, both old and new keys are valid.
 
 ### `ssh list-keys`
+
 Show key inventory with status:
 
 ```bash
@@ -64,6 +70,7 @@ vps-configurator ssh list-keys --json
 ```
 
 ### `ssh revoke-key`
+
 Revoke and remove a key:
 
 ```bash
@@ -71,6 +78,7 @@ vps-configurator ssh revoke-key --user johndoe --key-id old-key
 ```
 
 ### `ssh status`
+
 Show SSH security status:
 
 ```bash
@@ -79,6 +87,7 @@ vps-configurator ssh status --json
 ```
 
 ### `ssh harden`
+
 Apply SSH security hardening:
 
 ```bash
@@ -88,6 +97,7 @@ vps-configurator ssh harden
 ## Key Rotation Policy
 
 Default policy:
+
 - **Rotation interval**: 90 days
 - **Grace period**: 7 days (both keys valid)
 - **Expiry warning**: 14 days before expiration
@@ -103,16 +113,19 @@ Default policy:
 ## Troubleshooting
 
 ### Cannot connect after disabling password auth
+
 1. Ensure your public key is in `~/.ssh/authorized_keys`
 2. Check file permissions: `chmod 600 ~/.ssh/authorized_keys`
 3. Verify SSH config: `ssh -v user@server`
 
 ### Key generation fails
+
 - Ensure user exists: `id username`
 - Check SSH directory: `ls -la ~/.ssh`
 - Verify permissions: SSH dir must be 700
 
 ### Restoring password auth (emergency)
+
 ```bash
 sudo sed -i 's/PasswordAuthentication no/PasswordAuthentication yes/' /etc/ssh/sshd_config
 sudo systemctl reload sshd

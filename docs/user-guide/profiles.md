@@ -4,11 +4,11 @@ Profiles allow you to quickly apply a predefined set of configurations suitable 
 
 ## Available Profiles
 
-*   **Beginner:** Basic setup with essential tools and maximum guidance.
-*   **Intermediate:** Balanced setup for standard development needs.
-*   **Advanced:** minimal setup with maximum control for experienced users.
-*   **Minimal:** Only the bare necessities (system + security).
-*   **Full:** Everything enabled.
+* **Beginner:** Basic setup with essential tools and maximum guidance.
+* **Intermediate:** Balanced setup for standard development needs.
+* **Advanced:** minimal setup with maximum control for experienced users.
+* **Minimal:** Only the bare necessities (system + security).
+* **Full:** Everything enabled.
 
 ## Using a Profile
 

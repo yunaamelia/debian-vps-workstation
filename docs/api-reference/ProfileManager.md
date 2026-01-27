@@ -5,6 +5,7 @@
 Manage configuration profiles.
 
 Supports:
+
 - Built-in profiles (beginner, developer, fullstack, etc.)
 - Custom user profiles
 - Profile inheritance
@@ -13,7 +14,6 @@ Supports:
 ## Methods
 
 ### `__init__(self, logger: Optional[logging.Logger] = None)`
-
 
 ---
 

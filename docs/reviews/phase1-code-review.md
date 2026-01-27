@@ -779,15 +779,15 @@ def _configure_user_session(self):
 
 ### Should Fix (Recommended)
 
-5. ⚠️ Validate configuration values
-6. ⚠️ Add rollback registration
-7. ⚠️ Resolve conflict with existing `_configure_xrdp()` method
+1. ⚠️ Validate configuration values
+2. ⚠️ Add rollback registration
+3. ⚠️ Resolve conflict with existing `_configure_xrdp()` method
 
 ### Nice to Have
 
-8. 💡 Make user configuration optional/configurable
-9. 💡 Extract magic numbers to constants
-10. 💡 Add comprehensive unit tests
+1. 💡 Make user configuration optional/configurable
+2. 💡 Extract magic numbers to constants
+3. 💡 Add comprehensive unit tests
 
 ---
 

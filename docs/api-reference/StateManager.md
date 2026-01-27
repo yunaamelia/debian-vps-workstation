@@ -5,6 +5,7 @@
 Manages installation state with SQLite persistence.
 
 Provides:
+
 - State persistence across restarts
 - Checkpoint creation and restore
 - Resume capability after crashes

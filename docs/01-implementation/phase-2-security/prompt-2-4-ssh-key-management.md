@@ -13,11 +13,11 @@ Implement `SSHKeyManager` in `configurator/security/ssh_keys.py`.
 
 ### Functional
 
-1.  **Generation**: Create Ed25519 (preferred) or RSA-4096 keys.
-2.  **Deployment**: Add public key to `~/.ssh/authorized_keys`.
-3.  **Hardening**: Ensure `.ssh` permissions (700 dir, 600 files).
-4.  **Rotation**: Generate new key, add to authorized_keys, (optional: remove old key after confirmation).
-5.  **SSHD Config**: Disable `PasswordAuthentication` and `PermitRootLogin`.
+1. **Generation**: Create Ed25519 (preferred) or RSA-4096 keys.
+2. **Deployment**: Add public key to `~/.ssh/authorized_keys`.
+3. **Hardening**: Ensure `.ssh` permissions (700 dir, 600 files).
+4. **Rotation**: Generate new key, add to authorized_keys, (optional: remove old key after confirmation).
+5. **SSHD Config**: Disable `PasswordAuthentication` and `PermitRootLogin`.
 
 ## 📝 Specifications
 
@@ -39,12 +39,12 @@ class SSHKeyManager:
 
 ## 🪜 Implementation Steps
 
-1.  **Key Gen**: Use `subprocess` to call `ssh-keygen` or Python `cryptography` library.
-2.  **File Ops**:
+1. **Key Gen**: Use `subprocess` to call `ssh-keygen` or Python `cryptography` library.
+2. **File Ops**:
     - `os.makedirs` with mode 0o700.
     - Write authorized_keys.
     - `shutil.chown` to user.
-3.  **Config Editor**:
+3. **Config Editor**:
     - Regex replacement for `sshd_config` parameters.
     - `systemctl reload sshd`.
 

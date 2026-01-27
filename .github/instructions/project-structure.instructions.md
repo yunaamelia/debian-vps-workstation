@@ -635,6 +635,7 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 ### Structural Anti-Patterns
 
 ❌ **NEVER:**
+
 - Place feature logic in `cli.py` or `wizard.py` (presentation layer)
 - Import from higher layers in lower layers
 - Create circular dependencies between modules
@@ -649,6 +650,7 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 ### Naming Anti-Patterns
 
 ❌ **NEVER:**
+
 - Use `camelCase` for Python files or functions
 - Use `PascalCase` for module files
 - Omit `test_` prefix for test files
@@ -659,6 +661,7 @@ section-order = ["future", "standard-library", "third-party", "first-party", "lo
 ### Organization Anti-Patterns
 
 ❌ **NEVER:**
+
 - Place business logic in utility modules
 - Create "misc" or "common" directories for unrelated code
 - Mix production and test code in the same directory

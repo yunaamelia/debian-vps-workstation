@@ -59,6 +59,7 @@ This section guides you through submitting a bug report.
    ```
 
 4. **Run tests**
+
    ```bash
    pytest tests/
    ```

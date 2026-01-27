@@ -13,13 +13,13 @@ Implement a `LazyLoader` mechanism or leverage Python's `importlib` for module m
 
 ### Functional
 
-1.  **On-Demand Import**: Modules are not imported until a function or class from them is accessed.
-2.  **Registry**: A central registry mapping "module_name" to "file_path" or "python package path".
+1. **On-Demand Import**: Modules are not imported until a function or class from them is accessed.
+2. **Registry**: A central registry mapping "module_name" to "file_path" or "python package path".
 
 ### Non-Functional
 
-1.  **Transparency**: The rest of the code should treat lazy modules as if they were standard imports (proxy pattern).
-2.  **Startup Speed**: measurable reduction in start time.
+1. **Transparency**: The rest of the code should treat lazy modules as if they were standard imports (proxy pattern).
+2. **Startup Speed**: measurable reduction in start time.
 
 ## 📝 Specifications
 
@@ -44,20 +44,24 @@ class LazyModule:
 
 ## 🪜 Implementation Steps
 
-1.  **Create Module**: `configurator/core/lazy_loader.py`.
-2.  **Implement `LazyModule`**: Use the proxy pattern or `sys.meta_path` (Proxy is simpler for this scope).
-3.  **Refactor `configurator/modules/__init__.py`**:
+1. **Create Module**: `configurator/core/lazy_loader.py`.
+2. **Implement `LazyModule`**: Use the proxy pattern or `sys.meta_path` (Proxy is simpler for this scope).
+3. **Refactor `configurator/modules/__init__.py`**:
     - Instead of:
+
       ```python
       from .docker import DockerModule
       from .nginx import NginxModule
       ```
+
     - Use:
+
       ```python
       DockerModule = LazyLoader("configurator.modules.docker", "DockerModule")
       ```
+
       (You may need a helper that loads the class specifically).
-4.  **Test**:
+4. **Test**:
     - Create a script that imports the registry but doesn't use the modules. Check `sys.modules`. The sub-modules should NOT be there.
 
 ## 🔍 Validation Checklist

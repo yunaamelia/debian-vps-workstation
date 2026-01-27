@@ -784,7 +784,7 @@ Before using in production:
 
 ---
 
-## 🎉 CONGRATULATIONS!
+## 🎉 CONGRATULATIONS
 
 You've successfully set up a **secure VPS** in just 15 minutes!
 
@@ -801,7 +801,7 @@ You've successfully set up a **secure VPS** in just 15 minutes!
 - 📚 Full Documentation: `/docs` directory
 - 💬 GitHub Discussions: Ask questions
 - 🐛 GitHub Issues: Report bugs
-- 📧 Email: support@example.com
+- 📧 Email: <support@example.com>
 
 ---
 

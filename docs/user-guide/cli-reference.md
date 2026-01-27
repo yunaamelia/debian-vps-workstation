@@ -21,6 +21,7 @@ These options are available for all commands:
 User activity monitoring and auditing.
 
 **Syntax:**
+
 ```bash
 vps-configurator activity
 ```
@@ -39,6 +40,7 @@ vps-configurator activity
 Query security audit logs.
 
 **Syntax:**
+
 ```bash
 vps-configurator audit
 ```
@@ -57,6 +59,7 @@ vps-configurator audit
 Manage package cache.
 
 **Syntax:**
+
 ```bash
 vps-configurator cache
 ```
@@ -75,6 +78,7 @@ vps-configurator cache
 SSL/TLS certificate management with Let's Encrypt.
 
 **Syntax:**
+
 ```bash
 vps-configurator cert
 ```
@@ -93,6 +97,7 @@ vps-configurator cert
 Security compliance and hardening based on CIS Benchmarks.
 
 **Syntax:**
+
 ```bash
 vps-configurator cis
 ```
@@ -108,10 +113,10 @@ vps-configurator cis
 
 ### `vps-configurator dashboard`
 
-
 Launch TUI dashboard for installation monitoring.
 
 Provides a full-screen terminal UI with:
+
 - Real-time module status
 - System resource monitoring
 - Activity log
@@ -119,8 +124,8 @@ Provides a full-screen terminal UI with:
 
 Requires: textual (pip install textual)
 
-
 **Syntax:**
+
 ```bash
 vps-configurator dashboard [DEMO]
 ```
@@ -145,6 +150,7 @@ vps-configurator dashboard [DEMO]
 File Integrity Monitoring.
 
 **Syntax:**
+
 ```bash
 vps-configurator fim
 ```
@@ -160,22 +166,24 @@ vps-configurator fim
 
 ### `vps-configurator install`
 
-
 Install and configure the workstation.
 
 Examples:
 
-  # Interactive wizard (recommended for beginners)
+# Interactive wizard (recommended for beginners)
+
   vps-configurator wizard
 
-  # Quick install with beginner profile
+# Quick install with beginner profile
+
   vps-configurator install --profile beginner -y
 
-  # Install with custom config
+# Install with custom config
+
   vps-configurator install --config myconfig.yaml -y
 
-
 **Syntax:**
+
 ```bash
 vps-configurator install [PROFILE] [CONFIG] [NON_INTERACTIVE] [SKIP_VALIDATION] [DRY_RUN] [NO_PARALLEL] [PARALLEL_WORKERS] [VERBOSE]
 ```
@@ -207,6 +215,7 @@ vps-configurator install --profile advanced --dry-run
 ```
 
 **See also:**
+
 - [`wizard`](#vps-configurator-wizard)
 - [`verify`](#vps-configurator-verify)
 - [`profiles`](#vps-configurator-profiles)
@@ -219,6 +228,7 @@ vps-configurator install --profile advanced --dry-run
 Two-factor authentication (2FA/MFA) management.
 
 **Syntax:**
+
 ```bash
 vps-configurator mfa
 ```
@@ -237,6 +247,7 @@ vps-configurator mfa
 Monitoring and observability commands.
 
 **Syntax:**
+
 ```bash
 vps-configurator monitoring
 ```
@@ -255,6 +266,7 @@ vps-configurator monitoring
 Manage external plugins.
 
 **Syntax:**
+
 ```bash
 vps-configurator plugin
 ```
@@ -270,11 +282,10 @@ vps-configurator plugin
 
 ### `vps-configurator profiles`
 
-
 List available installation profiles.
 
-
 **Syntax:**
+
 ```bash
 vps-configurator profiles
 ```
@@ -290,6 +301,7 @@ vps-configurator profiles inspect beginner
 ```
 
 **See also:**
+
 - [`install`](#vps-configurator-install)
 - [`visualize`](#vps-configurator-visualize)
 
@@ -300,6 +312,7 @@ vps-configurator profiles inspect beginner
 Manage RBAC roles, assignments, and permission checks.
 
 **Syntax:**
+
 ```bash
 vps-configurator rbac
 ```
@@ -318,6 +331,7 @@ vps-configurator rbac
 Reset a resource (e.g., circuit breaker).
 
 **Syntax:**
+
 ```bash
 vps-configurator reset
 ```
@@ -338,14 +352,13 @@ vps-configurator reset
 
 ### `vps-configurator rollback`
 
-
 Rollback installation changes.
 
 Undoes changes made during the installation process.
 Use with caution!
 
-
 **Syntax:**
+
 ```bash
 vps-configurator rollback [DRY_RUN] [FORCE]
 ```
@@ -371,6 +384,7 @@ vps-configurator rollback [DRY_RUN] [FORCE]
 Manage encrypted secrets.
 
 **Syntax:**
+
 ```bash
 vps-configurator secrets
 ```
@@ -389,6 +403,7 @@ vps-configurator secrets
 SSH key management and security hardening.
 
 **Syntax:**
+
 ```bash
 vps-configurator ssh
 ```
@@ -407,6 +422,7 @@ vps-configurator ssh
 Check system status.
 
 **Syntax:**
+
 ```bash
 vps-configurator status
 ```
@@ -425,6 +441,7 @@ vps-configurator status
 Manage sudo policies (fine-grained access control).
 
 **Syntax:**
+
 ```bash
 vps-configurator sudo
 ```
@@ -443,6 +460,7 @@ vps-configurator sudo
 Team and group management.
 
 **Syntax:**
+
 ```bash
 vps-configurator team
 ```
@@ -461,6 +479,7 @@ vps-configurator team
 Temporary access and time-based permissions.
 
 **Syntax:**
+
 ```bash
 vps-configurator temp-access
 ```
@@ -479,6 +498,7 @@ vps-configurator temp-access
 Manage user lifecycle (create, offboard, suspend).
 
 **Syntax:**
+
 ```bash
 vps-configurator user
 ```
@@ -494,13 +514,12 @@ vps-configurator user
 
 ### `vps-configurator verify`
 
-
 Verify the installation.
 
 Checks that all installed components are working correctly.
 
-
 **Syntax:**
+
 ```bash
 vps-configurator verify [PROFILE] [CONFIG]
 ```
@@ -523,6 +542,7 @@ vps-configurator verify --module docker
 ```
 
 **See also:**
+
 - [`install`](#vps-configurator-install)
 - [`visualize`](#vps-configurator-visualize)
 
@@ -530,14 +550,13 @@ vps-configurator verify --module docker
 
 ### `vps-configurator visualize`
 
-
 Visualize dependencies for a profile.
 
 Displays the dependency tree or exports it to Mermaid format.
 If no profile is specified, uses the 'beginner' profile by default.
 
-
 **Syntax:**
+
 ```bash
 vps-configurator visualize [PROFILE] [FORMAT] [OUTPUT]
 ```
@@ -561,6 +580,7 @@ vps-configurator visualize --profile fullstack --format mermaid-file -o graph.mm
 ```
 
 **See also:**
+
 - [`install`](#vps-configurator-install)
 - [`profiles`](#vps-configurator-profiles)
 
@@ -571,6 +591,7 @@ vps-configurator visualize --profile fullstack --format mermaid-file -o graph.mm
 Vulnerability scanning and management.
 
 **Syntax:**
+
 ```bash
 vps-configurator vuln
 ```
@@ -586,14 +607,13 @@ vps-configurator vuln
 
 ### `vps-configurator wizard`
 
-
 Run the interactive setup wizard.
 
 Guides you through the configuration process
 with beginner-friendly prompts.
 
-
 **Syntax:**
+
 ```bash
 vps-configurator wizard
 ```
@@ -606,6 +626,7 @@ vps-configurator wizard
 ```
 
 **See also:**
+
 - [`install`](#vps-configurator-install)
 - [`profiles`](#vps-configurator-profiles)
 

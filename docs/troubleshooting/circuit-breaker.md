@@ -27,17 +27,17 @@ The Circuit Breaker pattern prevents cascading failures and wasted time by autom
 
 ## 🔄 States Explained
 
-1.  **CLOSED (Normal)**:
+1. **CLOSED (Normal)**:
     - Requests are allowed through.
     - Failures are counted.
     - If failures >= `failure_threshold` (default: 3), state changes to **OPEN**.
 
-2.  **OPEN (Failure)**:
+2. **OPEN (Failure)**:
     - All requests fail immediately with `CircuitBreakerError`.
     - Prevents wasting time on retries when a service is known to be down.
     - After `timeout` (default: 60s), state changes to **HALF-OPEN**.
 
-3.  **HALF-OPEN (Recovery)**:
+3. **HALF-OPEN (Recovery)**:
     - A single test request is allowed through.
     - If successful: State changes to **CLOSED** (Service recovered).
     - If failed: State returns to **OPEN** (Service still down).
@@ -45,6 +45,7 @@ The Circuit Breaker pattern prevents cascading failures and wasted time by autom
 ## 🛠️ CLI Commands
 
 ### status circuit-breakers
+
 View real-time status of all circuit breakers.
 
 ```bash
@@ -52,6 +53,7 @@ vps-configurator status circuit-breakers
 ```
 
 **Output:**
+
 ```
 Circuit Breaker Status
 ┏━━━━━━━━━━━━━━━━━┳━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━┓
@@ -63,6 +65,7 @@ Circuit Breaker Status
 ```
 
 ### reset circuit-breaker
+
 Manually reset a circuit breaker to CLOSED state.
 
 ```bash
@@ -74,6 +77,7 @@ vps-configurator reset circuit-breaker apt-repository
 ### Error: "Circuit breaker open for apt"
 
 **Message:**
+
 ```
 ╔════════════════════════════════════════════════════════╗
 ║           ⚠️  CIRCUIT BREAKER OPEN                     ║
@@ -88,16 +92,18 @@ The system detected repeated failures (usually 3) when trying to connect to the 
 
 **Resolution Steps:**
 
-1.  **Check Connectivity**:
+1. **Check Connectivity**:
+
     ```bash
     ping -c 3 deb.debian.org
     ```
 
-2.  **Wait for Recovery**:
+2. **Wait for Recovery**:
     The system will automatically try again after 60 seconds.
 
-3.  **Manual Reset**:
+3. **Manual Reset**:
     If you fixed the issue (e.g., restored internet connectivity), you can force a reset:
+
     ```bash
     vps-configurator reset circuit-breaker apt-repository
     ```

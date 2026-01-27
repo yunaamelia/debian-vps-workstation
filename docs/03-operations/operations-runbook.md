@@ -1254,21 +1254,21 @@ systemctl restart sshd
 **Primary Admin:**
 
 - Name: [Your Name]
-- Email: admin@company.com
+- Email: <admin@company.com>
 - Phone: [Phone]
 - Availability: 24/7 for critical issues
 
 **Secondary Admin:**
 
 - Name: [Backup Admin]
-- Email: backup-admin@company.com
+- Email: <backup-admin@company.com>
 - Phone: [Phone]
 - Availability: Business hours + on-call rotation
 
 **Team Lead:**
 
 - Name: [Team Lead]
-- Email: lead@company.com
+- Email: <lead@company.com>
 - Phone: [Phone]
 - Escalation: Major incidents, policy decisions
 
@@ -1280,7 +1280,7 @@ systemctl restart sshd
 
 - Provider: [e.g., DigitalOcean, AWS, Linode]
 - Support Portal: [URL]
-- Support Email: support@provider.com
+- Support Email: <support@provider.com>
 - Phone: [Support Phone]
 - Account ID: [Account]
 

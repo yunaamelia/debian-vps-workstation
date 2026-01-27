@@ -81,6 +81,7 @@ ssh root@YOUR_SERVER_IP
 ```
 
 If you set up SSH keys:
+
 ```bash
 ssh -i ~/.ssh/your_key root@YOUR_SERVER_IP
 ```
@@ -195,16 +196,19 @@ After installation completes, you can connect to your desktop.
 ### Linux
 
 Using Remmina:
+
 ```bash
 remmina -c rdp://YOUR_SERVER_IP
 ```
 
 Using rdesktop:
+
 ```bash
 rdesktop -u YOUR_USERNAME YOUR_SERVER_IP
 ```
 
 Using FreeRDP:
+
 ```bash
 xfreerdp /u:YOUR_USERNAME /v:YOUR_SERVER_IP
 ```
@@ -212,6 +216,7 @@ xfreerdp /u:YOUR_USERNAME /v:YOUR_SERVER_IP
 ### First Login
 
 On first login:
+
 1. You'll see the XFCE4 desktop
 2. A panel setup dialog may appear - choose "Use default config"
 3. Open File Manager or Terminal from the dock
@@ -275,18 +280,21 @@ git config --global user.email "your.email@example.com"
 ### Cannot Connect via RDP
 
 1. **Check if xrdp is running**:
+
    ```bash
    sudo systemctl status xrdp
    sudo systemctl restart xrdp
    ```
 
 2. **Check firewall**:
+
    ```bash
    sudo ufw status
    sudo ufw allow 3389/tcp
    ```
 
 3. **Check port is listening**:
+
    ```bash
    ss -tlnp | grep 3389
    ```
@@ -294,6 +302,7 @@ git config --global user.email "your.email@example.com"
 ### Slow Desktop Performance
 
 1. **Check system resources**:
+
    ```bash
    htop
    ```
@@ -305,11 +314,13 @@ git config --global user.email "your.email@example.com"
 ### SSH Connection Issues
 
 1. **Check SSH service**:
+
    ```bash
    sudo systemctl status sshd
    ```
 
 2. **Check fail2ban** (you might be banned):
+
    ```bash
    sudo fail2ban-client status sshd
    sudo fail2ban-client set sshd unbanip YOUR_IP

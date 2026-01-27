@@ -13,18 +13,18 @@ Implement `PackageCache` in `configurator/core/package_cache.py` to manage local
 
 ### Functional
 
-1.  **Storage**: Central directory (e.g., `~/.vps-configurator/cache/`).
-2.  **Hashing**: Identify files by SHA256 checksum or version string.
-3.  **Operations**: `get(key)`, `put(key, file_path)`, `exists(key)`.
-4.  **Backend Support**:
+1. **Storage**: Central directory (e.g., `~/.vps-configurator/cache/`).
+2. **Hashing**: Identify files by SHA256 checksum or version string.
+3. **Operations**: `get(key)`, `put(key, file_path)`, `exists(key)`.
+4. **Backend Support**:
     - APT: Proxy or local repo (simulated via `var/cache/apt/archives` checks).
     - PIP: Use pip's internal cache or copy wheels.
     - Files: Generic file download cache.
 
 ### Non-Functional
 
-1.  **Integrity**: Ensure cached files are not corrupted (check hash on retrieval).
-2.  **Size Limit**: (Optional) LRU policies to clear old cache files.
+1. **Integrity**: Ensure cached files are not corrupted (check hash on retrieval).
+2. **Size Limit**: (Optional) LRU policies to clear old cache files.
 
 ## 📝 Specifications
 
@@ -63,12 +63,12 @@ class PackageCache:
 
 ## 🪜 Implementation Steps
 
-1.  **Create Module**: `configurator/core/package_cache.py`.
-2.  **Hash Generation**: Implement URL -> Filename logic (e.g., MD5 of URL) to store unique files.
-3.  **File Operations**:
+1. **Create Module**: `configurator/core/package_cache.py`.
+2. **Hash Generation**: Implement URL -> Filename logic (e.g., MD5 of URL) to store unique files.
+3. **File Operations**:
     - Ensure cache dir exists.
     - `shutil.copy2` for storing.
-4.  **Integration**:
+4. **Integration**:
     - Identify where `wget` or `curl` is used in the codebase.
     - Wrap downloads with this cache logic.
 

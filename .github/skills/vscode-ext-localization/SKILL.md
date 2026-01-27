@@ -10,6 +10,7 @@ This skill helps you localize every aspect of VS Code extensions
 ## When to use this skill
 
 Use this skill when you need to:
+
 - Localize new or existing contributed configurations (settings), commands, menus, views or walkthroughs
 - Localize new or existing messages or other string resources contained in extension source code that are displayed to the end user
 

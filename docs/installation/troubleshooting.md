@@ -18,6 +18,7 @@ Common issues and their solutions when using the Debian VPS Workstation Configur
 ### "System validation failed"
 
 **Error:**
+
 ```
 PrerequisiteError: System validation failed
 ```
@@ -25,22 +26,27 @@ PrerequisiteError: System validation failed
 **Cause:** The system doesn't meet minimum requirements.
 
 **Solution:**
+
 1. Check you're running Debian 13:
+
    ```bash
    cat /etc/os-release
    ```
 
 2. Check you have enough RAM:
+
    ```bash
    free -h
    ```
 
 3. Check disk space:
+
    ```bash
    df -h /
    ```
 
 4. Run as root:
+
    ```bash
    sudo python -m configurator install
    ```
@@ -50,6 +56,7 @@ PrerequisiteError: System validation failed
 ### "Package installation failed"
 
 **Error:**
+
 ```
 ModuleExecutionError: Failed to install packages
 ```
@@ -57,22 +64,27 @@ ModuleExecutionError: Failed to install packages
 **Cause:** APT repository issues or network problems.
 
 **Solution:**
+
 1. Update package lists:
+
    ```bash
    sudo apt update
    ```
 
 2. Fix broken packages:
+
    ```bash
    sudo apt --fix-broken install
    ```
 
 3. Check internet connectivity:
+
    ```bash
    ping -c 3 google.com
    ```
 
 4. Retry installation:
+
    ```bash
    sudo python -m configurator install --profile beginner
    ```
@@ -82,6 +94,7 @@ ModuleExecutionError: Failed to install packages
 ### "Configuration file not found"
 
 **Error:**
+
 ```
 ConfigurationError: Configuration file not found
 ```
@@ -89,12 +102,15 @@ ConfigurationError: Configuration file not found
 **Cause:** Custom config file doesn't exist.
 
 **Solution:**
+
 1. Check the file path:
+
    ```bash
    ls -la /path/to/your/config.yaml
    ```
 
 2. Use absolute path:
+
    ```bash
    sudo python -m configurator install --config /full/path/to/config.yaml
    ```
@@ -110,22 +126,26 @@ ConfigurationError: Configuration file not found
 **Solution:**
 
 1. Check xrdp is running:
+
    ```bash
    sudo systemctl status xrdp
    ```
 
 2. Restart xrdp if needed:
+
    ```bash
    sudo systemctl restart xrdp
    sudo systemctl restart xrdp-sesman
    ```
 
 3. Check port 3389:
+
    ```bash
    ss -tlnp | grep 3389
    ```
 
 4. Check firewall allows RDP:
+
    ```bash
    sudo ufw status
    sudo ufw allow 3389/tcp
@@ -142,11 +162,13 @@ ConfigurationError: Configuration file not found
 **Solution:**
 
 1. Check startwm.sh:
+
    ```bash
    cat /etc/xrdp/startwm.sh
    ```
 
 2. Reset to default:
+
    ```bash
    echo '#!/bin/sh
    exec /usr/bin/startxfce4' | sudo tee /etc/xrdp/startwm.sh
@@ -163,11 +185,13 @@ ConfigurationError: Configuration file not found
 **Solution:**
 
 1. Verify user exists:
+
    ```bash
    id YOUR_USERNAME
    ```
 
 2. Reset password:
+
    ```bash
    sudo passwd YOUR_USERNAME
    ```
@@ -189,6 +213,7 @@ ConfigurationError: Configuration file not found
    - Disable compositor
 
 3. Check server resources:
+
    ```bash
    htop
    ```
@@ -208,16 +233,19 @@ ConfigurationError: Configuration file not found
 1. Access via VPS provider's console (web-based)
 
 2. Check if you're banned:
+
    ```bash
    sudo fail2ban-client status sshd
    ```
 
 3. Unban your IP:
+
    ```bash
    sudo fail2ban-client set sshd unbanip YOUR_IP_ADDRESS
    ```
 
 4. Whitelist your IP:
+
    ```bash
    echo "YOUR_IP_ADDRESS" | sudo tee -a /etc/fail2ban/jail.local
    sudo systemctl restart fail2ban
@@ -234,12 +262,14 @@ ConfigurationError: Configuration file not found
 1. Use VPS provider console
 
 2. Start SSH:
+
    ```bash
    sudo systemctl start sshd
    sudo systemctl enable sshd
    ```
 
 3. Check firewall:
+
    ```bash
    sudo ufw status
    sudo ufw allow 22/tcp
@@ -252,16 +282,19 @@ ConfigurationError: Configuration file not found
 **Solution:**
 
 1. Check current rules:
+
    ```bash
    sudo ufw status verbose
    ```
 
 2. Allow specific port:
+
    ```bash
    sudo ufw allow 8080/tcp
    ```
 
 3. Reset firewall (careful!):
+
    ```bash
    sudo ufw reset
    sudo ufw default deny incoming
@@ -280,16 +313,19 @@ ConfigurationError: Configuration file not found
 **Solution:**
 
 1. Check memory consumers:
+
    ```bash
    ps aux --sort=-%mem | head -10
    ```
 
 2. Kill heavy processes:
+
    ```bash
    kill -9 PID
    ```
 
 3. Add swap:
+
    ```bash
    sudo fallocate -l 4G /swapfile
    sudo chmod 600 /swapfile
@@ -304,6 +340,7 @@ ConfigurationError: Configuration file not found
 **Solution:**
 
 1. Check CPU consumers:
+
    ```bash
    top -o %CPU
    ```
@@ -319,22 +356,26 @@ ConfigurationError: Configuration file not found
 **Solution:**
 
 1. Find large files:
+
    ```bash
    du -h / | sort -rh | head -20
    ```
 
 2. Clean package cache:
+
    ```bash
    sudo apt clean
    sudo apt autoremove
    ```
 
 3. Clean Docker:
+
    ```bash
    docker system prune -a
    ```
 
 4. Clean logs:
+
    ```bash
    sudo journalctl --vacuum-time=7d
    ```
@@ -348,6 +389,7 @@ ConfigurationError: Configuration file not found
 **Cause:** User not in docker group.
 
 **Solution:**
+
 ```bash
 sudo usermod -aG docker $USER
 # Log out and back in, or:
@@ -361,12 +403,14 @@ newgrp docker
 **Cause:** nvm not sourced in current shell.
 
 **Solution:**
+
 ```bash
 source ~/.nvm/nvm.sh
 node --version
 ```
 
 Add to your shell profile if not present:
+
 ```bash
 echo 'export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"' >> ~/.bashrc
@@ -380,6 +424,7 @@ source ~/.bashrc
 **Cause:** Network issues or permission problems.
 
 **Solution:**
+
 ```bash
 # Install manually
 code --install-extension ms-python.python --force
@@ -401,17 +446,20 @@ sudo python -m configurator rollback
 ### Manual rollback steps
 
 1. Restore backup files:
+
    ```bash
    ls /var/backups/debian-vps-configurator/
    ```
 
 2. Disable services:
+
    ```bash
    sudo systemctl disable xrdp
    sudo systemctl stop xrdp
    ```
 
 3. Remove packages:
+
    ```bash
    sudo apt remove xrdp xfce4
    ```
@@ -431,6 +479,7 @@ If all else fails:
 If you can't solve your issue:
 
 1. **Collect logs**:
+
    ```bash
    cat /var/log/debian-vps-configurator/install.log
    journalctl -u xrdp

@@ -83,6 +83,7 @@ State values: `open`, `closed`
 **User**: "Create a bug issue - the login page crashes when using SSO"
 
 **Action**: Call `mcp__github__create_issue` with:
+
 ```json
 {
   "owner": "github",
@@ -98,6 +99,7 @@ State values: `open`, `closed`
 **User**: "Create a feature request for dark mode with high priority"
 
 **Action**: Call `mcp__github__create_issue` with:
+
 ```json
 {
   "owner": "github",

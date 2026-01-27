@@ -25,6 +25,7 @@
 #   --verbose           Enable debug logging
 #   --max-retries <n>   Number of retry attempts on failure (default: 3)
 #   --profile <name>    Configurator profile to run (default: advanced)
+#   --timezone <tz>     System timezone (default: Asia/Jakarta)
 #
 # ==============================================================================
 
@@ -52,6 +53,7 @@ SYNC_SOURCE=""
 VERBOSE=false
 MAX_RETRIES=3
 PROFILE="advanced"
+TARGET_TIMEZONE="Asia/Jakarta"
 DRY_RUN=false
 RETRY_DELAY=5
 
@@ -250,9 +252,9 @@ phase_user() {
     echo "$PHASE_USER" > "$PHASE_STATE_FILE"
     log "INFO" "$PHASE_USER" "Verifying user: $TARGET_USER"
 
-    # Set system Timezone to Asia/Jakarta (Hardcoded requirement)
+    # Set system Timezone
     if [[ "$DRY_RUN" != "true" ]]; then
-        run_priv timedatectl set-timezone Asia/Jakarta || log "WARNING" "$PHASE_USER" "Failed to set timezone to Asia/Jakarta"
+        run_priv timedatectl set-timezone "$TARGET_TIMEZONE" || log "WARNING" "$PHASE_USER" "Failed to set timezone to $TARGET_TIMEZONE"
     fi
 
     if ! id "$TARGET_USER" &>/dev/null; then
@@ -280,8 +282,14 @@ phase_user() {
     run_priv chmod 0440 "/etc/sudoers.d/90-vps-configurator-$TARGET_USER"
 
     # Add Go/Cargo to PATH for the target user globally
-    local profile_path="/home/$TARGET_USER/.profile"
-    local bashrc_path="/home/$TARGET_USER/.bashrc"
+    local user_home
+    if ! user_home=$(getent passwd "$TARGET_USER" | cut -d: -f6); then
+        log "WARNING" "$PHASE_USER" "Could not determine home dir for $TARGET_USER. Assuming /home/$TARGET_USER"
+        user_home="/home/$TARGET_USER"
+    fi
+
+    local profile_path="${user_home}/.profile"
+    local bashrc_path="${user_home}/.bashrc"
     local path_line='export PATH=$PATH:/usr/local/go/bin:$HOME/.cargo/bin'
 
     if [[ "$DRY_RUN" != "true" ]]; then
@@ -345,7 +353,7 @@ phase_exec() {
     fi
 
     # Attempt execution (as root/current user)
-    if ! "${SCRIPT_DIR}/venv/bin/vps-configurator" install --profile "$PROFILE" $cmd_flags >> "${LOG_FILE}" 2>&1; then
+    if ! sudo -E "${SCRIPT_DIR}/venv/bin/vps-configurator" install --profile "$PROFILE" $cmd_flags >> "${LOG_FILE}" 2>&1; then
         log "FAIL" "$PHASE_EXEC" "Configuration failed."
         return 1
     fi
@@ -375,6 +383,7 @@ main() {
             --verbose) VERBOSE=true; shift ;;
             --max-retries) MAX_RETRIES="$2"; shift 2 ;;
             --profile) PROFILE="$2"; shift 2 ;;
+            --timezone) TARGET_TIMEZONE="$2"; shift 2 ;;
             --dry-run) DRY_RUN=true; shift ;;
             *) echo "Unknown option: $1"; exit 1 ;;
         esac

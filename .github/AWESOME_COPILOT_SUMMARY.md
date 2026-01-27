@@ -5,6 +5,7 @@
 **Total Installed:** 48 files from 428 available resources (11%)
 
 ### 📋 Instructions (14)
+
 - Python development standards
 - Docker & containerization best practices
 - GitHub Actions CI/CD patterns
@@ -21,6 +22,7 @@
 - Documentation maintenance
 
 ### ⌨️ Prompts (17)
+
 - Architecture blueprint generator
 - Implementation plan creation
 - Feature breakdown (plan, test, implementation)
@@ -40,39 +42,47 @@
 - Blueprint generators (code exemplars, workflows, tech stack, folder structure)
 
 ### 🤖 Agents (20)
+
 **Planning & Architecture:**
+
 - Plan agent (strategic planning)
 - Arch agent (architecture design)
 - Implementation Plan agent
 - Task Planner agent
 
 **Development:**
+
 - Principal Software Engineer
 - Software Engineer v1
 - Debug agent
 - Code Tour agent
 
 **DevOps & Infrastructure:**
+
 - DevOps Expert
 - GitHub Actions Expert
 - Terraform agent
 
 **Quality & Maintenance:**
+
 - SE: Security Reviewer
 - Janitor (code cleanup)
 - Tech Debt Remediation Plan
 
 **TDD Workflow:**
+
 - TDD Red (write failing tests)
 - TDD Green (make tests pass)
 - TDD Refactor (improve code)
 
 **Guidance:**
+
 - Mentor agent
 - Critical Thinking agent
 - SE: Technical Writer
 
 ### 📚 Skills (10 - Already Present)
+
 - Application Insights instrumentation
 - Azure resource visualizer
 - Azure role selector
@@ -87,15 +97,19 @@
 ## How to Use
 
 ### Instructions
+
 Instructions auto-apply based on file patterns. Check frontmatter for `applyTo` field.
 
 ### Prompts
+
 Use in Copilot Chat with `/` command or reference by name.
 
 ### Agents
+
 Invoke agents in chat sessions or when assigning issues to Copilot.
 
 ### Skills
+
 Activate skills by referencing them in prompts when you need specialized capabilities.
 
 ## Next Steps

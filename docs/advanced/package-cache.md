@@ -7,6 +7,7 @@ The Debian VPS Configurator includes an intelligent package caching system desig
 When enabled, the package cache transparently captures `.deb` files downloaded by APT during the installation process. Subsequent installations (on the same machine or others sharing the cache) will use these cached files instead of downloading them again.
 
 ### Key Features
+
 - **Transparent Caching**: Automatically captures packages from `/var/cache/apt/archives`.
 - **Bandwidth Optimization**: Reduces internet data usage by up to 60%.
 - **Speed**: Installing from local cache is significantly faster than downloading.
@@ -26,6 +27,7 @@ performance:
 ```
 
 ### Cache Directory
+
 - **Root (Default)**: `/var/cache/debian-vps-configurator/packages`
 - **User (Fallback)**: `~/.cache/debian-vps-configurator/packages`
 
@@ -34,12 +36,15 @@ performance:
 Manage the cache using the `vps-configurator cache` command group:
 
 ### View Statistics
+
 ```bash
 vps-configurator cache stats
 ```
+
 Shows total size, hit rate, bandwidth saved, and other metrics.
 
 ### List Packages
+
 ```bash
 vps-c## Configuration
 The package cache is configured in `config.yaml` under the `performance.package_cache` section:
@@ -52,15 +57,19 @@ performance:
 ```
 
 ## Structure
+
 The cache stores packages with filenames including metadata:
 `{package}_{version}_{original_filename}`
 
 ## Cache Location
+
 Default paths:
+
 - System: `/var/cache/debian-vps-configurator/packages`
 - User (fallback): `~/.cache/debian-vps-configurator/packages`
 
 ## Usage
+
 Manage the cache via CLI:
 
 ```bash
@@ -78,16 +87,16 @@ vps-configurator cache clear --older-than 30
 
 The system consists of three main components:
 
-1.  **PackageCacheManager** (`configurator.core.package_cache`):
+1. **PackageCacheManager** (`configurator.core.package_cache`):
     - Manages the storage and indexing of packages.
     - Handles LRU eviction and persistence.
 
-2.  **AptCacheIntegration** (`configurator.utils.apt_cache`):
+2. **AptCacheIntegration** (`configurator.utils.apt_cache`):
     - Bridges the gap between the custom cache and APT's internal cache (`/var/cache/apt/archives`).
     - **Pre-Install**: Copies cached files to APT archives.
     - **Post-Install**: Scans APT archives for new files and adds them to the custom cache.
 
-3.  **ConfigurationModule Integration**:
+3. **ConfigurationModule Integration**:
     - The `ConfigurationModule` base class orchestrates the pre/post-install hooks during `install_packages()`.
 
 ## Best Practices

@@ -375,6 +375,7 @@ subprocess.run(["systemctl", "enable", "myservice"])
    ```
 
 3. Retry rollback:
+
    ```bash
    vps-configurator rollback --module docker --force
    ```

@@ -12,15 +12,15 @@ Implement the `CISScanner` engine in `configurator/security/cis_scanner.py` that
 
 ### Functional
 
-1.  **Definitions**: Store checks in YAML/JSON (id, description, audit_command, remediation_command).
-2.  **Execution**: Run shell commands to verify state.
-3.  **Remediation**: (Optional/Interactive) Run commands to fix failed checks.
-4.  **Reporting**: Generate an HTML/PDF report of pass/fail status.
+1. **Definitions**: Store checks in YAML/JSON (id, description, audit_command, remediation_command).
+2. **Execution**: Run shell commands to verify state.
+3. **Remediation**: (Optional/Interactive) Run commands to fix failed checks.
+4. **Reporting**: Generate an HTML/PDF report of pass/fail status.
 
 ### Non-Functional
 
-1.  **Safety**: Audit commands must be read-only. Remediation must be careful.
-2.  **Extensibility**: Easy to add new checks.
+1. **Safety**: Audit commands must be read-only. Remediation must be careful.
+2. **Extensibility**: Easy to add new checks.
 
 ## 📝 Specifications
 
@@ -57,16 +57,16 @@ class CISScanner:
 
 ## 🪜 Implementation Steps
 
-1.  **Data Structure**: Create `configurator/security/checks.yaml` with 5 sample CIS checks.
-2.  **Scanner Logic**:
+1. **Data Structure**: Create `configurator/security/checks.yaml` with 5 sample CIS checks.
+2. **Scanner Logic**:
     - Load YAML.
     - Loop through checks.
     - Execute `subprocess.run(check['audit'])`.
     - Check return code/output.
-3.  **Reporter**:
+3. **Reporter**:
     - Use Jinja2 to create a simple HTML template.
     - Render `results` into HTML.
-4.  **CLI Integration**:
+4. **CLI Integration**:
     - Add command `vps-configurator security cis-scan`.
 
 ## 🔍 Validation Checklist

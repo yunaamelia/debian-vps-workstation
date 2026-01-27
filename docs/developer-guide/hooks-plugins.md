@@ -4,11 +4,11 @@ The configurator supports a powerful hook system allowing you to intervene at va
 
 ## Hook Types
 
-*   `on_init`: Called when the module is initialized.
-*   `pre_install`: Called before package installation.
-*   `post_install`: Called after package installation.
-*   `pre_configure`: Called before configuration.
-*   `post_configure`: Called after configuration.
+* `on_init`: Called when the module is initialized.
+* `pre_install`: Called before package installation.
+* `post_install`: Called after package installation.
+* `pre_configure`: Called before configuration.
+* `post_configure`: Called after configuration.
 
 ## Registering a Hook
 

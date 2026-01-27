@@ -91,6 +91,7 @@ Returns:
 Install packages with network resilience.
 
 This is the preferred method for package installation as it includes:
+
 - Circuit breaker protection
 - Automatic retry with exponential backoff
 - Proper timeout handling

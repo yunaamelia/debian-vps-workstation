@@ -1096,13 +1096,13 @@ class MyFeatureModule(ConfigurationModule):
         return self.command_exists("mycommand")
 ```
 
-2. **Register in dependency graph** (`configurator/dependencies/registry.py`):
+1. **Register in dependency graph** (`configurator/dependencies/registry.py`):
 
 ```python
 ModuleDependencyInfo("myfeature", depends_on=["system"], priority=70)
 ```
 
-3. **Add configuration section** to `config/default.yaml`:
+1. **Add configuration section** to `config/default.yaml`:
 
 ```yaml
 myfeature:

@@ -13,12 +13,12 @@ Implement `MFAManager` in `configurator/security/mfa_manager.py`.
 
 ### Functional
 
-1.  **Setup**: Install `libpam-google-authenticator`.
-2.  **User Enrollment**: Generate secret, QR code, and scratch codes for a user.
-3.  **PAM Configuration**:
+1. **Setup**: Install `libpam-google-authenticator`.
+2. **User Enrollment**: Generate secret, QR code, and scratch codes for a user.
+3. **PAM Configuration**:
     - Edit `/etc/pam.d/sshd` and `/etc/pam.d/sudo`.
     - Enforce MFA requirement.
-4.  **SSH Integration**: Update `sshd_config` (`ChallengeResponseAuthentication yes`).
+4. **SSH Integration**: Update `sshd_config` (`ChallengeResponseAuthentication yes`).
 
 ## 📝 Specifications
 
@@ -46,12 +46,12 @@ class MFAManager:
 
 ## 🪜 Implementation Steps
 
-1.  **Dependency**: `apt-get install libpam-google-authenticator`.
-2.  **Enrollment**:
+1. **Dependency**: `apt-get install libpam-google-authenticator`.
+2. **Enrollment**:
     - Run `google-authenticator` non-interactively via flags (time-based, disallow-reuse, force, rate-limit).
     - Capture output to parse secret/codes.
     - Save to `~/.google_authenticator`.
-3.  **PAM Editing**:
+3. **PAM Editing**:
     - Insert `auth required pam_google_authenticator.so` line in PAM files.
 
 ## 🔍 Validation Checklist

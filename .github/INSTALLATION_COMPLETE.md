@@ -20,7 +20,9 @@
 ## 🎯 What's Installed
 
 ### Instructions (15)
+
 Auto-apply coding standards based on file patterns:
+
 - Python, Shell scripting standards
 - Docker & containerization best practices
 - GitHub Actions CI/CD patterns
@@ -34,7 +36,9 @@ Auto-apply coding standards based on file patterns:
 - Makefile, Markdown standards
 
 ### Prompts (25)
+
 Task-specific generators accessible via `/` command:
+
 - **Architecture:** Blueprint generator, ADR, tech stack
 - **Planning:** Implementation plans, feature breakdown
 - **Documentation:** README, technical spikes, code tour
@@ -44,7 +48,9 @@ Task-specific generators accessible via `/` command:
 - **Project:** First-ask, folder structure, workflow analysis
 
 ### Agents (20)
+
 Specialized AI personas for different workflows:
+
 - **Planning:** Plan, Arch, Task Planner, Implementation Plan
 - **Development:** Principal SE, Software Engineer v1, Debug, Code Tour
 - **DevOps:** DevOps Expert, GitHub Actions Expert, Terraform
@@ -53,7 +59,9 @@ Specialized AI personas for different workflows:
 - **Guidance:** Mentor, Critical Thinking, Technical Writer
 
 ### Skills (10)
+
 Pre-configured with bundled resources:
+
 - AppInsights instrumentation
 - Azure resource visualizer
 - Azure role selector
@@ -70,7 +78,9 @@ Pre-configured with bundled resources:
 ## 🚀 Usage Guide
 
 ### 1. Instructions (Auto-Apply)
+
 Instructions automatically activate based on file patterns defined in frontmatter:
+
 ```yaml
 ---
 applyTo: '**/*.py'
@@ -78,7 +88,9 @@ applyTo: '**/*.py'
 ```
 
 ### 2. Prompts (Manual Invocation)
+
 Use in Copilot Chat:
+
 ```
 @workspace /breakdown-plan for implementing user authentication
 @workspace /create-readme based on current codebase
@@ -86,7 +98,9 @@ Use in Copilot Chat:
 ```
 
 ### 3. Agents (Session/Issue Assignment)
+
 Activate in chat or assign to GitHub issues:
+
 ```
 @plan analyze the architecture for microservices migration
 @arch design a scalable deployment strategy
@@ -94,7 +108,9 @@ Activate in chat or assign to GitHub issues:
 ```
 
 ### 4. Skills (Reference in Prompts)
+
 Invoke specialized capabilities:
+
 ```
 Use the azure-resource-visualizer skill to diagram our infrastructure
 Apply the web-design-reviewer skill to check UI consistency
@@ -105,12 +121,14 @@ Apply the web-design-reviewer skill to check UI consistency
 ## 📚 Additional Resources Available
 
 **Not Yet Installed (380 files):**
+
 - 144 more instructions (Kubernetes, Ansible, Angular, React, etc.)
 - 108 more prompts (Language-specific, framework-specific)
 - 116 more agents (Database experts, cloud specialists, etc.)
 - Collections (curated workflow bundles)
 
 **To Browse:**
+
 ```bash
 ls /home/racoon/Desktop/awesome-copilot/instructions/
 ls /home/racoon/Desktop/awesome-copilot/prompts/
@@ -122,6 +140,7 @@ ls /home/racoon/Desktop/awesome-copilot/agents/
 ## 🔄 Project Integration
 
 ### Updated Files
+
 - `.github/copilot-instructions.md` - Code review checklist
 - `.github/instructions/` - 15 instruction files
 - `.github/prompts/` - 25 prompt files
@@ -129,6 +148,7 @@ ls /home/racoon/Desktop/awesome-copilot/agents/
 - `.github/skills/` - 10 skill directories (pre-existing)
 
 ### Documentation
+
 - `INSTALLATION_ANALYSIS.md` - Resource availability analysis
 - `.github/AWESOME_COPILOT_SUMMARY.md` - Detailed summary
 - `.github/INSTALLATION_COMPLETE.md` - This file

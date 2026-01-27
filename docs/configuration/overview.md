@@ -86,6 +86,7 @@ system:
 ```
 
 Common values:
+
 - `UTC`
 - `America/New_York`
 - `America/Los_Angeles`
@@ -139,6 +140,7 @@ system:
 ```
 
 Tuned parameters include:
+
 - `vm.swappiness`
 - `fs.file-max`
 - `fs.inotify.max_user_watches`

@@ -251,7 +251,7 @@ Now that you're set up, explore:
 - 📚 [Documentation](../index.md)
 - 💬 [GitHub Discussions](https://github.com/ahmadrizal7/debian-vps-workstation/discussions)
 - 🐛 [Report Issues](https://github.com/ahmadrizal7/debian-vps-workstation/issues)
-- 📧 Email: support@example.com
+- 📧 Email: <support@example.com>
 
 ---
 

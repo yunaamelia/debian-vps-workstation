@@ -9,6 +9,7 @@ The default configuration is located at `config/default.yaml`. You can override 
 ## Key Sections
 
 ### System
+
 Basic system settings like hostname and timezone.
 
 ```yaml
@@ -18,6 +19,7 @@ system:
 ```
 
 ### Security
+
 Security hardening settings.
 
 ```yaml
@@ -27,6 +29,7 @@ security:
 ```
 
 ### Modules
+
 Enable or disable specific modules.
 
 ```yaml

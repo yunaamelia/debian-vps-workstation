@@ -410,6 +410,7 @@ vps-configurator cert renew --domain example.com --force
 ### Rate Limits
 
 Let's Encrypt has rate limits:
+
 - 50 certificates per domain per week
 - 5 duplicate certificates per week
 - 300 new orders per account per 3 hours

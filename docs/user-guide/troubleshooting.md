@@ -60,6 +60,7 @@ Fix the specific issue (e.g., stop the service using port 80) and retry.
 
 1. Press `Ctrl+C` to interrupt.
 2. Resume the installation:
+
    ```bash
    vps-configurator install --resume
    ```
@@ -120,13 +121,17 @@ sudo dpkg --configure -a
 **Solution:**
 
 - Use the correct port if you changed it (default 22, or custom like 2222).
+
   ```bash
   ssh -p 2222 user@host
   ```
+
 - Use the SSH key generated during setup.
+
   ```bash
   ssh -i path/to/key user@host
   ```
+
 - Access via your cloud provider's web console to debug.
 
 ## Module-Specific Issues
@@ -171,9 +176,11 @@ pipx install <tool>
 
 - Verify you can SSH from terminal first.
 - Kill VS Code server on VPS:
+
   ```bash
   rm -rf ~/.vscode-server
   ```
+
 - Reconnect to force re-download.
 
 ## Error Messages Reference

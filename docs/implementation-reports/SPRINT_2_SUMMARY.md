@@ -1,4 +1,4 @@
-# 🎉 SPRINT 2 - 100% COMPLETE!
+# 🎉 SPRINT 2 - 100% COMPLETE
 
 ## ✅ All 5 Tasks Delivered
 

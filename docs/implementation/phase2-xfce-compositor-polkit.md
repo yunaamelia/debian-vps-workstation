@@ -79,6 +79,7 @@ Successfully implemented Phase 2 of the XRDP Remote Desktop optimization: **XFCE
    ```
 
 2. **PackageKit Rule** (`46-allow-packagekit.pkla`):
+
    ```ini
    [Allow Package Management]
    Identity=unix-user:*
