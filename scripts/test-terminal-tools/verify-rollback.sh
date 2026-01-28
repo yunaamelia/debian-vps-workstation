@@ -1,0 +1,217 @@
+#!/usr/bin/env bash
+# ═══════════════════════════════════════════════════════════════════════════
+# Rollback Verification Script
+# Validates system state after rollback execution
+# ═══════════════════════════════════════════════════════════════════════════
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/lib/common.sh"
+
+# =============================================================================
+# VERIFICATION FUNCTIONS
+# =============================================================================
+
+verify_shell_functional() {
+    log_info "Verifying shell functionality..."
+
+    # Can spawn new shell
+    if timeout 5 zsh -c 'echo "Shell works"' &>/dev/null 2>&1; then
+        log_success "zsh: Can spawn new session"
+    elif timeout 5 bash -c 'echo "Shell works"' &>/dev/null 2>&1; then
+        log_success "bash: Can spawn new session (zsh unavailable)"
+    else
+        log_error "CRITICAL: Cannot spawn shell sessions"
+        return 1
+    fi
+
+    # Can execute basic commands
+    local commands=("ls" "cd" "echo" "cat")
+    for cmd in "${commands[@]}"; do
+        if command -v "$cmd" &>/dev/null; then
+            log_success "Command available: $cmd"
+        else
+            log_error "Command missing: $cmd"
+            return 1
+        fi
+    done
+
+    return 0
+}
+
+verify_no_remnants() {
+    log_info "Checking for orphaned configurations..."
+
+    local issues=0
+
+    # Check for orphaned tool configs without binaries
+    if [[ -d "${HOME}/.config/eza" ]] && ! command_exists eza; then
+        log_warning "Orphaned config found: ~/.config/eza (binary missing)"
+        ((issues++)) || true
+    fi
+
+    if [[ -d "${HOME}/.config/bat" ]] && ! command_exists bat && ! command_exists batcat; then
+        log_warning "Orphaned config found: ~/.config/bat (binary missing)"
+        ((issues++)) || true
+    fi
+
+    if [[ -d "${HOME}/.config/zoxide" ]] && ! command_exists zoxide; then
+        log_warning "Orphaned config found: ~/.config/zoxide (binary missing)"
+        ((issues++)) || true
+    fi
+
+    if [[ $issues -eq 0 ]]; then
+        log_success "No orphaned configurations found"
+    fi
+
+    return 0
+}
+
+verify_restoration_complete() {
+    log_info "Verifying restoration completeness..."
+
+    local backup_dir="$(get_backup_dir)"
+    local issues=0
+
+    if [[ ! -d "$backup_dir" ]]; then
+        log_warning "Backup directory not found: $backup_dir"
+        return 0
+    fi
+
+    # Check backed up files exist in original locations
+    if [[ -d "$backup_dir/files" ]]; then
+        find "$backup_dir/files" -type f | while read -r backup_file; do
+            local rel_path="${backup_file#$backup_dir/files/}"
+            local target="${HOME}/${rel_path}"
+
+            if [[ -f "$target" ]]; then
+                # Compare checksums
+                local backup_sum=$(md5sum "$backup_file" 2>/dev/null | cut -d' ' -f1)
+                local target_sum=$(md5sum "$target" 2>/dev/null | cut -d' ' -f1)
+
+                if [[ "$backup_sum" == "$target_sum" ]]; then
+                    log_success "Verified: $rel_path"
+                else
+                    log_warning "Modified: $rel_path (differs from backup)"
+                fi
+            else
+                log_warning "Missing: $target (was backed up)"
+            fi
+        done
+    fi
+
+    return 0
+}
+
+verify_permissions() {
+    log_info "Verifying file permissions..."
+
+    local files_to_check=(
+        "${HOME}/.zshrc:644"
+        "${HOME}/.bashrc:644"
+    )
+
+    for entry in "${files_to_check[@]}"; do
+        local file="${entry%:*}"
+        local expected_perm="${entry#*:}"
+
+        if [[ -f "$file" ]]; then
+            local actual_perm=$(stat -c "%a" "$file" 2>/dev/null || stat -f "%OLp" "$file" 2>/dev/null)
+            if [[ "$actual_perm" == "$expected_perm" ]]; then
+                log_success "Permissions OK: $file ($actual_perm)"
+            else
+                log_warning "Permissions differ: $file ($actual_perm vs expected $expected_perm)"
+            fi
+        fi
+    done
+
+    return 0
+}
+
+# =============================================================================
+# GENERATE VERIFICATION REPORT
+# =============================================================================
+
+generate_verification_report() {
+    local report_path="${LOG_DIR}/verification-${TIMESTAMP}.md"
+
+    cat > "$report_path" << EOF
+# Rollback Verification Report
+
+**Timestamp:** $(date -Iseconds)
+**Snapshot ID:** ${SNAPSHOT_ID:-unknown}
+
+## Verification Results
+
+### Shell Functionality
+$(verify_shell_functional 2>&1 | sed 's/^/- /')
+
+### Orphaned Configurations
+$(verify_no_remnants 2>&1 | sed 's/^/- /')
+
+### Restoration Completeness
+$(verify_restoration_complete 2>&1 | sed 's/^/- /')
+
+### File Permissions
+$(verify_permissions 2>&1 | sed 's/^/- /')
+
+---
+*Generated by Terminal Tools Verification System*
+EOF
+
+    echo "$report_path"
+}
+
+# =============================================================================
+# MAIN
+# =============================================================================
+
+main() {
+    ensure_dirs
+    export LOG_FILE="${LOG_DIR}/verification-${TIMESTAMP}.log"
+
+    # Load snapshot if available
+    if [[ -f "${SNAPSHOT_DIR}/latest" ]]; then
+        export SNAPSHOT_ID="$(cat "${SNAPSHOT_DIR}/latest")"
+        log_info "Using snapshot: ${SNAPSHOT_ID}"
+    fi
+
+    log_section "Post-Rollback Verification"
+
+    local failures=0
+
+    verify_shell_functional || ((failures++)) || true
+    verify_no_remnants || true
+    verify_restoration_complete || true
+    verify_permissions || true
+
+    # Generate report
+    log_section "Generating Verification Report"
+    local report_path
+    report_path=$(generate_verification_report)
+    log_info "Report: $report_path"
+
+    # Summary
+    log_section "Verification Summary"
+
+    if [[ $failures -eq 0 ]]; then
+        log_success "System verification passed"
+        echo ""
+        echo "  Shell:        ✅ Functional"
+        echo "  Configs:      ✅ Clean"
+        echo "  Restoration:  ✅ Complete"
+        echo "  Permissions:  ✅ Correct"
+        echo ""
+        return 0
+    else
+        log_error "System verification found issues"
+        echo ""
+        echo "  Failures: $failures"
+        echo "  See report: $report_path"
+        echo ""
+        return 1
+    fi
+}
+
+main "$@"

@@ -1,0 +1,119 @@
+# Terminal Tools Profile Configuration
+# Preset configurations for terminal tools module
+
+profiles:
+  minimal:
+    description: "Lightweight setup - essential tools only"
+    eza:
+      enabled: true
+      icons: false
+      git_integration: false
+    bat:
+      enabled: true
+      theme: "ansi"
+      line_numbers: false
+    zsh:
+      enabled: true
+      framework: null  # No oh-my-zsh
+      plugins: []
+      set_default_shell: false
+    zoxide:
+      enabled: true
+      interactive_mode: false
+
+  standard:
+    description: "Recommended setup - Context7 best practices"
+    eza:
+      enabled: true
+      icons: true
+      icons_auto: true  # EZA_ICONS_AUTO env var
+      git_integration: true
+      git_repos: true  # Show git status in directories
+      group_directories_first: true
+      color_scale: false
+      time_style: "long-iso"
+    bat:
+      enabled: true
+      theme: "TwoDark"
+      line_numbers: true
+      style: "numbers,changes,header"
+      italic_text: true
+    zsh:
+      enabled: true
+      framework: "oh-my-zsh"
+      plugins:
+        - git
+        - docker
+        - sudo
+        - command-not-found
+        - colored-man-pages
+        - zsh-autosuggestions
+        - zsh-syntax-highlighting  # Must be LAST
+      lazy_loading:
+        enabled: true
+        plugins:
+          - nvm
+      theme: "robbyrussell"
+      set_default_shell: true
+    zoxide:
+      enabled: true
+      interactive_mode: true
+      hook: "pwd"  # More efficient than prompt
+      exclude_dirs:
+        - "/tmp"
+        - "/var/tmp"
+
+  full:
+    description: "Complete setup - all features, all plugins"
+    eza:
+      enabled: true
+      icons: true
+      git_integration: true
+      group_directories_first: true
+      extended_attributes: true
+      time_style: "long-iso"
+    bat:
+      enabled: true
+      theme: "TwoDark"
+      line_numbers: true
+      git_integration: true
+      italic_text: true
+    zsh:
+      enabled: true
+      framework: "oh-my-zsh"
+      plugins:
+        - git
+        - docker
+        - docker-compose
+        - kubectl
+        - sudo
+        - command-not-found
+        - colored-man-pages
+        - history
+        - extract
+        - z
+        - fzf
+        - zsh-autosuggestions
+        - zsh-syntax-highlighting
+      theme: "robbyrussell"
+      set_default_shell: true
+      history_size: 50000
+    zoxide:
+      enabled: true
+      interactive_mode: true
+      exclude_dirs:
+        - "/tmp"
+        - "/var/tmp"
+        - "/proc"
+        - "/sys"
+      max_results: 15
+    fzf:
+      enabled: true
+      preview: true
+      height: "40%"
+      layout: "reverse"
+      border: true
+    optional_tools:
+      ripgrep: true
+      fd: true
+      delta: true

@@ -44,6 +44,8 @@ _MODULE_REGISTRY = {
     # Security Extensions
     "CISComplianceModule": ("configurator.modules.cis_compliance", "CISComplianceModule"),
     "TrivyScannerModule": ("configurator.modules.trivy_scanner", "TrivyScannerModule"),
+    # Terminal Tools
+    "TerminalToolsModule": ("configurator.modules.terminal_tools", "TerminalToolsModule"),
 }
 
 __all__ = list(_MODULE_REGISTRY.keys())

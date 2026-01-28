@@ -26,21 +26,41 @@ class RichProgressReporter(ReporterInterface):
 
     Features:
     - Multi-line progress bars (one per module)
-    - Spinner animations
+    - Spinner animations (configurable)
     - Time elapsed/remaining
     - Status messages
     - Thread-safe updates
+    - Dry-run mode support
     """
 
-    def __init__(self, console: Optional[Console] = None) -> None:
+    def __init__(
+        self,
+        console: Optional[Console] = None,
+        refresh_per_second: float = 4.0,
+        dry_run: bool = False,
+    ) -> None:
+        """
+        Initialize the Rich progress reporter.
+
+        Args:
+            console: Rich console instance (creates new if None)
+            refresh_per_second: Screen refresh rate (4.0 = 250ms, optimized for performance)
+            dry_run: If True, disables animations for faster output
+        """
         self.console = console or Console()
+        self.refresh_per_second = refresh_per_second
+        self.dry_run = dry_run
+
         self.start_time: Optional[datetime] = None
         self.current_phase: Optional[str] = None
         self.results: Dict[str, bool] = {}
 
         # Create Rich Progress instance
+        # In dry-run mode, use a static spinner (no animation overhead)
+        spinner = SpinnerColumn() if not dry_run else TextColumn("→")
+
         self.progress = Progress(
-            SpinnerColumn(),
+            spinner,
             TextColumn("[bold blue]{task.description}"),
             BarColumn(),
             MofNCompleteColumn(),
@@ -49,6 +69,8 @@ class RichProgressReporter(ReporterInterface):
             TextColumn("[dim]{task.fields[status]}[/dim]"),
             console=self.console,
             expand=False,
+            # Disable auto-refresh in dry-run mode
+            auto_refresh=not dry_run,
         )
 
         # Thread-safe task management
@@ -76,8 +98,8 @@ class RichProgressReporter(ReporterInterface):
         self.live = Live(
             self.progress,
             console=self.console,
-            refresh_per_second=10,
-            transient=False,  # Keep the progress bars after completion? usually yes
+            refresh_per_second=self.refresh_per_second,
+            transient=False,  # Keep the progress bars after completion
         )
         self.live.start()
 

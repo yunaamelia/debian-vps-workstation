@@ -1,8 +1,25 @@
 # tests/manual/test_tui_interactive.py
+"""
+Manual TUI interactive test.
+Requires the deprecated tui_dashboard module which has been replaced by
+the new compact UI system. This test is skipped by default.
+"""
+
 import asyncio
 import sys
 
-from configurator.ui.tui_dashboard import InstallationDashboard
+import pytest
+
+# Skip this test module - tui_dashboard has been replaced by compact UI
+pytest.skip(
+    "tui_dashboard module deprecated - replaced by compact UI system", allow_module_level=True
+)
+
+# The following imports would fail without the skip above
+try:
+    from configurator.ui.tui_dashboard import InstallationDashboard
+except ImportError:
+    InstallationDashboard = None
 
 # Check textual availability
 try:

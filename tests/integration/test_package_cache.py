@@ -78,6 +78,7 @@ class TestPackageCacheIntegration(unittest.TestCase):
 
     def test_module_uses_cache_flow(self):
         """Test the full flow in a module's install_packages method."""
+        from configurator.utils.command import CommandResult
 
         # 1. Setup Installer and Manager manually to control paths
         manager = PackageCacheManager(cache_dir=self.cache_dir, logger=self.logger)
@@ -97,13 +98,13 @@ class TestPackageCacheIntegration(unittest.TestCase):
             dry_run_manager=self.container.get("dry_run_manager"),
         )
 
+        # Bypass retry decorator for precise control
+        if hasattr(module.install_packages, "__wrapped__"):
+            original_func = module.install_packages.__wrapped__
+            module.install_packages = original_func.__get__(module, MockModule)
+
         # 3. Mock run_command to verify and simulate side effects
         with unittest.mock.patch.object(module, "run") as mock_run:
-            mock_run.return_value.success = True
-            mock_run.return_value.return_code = 0
-            mock_run.return_value.stdout = ""
-            mock_run.return_value.stderr = ""
-
             # Scenario A: Capture new package
             # Simulate apt-get install creating a file in apt_dir
             def side_effect(*args, **kwargs):
@@ -113,11 +114,7 @@ class TestPackageCacheIntegration(unittest.TestCase):
                     # Logic in apt_cache looks for *.deb
                     with open(self.apt_dir / "newpkg_1.0_amd64.deb", "wb") as f:
                         f.write(b"downloaded content")
-                m = unittest.mock.Mock(success=True)
-                m.return_code = 0
-                m.stdout = ""
-                m.stderr = ""
-                return m
+                return CommandResult(command=cmd, return_code=0, stdout="", stderr="")
 
             mock_run.side_effect = side_effect
 
@@ -143,10 +140,12 @@ class TestPackageCacheIntegration(unittest.TestCase):
             print(f"DEBUG: Cache contents: {[p.filename for p in manager.list_packages()]}")
             self.assertTrue(manager.has_package("newpkg", "1.0"))
 
-            # Reset mock
+            # Reset mock to return simple CommandResult
             mock_run.reset_mock()
             mock_run.side_effect = None
-            mock_run.return_value.success = True
+            mock_run.return_value = CommandResult(
+                command="apt-get install -y newpkg", return_code=0, stdout="", stderr=""
+            )
 
             # Run install again
             print("DEBUG: Running install_packages again")

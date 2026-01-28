@@ -95,8 +95,10 @@ class SecretsManager:
 
         # Derive key
         try:
-            # Load or generate salt
-            salt_path = self.DEFAULT_MASTER_KEY_PATH.parent / ".salt"
+            # Load or generate salt - use storage path parent for testability
+            # In production, storage_path parent is DEFAULT_STORAGE_PATH.parent
+            salt_dir = self.storage_path.parent
+            salt_path = salt_dir / ".salt"
             salt = None
 
             if salt_path.exists():

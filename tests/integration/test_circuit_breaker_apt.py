@@ -85,12 +85,22 @@ class TestCircuitBreakerAptIntegration:
 
     def test_install_packages_success_closes_circuit(self, mock_module):
         """Verify that successful install resets the breaker."""
+        from configurator.utils.command import CommandResult
+
         mock_module.circuit_breaker_manager.reset_all()
         breaker = mock_module.circuit_breaker_manager.get_breaker("apt-repository")
 
+        # Bypass retry decorator for precise control
+        if hasattr(mock_module.install_packages, "__wrapped__"):
+            original_func = mock_module.install_packages.__wrapped__
+            mock_module.install_packages = original_func.__get__(mock_module, MockModule)
+
         with patch.object(mock_module, "run") as mock_run:
-            mock_run.return_value.success = True
-            mock_run.return_value.return_code = 0
+            # Create a proper CommandResult mock
+            success_result = CommandResult(
+                command="apt-get install -y package1", return_code=0, stdout="", stderr=""
+            )
+            mock_run.return_value = success_result
 
             assert mock_module.install_packages(["package1"]) is True
             assert breaker.state.value == "closed"

@@ -1,6 +1,19 @@
+"""
+Test for deprecated TUI Dashboard.
+This component has been replaced by the new compact UI system.
+"""
+
 import pytest
 
-from configurator.ui.tui_dashboard import InstallationDashboard
+# Skip this test module - tui_dashboard deprecated
+pytest.skip(
+    "ui.tui_dashboard module deprecated - replaced by compact UI system", allow_module_level=True
+)
+
+try:
+    from configurator.ui.tui_dashboard import InstallationDashboard
+except ImportError:
+    InstallationDashboard = None
 
 
 @pytest.mark.asyncio

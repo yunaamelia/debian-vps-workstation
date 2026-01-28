@@ -1,0 +1,44 @@
+{
+  "dependency_graph_build": {
+    "duration": 8.175345992640359e-05,
+    "timestamp": "2026-01-28T05:41:02.330250",
+    "metadata": {
+      "auto_generated": true
+    }
+  },
+  "circular_detection_50_modules": {
+    "duration": 0.00031249500170815736,
+    "timestamp": "2026-01-28T05:41:02.331733",
+    "metadata": {
+      "auto_generated": true
+    }
+  },
+  "network_wrapper_overhead": {
+    "duration": 1.7221150010300336e-06,
+    "timestamp": "2026-01-28T05:41:02.334613",
+    "metadata": {
+      "auto_generated": true
+    }
+  },
+  "circuit_breaker_status_check": {
+    "duration": 1.276233299904561e-06,
+    "timestamp": "2026-01-28T05:41:02.348544",
+    "metadata": {
+      "auto_generated": true
+    }
+  },
+  "cli_startup_time": {
+    "duration": 0.14845354820063222,
+    "timestamp": "2026-01-28T05:41:03.093445",
+    "metadata": {
+      "auto_generated": true
+    }
+  },
+  "dry_run_full_installation": {
+    "duration": 3.0000046535860747e-07,
+    "timestamp": "2026-01-28T05:41:03.774821",
+    "metadata": {
+      "auto_generated": true
+    }
+  }
+}

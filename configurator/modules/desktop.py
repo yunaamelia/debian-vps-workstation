@@ -2589,16 +2589,13 @@ fi
 # Show line numbers
 {"--number" if line_numbers else ""}
 
-# Show git modifications
-{"--show-all" if git_integration else ""}
-
 # Use pager for long output
 --paging=auto
 
 # Wrap lines
 --wrap=auto
 
-# Show non-printable characters
+# Show non-printable characters (tabs, newlines, etc)
 --show-all
 """
 

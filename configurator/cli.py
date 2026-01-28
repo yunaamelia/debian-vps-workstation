@@ -162,6 +162,12 @@ def main(ctx: click.Context, verbose: bool, quiet: bool):
     default=None,
     help="Sudo timeout in minutes (-1=once, 0=always)",
 )
+@click.option(
+    "--ui-mode",
+    type=click.Choice(["compact", "verbose", "minimal", "json"]),
+    default="compact",
+    help="UI output mode (compact=default, verbose=detailed, minimal=text, json=structured)",
+)
 @click.pass_context
 def install(
     ctx: click.Context,
@@ -180,6 +186,7 @@ def install(
     password_file: Optional[Path],
     ssh_key: Optional[str],
     sudo_timeout: Optional[int],
+    ui_mode: str,
 ):
     """
     Install and configure the workstation.
@@ -211,6 +218,33 @@ def install(
             logger.set_console_level(level)
         else:
             logger.warning("Logger does not support dynamic level changes")
+
+    # Configure UI Mode
+    from configurator.ui.layout.console import UIMode
+
+    # Map CLI string to Enum
+    mode_enum = UIMode(ui_mode)
+
+    # If verbose flag is set, it overrides compact mode to verbose
+    if verbose:
+        mode_enum = UIMode.VERBOSE
+    elif ctx.obj.get("quiet", False):
+        mode_enum = UIMode.MINIMAL
+
+    # Set environment variable for logger
+    os.environ["VPS_UI_MODE"] = mode_enum.value
+
+    # Re-initialize logger with new mode
+    # We must shutdown the existing manager first to clear handlers
+    from configurator.logger import shutdown_log_manager
+
+    shutdown_log_manager()
+
+    # Re-setup logger
+    # Note: ctx.obj["logger"] refers to the old DynamicLogger wrapper.
+    # setup_logger will create a NEW wrapper around the NEW manager.
+    ctx.obj["logger"] = setup_logger(verbose=verbose, quiet=ctx.obj.get("quiet", False))
+    logger = ctx.obj["logger"]
 
     # If no profile or config specified AND no modules, suggest using wizard
     if not profile and not config and not non_interactive and not modules:
@@ -352,64 +386,6 @@ def wizard(ctx: click.Context):
         sys.exit(0)
     except Exception as e:
         logger.exception("Wizard failed")
-        console.print(f"[red]Error: {e}[/red]")
-        sys.exit(1)
-
-
-@main.command()
-@click.option(
-    "--demo",
-    is_flag=True,
-    default=False,
-    help="Run dashboard in demo mode with mock data",
-)
-@click.pass_context
-def dashboard(ctx: click.Context, demo: bool):
-    """
-    Launch TUI dashboard for installation monitoring.
-
-    Provides a full-screen terminal UI with:
-    - Real-time module status
-    - System resource monitoring
-    - Activity log
-    - Keyboard controls (p=pause, r=resume, q=quit)
-
-    Requires: textual (pip install textual)
-    """
-    logger = ctx.obj["logger"]
-
-    try:
-        from configurator.ui.tui_dashboard import InstallationDashboard
-    except ImportError:
-        console.print(
-            "[red]Error: TUI dashboard requires textual[/red]\n"
-            "[yellow]Install with:[/yellow] pip install textual"
-        )
-        sys.exit(1)
-
-    try:
-        app = InstallationDashboard()
-
-        if demo:
-            # Demo mode - show example data
-            console.print("[cyan]Launching dashboard in demo mode...[/cyan]")
-
-            # This would typically be run with real installation
-            # For now, just start the app
-            app.run()
-        else:
-            # Real mode - would be integrated with installer
-            console.print(
-                "[yellow]Note: Dashboard integration with installer coming soon[/yellow]\n"
-                "[cyan]Running in demo mode for now...[/cyan]"
-            )
-            app.run()
-
-    except KeyboardInterrupt:
-        console.print("\n[yellow]Dashboard closed.[/yellow]")
-        sys.exit(0)
-    except Exception as e:
-        logger.exception("Dashboard failed")
         console.print(f"[red]Error: {e}[/red]")
         sys.exit(1)
 
@@ -585,6 +561,119 @@ def profiles():
         console.print(f"    {info['name']}")
         console.print(f"    {info['description']}")
         console.print()
+
+
+@main.command("configure-terminal-tools")
+@click.option(
+    "--dry-run",
+    is_flag=True,
+    help="Preview changes without applying",
+)
+@click.option(
+    "--skip-ohmyzsh",
+    is_flag=True,
+    help="Skip oh-my-zsh framework installation",
+)
+@click.option(
+    "--skip-plugins",
+    is_flag=True,
+    help="Skip plugin installation",
+)
+@click.option(
+    "--profile",
+    type=click.Choice(["minimal", "standard", "full"]),
+    default="standard",
+    help="Configuration profile to use",
+)
+@click.pass_context
+def configure_terminal_tools(
+    ctx: click.Context,
+    dry_run: bool,
+    skip_ohmyzsh: bool,
+    skip_plugins: bool,
+    profile: str,
+):
+    """
+    Configure terminal tools (eza, bat, zsh, zoxide) with best practices.
+
+    Uses oh-my-zsh framework + GitHub best practices synthesis.
+    Applies integrations between all tools.
+
+    Examples:
+
+      # Standard setup with all tools
+      vps-configurator configure-terminal-tools
+
+      # Preview changes first
+      vps-configurator configure-terminal-tools --dry-run
+
+      # Minimal setup without oh-my-zsh
+      vps-configurator configure-terminal-tools --profile minimal --skip-ohmyzsh
+    """
+    logger = ctx.obj.get("logger") or setup_logger()
+
+    if dry_run:
+        console.print("[yellow]DRY RUN MODE - No changes will be made[/yellow]\n")
+
+    console.print(f"[bold]Configuring terminal tools with '{profile}' profile...[/bold]\n")
+
+    try:
+        # Load configuration
+        config_manager = ConfigManager()
+
+        # Apply profile settings
+        config_manager.set("desktop.terminal_tools.profile", profile)
+        if skip_ohmyzsh:
+            config_manager.set("desktop.zsh.skip_ohmyzsh", True)
+        if skip_plugins:
+            config_manager.set("desktop.zsh.skip_plugins", True)
+
+        # Import and instantiate module
+        from configurator.core.dryrun import DryRunManager
+        from configurator.modules.terminal_tools import TerminalToolsModule
+
+        # Create dry-run manager if needed
+        dry_run_manager = None
+        if dry_run:
+            dry_run_manager = DryRunManager()
+            dry_run_manager.enable()
+
+        module = TerminalToolsModule(
+            config=config_manager,
+            logger=logger,
+            dry_run_manager=dry_run_manager,
+        )
+
+        # Run validation
+        console.print("[dim]Validating prerequisites...[/dim]")
+        if not module.validate():
+            console.print("[red]✗ Validation failed. Cannot proceed.[/red]")
+            sys.exit(1)
+        console.print("[green]✓ Validation passed[/green]\n")
+
+        # Run configuration
+        console.print("[dim]Installing and configuring tools...[/dim]")
+        if not module.configure():
+            console.print("[red]✗ Configuration failed.[/red]")
+            sys.exit(1)
+        console.print("[green]✓ Configuration complete[/green]\n")
+
+        # Run verification
+        console.print("[dim]Verifying installation...[/dim]")
+        if module.verify():
+            console.print("\n[green bold]✓ Terminal tools configured successfully![/green bold]")
+            console.print("\n[yellow]Note: Start a new shell session to use the tools.[/yellow]")
+        else:
+            console.print("\n[yellow]⚠ Some verifications failed. Check the output above.[/yellow]")
+            sys.exit(1)
+
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Configuration cancelled.[/yellow]")
+        sys.exit(0)
+    except Exception as e:
+        logger.exception("Terminal tools configuration failed")
+        console.print(f"[red]Error: {e}[/red]")
+        sys.exit(1)
 
 
 @main.group()

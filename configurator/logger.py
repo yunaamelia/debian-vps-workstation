@@ -82,21 +82,54 @@ class ParallelLogManager:
 
     def _setup_handlers(self) -> None:
         """Create output handlers (console + files)."""
-        # 1. Console handler (Rich)
-        console_handler = RichHandler(
-            console=Console(stderr=True),
-            show_time=False,
-            show_path=False,
-            rich_tracebacks=True,
-            markup=False,
-        )
+        # 1. Console handler
+        # Check if we should use compact mode (default behavior unless overridden)
+        # In a full dependency injection system, we'd pass this in.
+        # For now, we'll check an env var or default to Rich for backward compat
+        # unless specifically set.
+
+        console_handler = None
+
+        # Check for UI Mode (set via CLI usually)
+        ui_mode = os.environ.get("VPS_UI_MODE", "verbose")  # Default to verbose/existing for safety
+
+        if ui_mode == "compact":
+            from configurator.ui.logging.formatter import CompactLogFormatter
+
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(CompactLogFormatter(use_colors=True))
+        elif ui_mode == "minimal":
+            from configurator.ui.logging.formatter import CompactLogFormatter
+
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(CompactLogFormatter(use_colors=False))
+        elif ui_mode == "json":
+            from configurator.ui.logging.formatter import JSONLogFormatter
+
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(JSONLogFormatter())
+        else:
+            # Standard Rich Handler (verbose or unknown)
+            console_handler = RichHandler(
+                console=Console(stderr=True),
+                show_time=False,
+                show_path=False,
+                rich_tracebacks=True,
+                markup=False,
+            )
+            console_handler.setFormatter(logging.Formatter("%(message)s"))
+
         console_handler.setLevel(self.console_level)
-        console_handler.setFormatter(logging.Formatter("%(message)s"))
         self.handlers.append(console_handler)
 
         # 2. Main log file (all modules)
         main_log_file = self.base_log_dir / "install.log"
-        file_handler = logging.FileHandler(main_log_file, encoding="utf-8")
+        # Best Practice: Log rotation (10MB, keep 5 backups)
+        from logging.handlers import RotatingFileHandler
+
+        file_handler = RotatingFileHandler(
+            str(main_log_file), maxBytes=10 * 1024 * 1024, backupCount=5, encoding="utf-8"
+        )
         file_handler.setLevel(self.file_level)
         file_handler.setFormatter(
             logging.Formatter(

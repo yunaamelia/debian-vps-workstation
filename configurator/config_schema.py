@@ -113,6 +113,81 @@ class NetworkingConfig(BaseModel):
     caddy: EnabledConfig = Field(default_factory=EnabledConfig)
 
 
+# =============================================================================
+# Terminal Tools Configuration (Context7 Best Practices)
+# =============================================================================
+
+
+class EzaConfig(BaseModel):
+    """Eza (modern ls) configuration - Context7 best practices."""
+
+    enabled: bool = True
+    icons: bool = True
+    git_integration: bool = True
+    git_repos: bool = False
+    group_directories_first: bool = True
+    color_scale: bool = False
+    time_style: str = Field(default="long-iso")
+
+
+class BatConfig(BaseModel):
+    """Bat (modern cat) configuration - Context7 best practices."""
+
+    enabled: bool = True
+    theme: str = Field(default="TwoDark")
+    line_numbers: bool = True
+    style: str = Field(default="numbers,changes,header")
+    italic_text: bool = True
+
+
+class ZshPluginsConfig(BaseModel):
+    """Zsh plugin configuration with categorization."""
+
+    core: List[str] = Field(default=["git", "sudo", "command-not-found", "colored-man-pages"])
+    productivity: List[str] = Field(default=["zsh-autosuggestions"])
+    syntax: List[str] = Field(default=["zsh-syntax-highlighting"])
+    lazy_load: List[str] = Field(default=["nvm"])
+
+
+class ZshConfig(BaseModel):
+    """Zsh shell configuration - Context7 best practices."""
+
+    enabled: bool = True
+    framework: str = Field(default="oh-my-zsh")
+    theme: str = Field(default="robbyrussell")
+    plugins: List[str] = Field(
+        default=[
+            "git",
+            "docker",
+            "sudo",
+            "command-not-found",
+            "colored-man-pages",
+            "zsh-autosuggestions",
+            "zsh-syntax-highlighting",
+        ]
+    )
+    lazy_loading: bool = True
+    set_default_shell: bool = True
+
+
+class ZoxideConfig(BaseModel):
+    """Zoxide (smart cd) configuration - Context7 best practices."""
+
+    enabled: bool = True
+    interactive_mode: bool = True
+    hook: str = Field(default="pwd")  # pwd or prompt
+    exclude_dirs: List[str] = Field(default=["/tmp", "/var/tmp"])
+
+
+class TerminalToolsConfig(BaseModel):
+    """Terminal tools configuration with Context7 best practices."""
+
+    eza: EzaConfig = Field(default_factory=EzaConfig)
+    bat: BatConfig = Field(default_factory=BatConfig)
+    zsh: ZshConfig = Field(default_factory=ZshConfig)
+    zoxide: ZoxideConfig = Field(default_factory=ZoxideConfig)
+
+
 class MonitoringConfig(BaseModel):
     netdata: EnabledConfig = Field(default_factory=EnabledConfig)
 
@@ -124,6 +199,7 @@ class Config(BaseModel):
     languages: LanguagesConfig = Field(default_factory=LanguagesConfig)
     tools: ToolsConfig = Field(default_factory=ToolsConfig)
     networking: NetworkingConfig = Field(default_factory=NetworkingConfig)
+    terminal_tools: TerminalToolsConfig = Field(default_factory=TerminalToolsConfig)
     monitoring: MonitoringConfig = Field(default_factory=MonitoringConfig)
     interactive: bool = True
     verbose: bool = False

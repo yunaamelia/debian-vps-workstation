@@ -1,13 +1,141 @@
-# Advanced Profile
-# Full control, all features enabled
+# ═══════════════════════════════════════════════════════════════════════════
+# Advanced Profile - Full Control Override
+# ═══════════════════════════════════════════════════════════════════════════
+# Purpose: Extends default.yaml with all features enabled
+# Use: vps-configurator --profile advanced
 # Estimated time: ~60 minutes
+# ═══════════════════════════════════════════════════════════════════════════
+
+# =============================================================================
+# SYSTEM ENHANCEMENTS
+# =============================================================================
 
 system:
   hostname: dev-workstation
   timezone: UTC
+  swap_size_gb: 4  # Enhanced for development workloads
   kernel_tuning: true
 
-# All languages enabled
+# =============================================================================
+# SECURITY ENHANCEMENTS
+# =============================================================================
+
+security:
+  mfa:
+    enabled: true
+    pam:
+      enable_for_ssh: true
+      enable_for_sudo: true
+
+rbac:
+  sudo:
+    mfa:
+      enabled: true
+
+# =============================================================================
+# USER DEFAULTS
+# =============================================================================
+
+users:
+  lifecycle:
+    provisioning:
+      default_shell: /bin/zsh
+      enable_2fa: true
+
+# =============================================================================
+# DESKTOP + TERMINAL TOOLS (FULL PROFILE)
+# =============================================================================
+
+desktop:
+  enabled: true
+
+  themes:
+    install:
+      - nordic
+      - arc
+      - dracula
+
+  icons:
+    install:
+      - papirus
+      - tela
+
+  # Terminal Tools - FULL Profile from terminal-tools-profile.yaml
+  terminal_tools:
+    eza:
+      enabled: true
+      icons: true
+      icons_auto: true
+      git_integration: true
+      git_repos: true
+      group_directories_first: true
+      extended_attributes: true
+      time_style: "long-iso"
+      color_scale: true
+
+    bat:
+      enabled: true
+      theme: "TwoDark"
+      line_numbers: true
+      style: "numbers,changes,header"
+      italic_text: true
+      git_integration: true
+
+    zsh:
+      enabled: true
+      framework: "oh-my-zsh"
+      plugins:
+        - git
+        - docker
+        - docker-compose
+        - kubectl
+        - sudo
+        - command-not-found
+        - colored-man-pages
+        - history
+        - extract
+        - z
+        - fzf
+        - zsh-autosuggestions
+        - zsh-syntax-highlighting
+      lazy_loading:
+        enabled: true
+        plugins:
+          - nvm
+      theme: "robbyrussell"
+      set_default_shell: true
+      history_size: 50000
+
+    zoxide:
+      enabled: true
+      interactive_mode: true
+      hook: "pwd"
+      exclude_dirs:
+        - "/tmp"
+        - "/var/tmp"
+        - "/proc"
+        - "/sys"
+      max_results: 15
+
+    fzf:
+      enabled: true
+      preview: true
+      height: "40%"
+      layout: "reverse"
+      border: true
+      color_scheme: "dark"
+
+    optional:
+      ripgrep: true
+      fd: true
+      delta: true
+      tokei: true
+      bottom: true
+
+# =============================================================================
+# ALL LANGUAGES ENABLED
+# =============================================================================
+
 languages:
   python:
     enabled: true
@@ -18,7 +146,9 @@ languages:
       - pytest
       - ipython
       - poetry
+      - ruff
       - httpie
+
   nodejs:
     enabled: true
     version: "20"
@@ -34,23 +164,34 @@ languages:
       - prettier
       - webpack
       - vite
+
   golang:
     enabled: true
+
   rust:
     enabled: true
+
   java:
     enabled: true
+
   php:
     enabled: true
 
-# All tools
+# =============================================================================
+# ALL TOOLS ENABLED
+# =============================================================================
+
 tools:
   docker:
     enabled: true
     compose: true
+    buildx: true
+
   git:
     enabled: true
     github_cli: true
+    lfs: true
+
   editors:
     vscode:
       enabled: true
@@ -59,14 +200,73 @@ tools:
     neovim:
       enabled: true
 
-# Networking
+# =============================================================================
+# NETWORKING ENABLED
+# =============================================================================
+
 networking:
   wireguard:
     enabled: true
   caddy:
     enabled: true
 
-# Monitoring
+# =============================================================================
+# MONITORING ENABLED
+# =============================================================================
+
 monitoring:
   netdata:
     enabled: true
+
+# =============================================================================
+# PERFORMANCE TUNING
+# =============================================================================
+
+performance:
+  max_workers: 4
+  package_cache:
+    max_size_gb: 20.0
+  network_retry:
+    max_retries: 5
+
+# =============================================================================
+# SECURITY ADVANCED
+# =============================================================================
+
+security_advanced:
+  cis_scanner:
+    enabled: true
+    level: 2
+    scan_schedule: "daily"
+
+  vulnerability_scanner:
+    enabled: true
+    scan_on_install: true
+    severity_threshold: "MEDIUM"
+
+  mfa:
+    enabled: true
+
+  supply_chain:
+    strict_mode: true
+
+# =============================================================================
+# OBSERVABILITY
+# =============================================================================
+
+observability:
+  metrics:
+    collect_interval: 30
+
+  logging:
+    level: DEBUG
+
+  tracing:
+    enabled: true
+
+# =============================================================================
+# INSTALLATION BEHAVIOR
+# =============================================================================
+
+interactive: false
+verbose: true

@@ -283,26 +283,40 @@ desktop:
 
   # === Phase 5: Advanced Terminal Tools ===
   terminal_tools:
-    # Bat configuration
+    # Bat configuration (Context7 best practices)
     bat:
       theme: "TwoDark" # TwoDark, Monokai Extended, Nord, etc.
       line_numbers: true # Show line numbers
+      style: "numbers,changes,header" # Context7 recommended
+      italic_text: true # Use italic text
       git_integration: true # Show git modifications
 
-    # Exa configuration
+    # Eza configuration (Context7 best practices)
     exa:
       git_integration: true # Show git status per file
+      git_repos: true # Show git repo status in directories
       icons: true # Show file type icons
+      icons_auto: true # EZA_ICONS_AUTO environment variable
       extended_attributes: false # Show extended attrs (Linux-specific)
-      time_style: "long-iso" # Date format:  long-iso, iso, relative
+      time_style: "long-iso" # Date format: long-iso, iso, relative
       group_directories_first: true
+      color_scale: false # Age/size based coloring
 
-    # Zoxide configuration
+    # Zsh configuration (Context7 best practices)
+    zsh:
+      lazy_loading: true # Defer heavy plugin initialization
+      lazy_plugins:
+        - nvm # NVM is heavy, load on first use
+
+    # Zoxide configuration (Context7 best practices)
     zoxide:
       interactive_mode: true # Enable 'zi' command
+      hook: "pwd" # pwd (efficient) or prompt
       exclude_dirs:
         - "/tmp"
         - "/var/tmp"
+        - "/proc"
+        - "/sys"
       max_results: 10
 
     # FZF configuration

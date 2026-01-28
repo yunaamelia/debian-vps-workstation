@@ -11,7 +11,7 @@ rm -f /etc/apt/sources.list.d/docker.list
 apt-get update
 # Suppress interactive prompts
 export DEBIAN_FRONTEND=noninteractive
-apt-get install -y python3-venv unzip sshpass
+apt-get install -y python3-venv unzip sshpass gnome-keyring libsecret-1-0 libsecret-tools dbus-x11
 
 # Prepare directory
 mkdir -p /opt/vps-workstation

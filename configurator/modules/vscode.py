@@ -6,7 +6,9 @@ Handles:
 - Extension installation
 """
 
+import json
 import os
+import shutil
 
 from configurator.modules.base import ConfigurationModule
 from configurator.utils.file import write_file
@@ -53,10 +55,13 @@ class VSCodeModule(ConfigurationModule):
         # 1. Add Microsoft repository
         self._add_microsoft_repository()
 
-        # 2. Install VS Code
+        # 2. Install VS Code and dependencies
         self._install_vscode()
 
-        # 3. Install extensions
+        # 3. Configure keyring
+        self._configure_keyring()
+
+        # 4. Install extensions
         self._install_extensions()
 
         self.logger.info("✓ VS Code installed")
@@ -113,9 +118,12 @@ class VSCodeModule(ConfigurationModule):
         self.logger.info("✓ Microsoft repository added")
 
     def _install_vscode(self):
-        """Install VS Code package."""
-        self.logger.info("Installing VS Code package...")
-        self.install_packages(["code"], update_cache=True)
+        """Install VS Code package and dependencies."""
+        self.logger.info("Installing VS Code package and keyring dependencies...")
+        self.install_packages(
+            ["code", "gnome-keyring", "libsecret-1-0", "libsecret-tools", "dbus-x11"],
+            update_cache=True,
+        )
 
     def _install_extensions(self):
         """Install recommended extensions."""
@@ -171,3 +179,52 @@ class VSCodeModule(ConfigurationModule):
                         import time
 
                         time.sleep(5)
+
+    def _configure_keyring(self):
+        """Configure VS Code to use gnome-libsecret for keyring."""
+        self.logger.info("Configuring VS Code keyring settings...")
+
+        vscode_dir = os.path.join(self.target_home, ".vscode")
+        argv_path = os.path.join(vscode_dir, "argv.json")
+
+        if self.dry_run:
+            self.logger.info(f"[Dry Run] Would update {argv_path} with password-store setting")
+            return
+
+        # Create .vscode directory if it doesn't exist
+        if not os.path.exists(vscode_dir):
+            os.makedirs(vscode_dir, exist_ok=True)
+            if self.target_user != "root":
+                shutil.chown(vscode_dir, user=self.target_user, group=self.target_user)
+
+        current_config = {}
+        if os.path.exists(argv_path):
+            try:
+                with open(argv_path, "r") as f:
+                    content = f.read()
+                    if content.strip():
+                        current_config = json.loads(content)
+            except json.JSONDecodeError:
+                self.logger.warning(
+                    f"Could not parse valid JSON from {argv_path}. Will attempt to preserve or overwrite."
+                )
+
+        # Update config
+        if (
+            "password-store" not in current_config
+            or current_config["password-store"] != "gnome-libsecret"
+        ):
+            current_config["password-store"] = "gnome-libsecret"
+
+            try:
+                with open(argv_path, "w") as f:
+                    json.dump(current_config, f, indent=4)
+
+                if self.target_user != "root":
+                    shutil.chown(argv_path, user=self.target_user, group=self.target_user)
+
+                self.logger.info("✓ Updated argv.json with password-store setting")
+            except Exception as e:
+                self.logger.error(f"Failed to update {argv_path}: {e}")
+        else:
+            self.logger.info("  Keyring setting already configured")
